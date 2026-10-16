@@ -673,3 +673,47 @@ public class PrefsTests
         Assert.True(reloaded.Data.TourSeen);
     }
 }
+
+public class StuckProtectionTests
+{
+    [Fact]
+    public async Task ADamagedDownloadEndsAsFailedInsteadOfFreezingTheApp()
+    {
+        using var dir = new TempDir();
+        using var web = new FakeWeb();
+        Directory.CreateDirectory(dir.Combine("game", "Mods"));
+        File.WriteAllText(dir.Combine("game", "Stardew Valley.dll"), "");
+        dir.Write("game/Mods/Thing/manifest.json", Zips.Manifest("me.Thing", "1.0.0", "Thing", ", \"UpdateKeys\": [\"GitHub:me/thing\"]"));
+        using var tmp = new TempDir();
+        var damaged = File.ReadAllBytes(InstallerSafetyTests.DamagedZip(tmp));
+
+        web.Handler = (path, ctx) =>
+        {
+            if (path == "/smapi")
+                return FakeWeb.Json("""[{"id":"me.Thing","suggestedUpdate":{"version":"2.0.0","url":"x"},"metadata":{"name":"Thing","gitHubRepo":"me/thing","main":{"version":"2.0.0"}},"errors":[]}]""");
+            if (path == "/gh/repos/me/thing/releases")
+                return FakeWeb.Json($$"""[{"tag_name":"v2.0.0","name":"2.0.0","draft":false,"prerelease":false,"html_url":"{{web.Base}}/p","assets":[{"name":"Thing-2.0.0.zip","browser_download_url":"{{web.Base}}/gh/dl/Thing.zip"}]}]""");
+            return path == "/gh/dl/Thing.zip" ? damaged : null;
+        };
+
+        var settings = new SettingsStore(dir.Combine("settings.json"));
+        settings.Data.Policy = SourcePolicy.InstantFirst;
+        using var service = new UpdateService(settings, new HistoryStore(dir.Combine("history.json"), dir.Combine("backups")), _ => { });
+        await service.SetGameFolderAsync(dir.Combine("game"));
+
+        JsonElement Snap() => JsonSerializer.SerializeToElement(service.Snapshot(), AppEnvironment.Json);
+        async Task<JsonElement> WaitFor(Func<JsonElement, bool> done)
+        {
+            var end = DateTime.UtcNow.AddSeconds(20);
+            while (DateTime.UtcNow < end) { var s = Snap(); if (done(s)) return s; await Task.Delay(100); }
+            throw new TimeoutException(Snap().ToString());
+        }
+
+        await WaitFor(s => s.GetProperty("phase").GetString() == "Review");
+        _ = service.ApplyAsync(new[] { "gh:me/thing" });
+        var final = await WaitFor(s => s.GetProperty("phase").GetString() == "Finished");
+
+        Assert.Equal("Failed", final.GetProperty("items")[0].GetProperty("status").GetString());
+        Assert.Equal("1.0.0", ManifestReader.ReadFile(dir.Combine("game", "Mods", "Thing", "manifest.json"), "x")!.Version);
+    }
+}

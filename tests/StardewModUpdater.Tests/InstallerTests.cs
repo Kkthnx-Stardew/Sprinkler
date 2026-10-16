@@ -185,3 +185,87 @@ public class InstallerTests
         Assert.Equal(4, history.All().Count);
     }
 }
+
+public class InstallerSafetyTests
+{
+    private static (Installer Installer, HistoryStore History) Make(TempDir d)
+    {
+        var settings = new SettingsStore(d.Combine("settings.json"));
+        var history = new HistoryStore(d.Combine("history.json"), d.Combine("backups"));
+        return (new Installer(history, settings), history);
+    }
+
+    /// <summary>A zip whose directory is valid but whose compressed data is damaged, so reading an entry fails late.</summary>
+    internal static string DamagedZip(TempDir d)
+    {
+        var big = string.Join('\n', Enumerable.Range(0, 4000).Select(i => "line " + i + " of some compressible text for the mod"));
+        var path = Zips.Build(d, "damaged.zip", ("Thing/manifest.json", Zips.Manifest("me.Thing", "2.0.0")), ("Thing/big.txt", big));
+        var bytes = File.ReadAllBytes(path);
+        for (var i = 200; i < 260; i++)
+            bytes[i] ^= 0xFF;
+        File.WriteAllBytes(path, bytes);
+        return path;
+    }
+
+    [Fact]
+    public void ADamagedArchiveFailsCleanlyAndChangesNothing()
+    {
+        using var d = new TempDir();
+        var mods = d.Combine("Mods");
+        d.Write("Mods/Thing/manifest.json", Zips.Manifest("me.Thing", "1.0.0"));
+        var (inst, history) = Make(d);
+        var zip = DamagedZip(d);
+
+        using (var a = ArchiveFile.Open(zip))
+        {
+            var plan = Installer.Plan(zip, a, mods, ModScanner.Scan(mods));
+            Assert.Throws<InstallException>(() => inst.Apply(plan, mods, "test"));
+        }
+
+        Assert.Equal("1.0.0", ManifestReader.ReadFile(d.Combine("Mods", "Thing", "manifest.json"), "x")!.Version);
+        Assert.Empty(history.All());
+    }
+
+    [Fact]
+    public void UndoWithADamagedBackupLeavesTheCurrentModAlone()
+    {
+        using var d = new TempDir();
+        var mods = d.Combine("Mods");
+        d.Write("Mods/Thing/manifest.json", Zips.Manifest("me.Thing", "1.0.0"));
+        var (inst, history) = Make(d);
+        var zip = Zips.Build(d, "u.zip", ("Thing/manifest.json", Zips.Manifest("me.Thing", "1.1.0")));
+        using (var a = ArchiveFile.Open(zip))
+            inst.Apply(Installer.Plan(zip, a, mods, ModScanner.Scan(mods)), mods, "test");
+        var entry = history.All().Single();
+
+        File.WriteAllText(Path.Combine(history.BackupsDir, entry.BackupFile!), "this is not a zip any more");
+
+        Assert.Throws<InstallException>(() => inst.Undo(entry.Id, mods));
+        Assert.Equal("1.1.0", ManifestReader.ReadFile(d.Combine("Mods", "Thing", "manifest.json"), "x")!.Version);
+        Assert.False(history.Find(entry.Id)!.Undone);
+    }
+
+    [Fact]
+    public void RefusesAnInstallThatCannotFitOnTheDrive()
+    {
+        using var d = new TempDir();
+        var mods = d.Combine("Mods");
+        var zip = Zips.Build(d, "n.zip", ("Fresh/manifest.json", Zips.Manifest("new.Fresh", "1.0.0")), ("Fresh/data.bin", new string('x', 100_000)));
+        using var a = ArchiveFile.Open(zip);
+        var plan = Installer.Plan(zip, a, mods, new List<ModInfo>());
+
+        var ex = Assert.Throws<InstallException>(() => Installer.EnsureSpace(plan, a, mods, d.Combine("b"), d.Combine("s"), _ => 1024));
+        Assert.Contains("not enough free space", ex.Message);
+        Installer.EnsureSpace(plan, a, mods, d.Combine("b"), d.Combine("s"), _ => long.MaxValue);
+    }
+
+    [Fact]
+    public void SwitchingSourceKeepsEveryOfferAfterItInTheRetryOrder()
+    {
+        Assert.Equal(new[] { 0, 1, 2 }, UpdateService.NextOrder(new List<int> { 0, 1, 2 }, 0, 1));
+        // waiting on offer 1 (position 1) and switching to offer 0: offer 2 must still be tried afterwards
+        Assert.Equal(new[] { 0, 1, 0, 2 }, UpdateService.NextOrder(new List<int> { 0, 1, 2 }, 1, 0));
+        // switching to a later offer moves it to the front of what is left
+        Assert.Equal(new[] { 0, 2, 1 }, UpdateService.NextOrder(new List<int> { 0, 1, 2 }, 0, 2));
+    }
+}

@@ -35,6 +35,8 @@ Nexus Mods first, with CurseForge and GitHub as fallbacks when they have the sam
 
 To get your key, log in to Nexus Mods, open Site preferences, then API keys, and copy the "Personal API Key". Paste it under "Nexus and settings". It is stored encrypted for your Windows user and only ever sent to Nexus.
 
+Nexus's [API policy](https://help.nexusmods.com/article/114-api-acceptable-use-policy) tolerates personal keys for personal use and asks public apps to register with them. This project has not been registered yet, so use your own key for your own PC only, and never share it. Once registered, a "Log in with Nexus" button will replace pasting a key. Nexus limits each account to 20,000 requests a day (then 500 an hour), and the app uses a few per outdated mod, so normal use stays far below that.
+
 You can also drag any mod `.zip`, `.7z` or `.rar` onto the window. The app shows what it would change and installs it after you confirm.
 
 ## What it does to your mods
@@ -44,7 +46,11 @@ You can also drag any mod `.zip`, `.7z` or `.rar` onto the window. The app shows
 3. Copies the new files over. Your `config.json` is kept, old `.dll` files the new version dropped are removed, and files you added yourself are left alone.
 4. Reads the new manifest back to confirm the version.
 
-It also finds required mods that are missing (the ones SMAPI skips without a clear message) and offers to install them.
+It also finds required mods that are missing (the ones SMAPI skips without a clear message) and offers to install them. After you play, it reads SMAPI's own log and tells you which mods failed to load and why, in plain words. You can switch any mod off or on from the All mods tab using SMAPI's folder-name rule (a folder starting with a dot is skipped), and the app warns you first if other mods need it.
+
+## Speed
+
+Measured on a Windows 11 PC with a real 36-mod folder (three runs of the published exe): the window's server is ready in about 0.5 s, the full update check finishes in about 1 s, memory is about 58 MB, and idle CPU is effectively zero. The exe is about 32 MB.
 
 ## Safety
 

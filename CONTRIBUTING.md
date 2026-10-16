@@ -46,6 +46,10 @@ The UI talks to the app through `/api/*` on 127.0.0.1 with a per-run token. The 
 - Keep the app light. Avoid new dependencies unless they earn their size; the published exe is about 32 MB.
 - No telemetry, ads or accounts of our own.
 
+## Before a wide release: register with Nexus
+
+Nexus's API policy says personal API keys are tolerated for testing and personal use only, and that a public-facing app must be registered by emailing support@nexusmods.com with a testing build, a name, a short description and a logo. Registration also gives the app a slug for Nexus's single sign-on, which would replace pasting a key. Open source is encouraged and may speed the review. Until that is done, keep the README's wording about personal keys. The policy page is the source: https://help.nexusmods.com/article/114-api-acceptable-use-policy
+
 ## Pull requests
 
 Keep each pull request to one change, explain what and why in the description, and make sure `dotnet test` passes. Commit messages should be short plain sentences in the imperative, for example "Keep config.json when a mod is replaced".

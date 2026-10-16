@@ -246,6 +246,23 @@ internal sealed class WebHost : IAsyncDisposable
             return Results.Json(new { note });
         });
 
+        api.MapPost("/shortcut", (FlagBody body) =>
+        {
+            if (!Platform.IsLinux)
+                return Results.Json(new { error = "Menu shortcuts are only needed on Linux." });
+            try
+            {
+                var note = body.On ? LinuxShortcut.Install() : null;
+                if (!body.On)
+                    LinuxShortcut.Remove();
+                return Results.Json(new { note });
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                return Results.Json(new { error = "Could not change the menu shortcut: " + ex.Message });
+            }
+        });
+
         api.MapPost("/window", (FlagBody body) =>
         {
             _service.Settings.Data.AppWindow = body.On;

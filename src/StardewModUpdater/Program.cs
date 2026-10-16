@@ -24,8 +24,11 @@ internal static class Program
     {
         var options = Options.Parse(args);
 
-        if (options.Help || options.Check || options.Version)
+        if (options.Help || options.Check || options.Version || options.InstallShortcut || options.RemoveShortcut)
             AttachParentConsole();
+
+        if (options.InstallShortcut || options.RemoveShortcut)
+            return ManageShortcut(options.InstallShortcut);
 
         if (options.Version)
         {
@@ -134,6 +137,31 @@ internal static class Program
         return 0;
     }
 
+    private static int ManageShortcut(bool install)
+    {
+        if (!Platform.IsLinux)
+        {
+            Console.WriteLine("Menu shortcuts are only needed on Linux. On Windows, pin or copy the program instead.");
+            return 1;
+        }
+        try
+        {
+            if (install)
+                Console.WriteLine(LinuxShortcut.Install());
+            else
+            {
+                LinuxShortcut.Remove();
+                Console.WriteLine("Removed Stardew Mod Updater from your application menu.");
+            }
+            return 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            Console.Error.WriteLine("Could not change the menu shortcut: " + ex.Message);
+            return 2;
+        }
+    }
+
     private static async Task<bool> ForwardToRunningInstanceAsync(Options options)
     {
         try
@@ -209,7 +237,7 @@ internal static class Program
         return 0;
     }
 
-    private sealed record Options(string? ModsPath, string? GamePath, bool NoBrowser, bool Check, bool Help, int Port, string? NxmUrl, bool Browser = false, bool Version = false)
+    private sealed record Options(string? ModsPath, string? GamePath, bool NoBrowser, bool Check, bool Help, int Port, string? NxmUrl, bool Browser = false, bool Version = false, bool InstallShortcut = false, bool RemoveShortcut = false)
     {
         public const string HelpText =
             "Stardew Mod Updater\n" +
@@ -218,12 +246,14 @@ internal static class Program
             "  --game <folder>                    use this Stardew Valley folder\n" +
             "  --mods <folder>                    use this Mods folder\n" +
             "  --no-browser                       do not open a browser tab\n" +
-            "  --port <number>                    listen on a fixed local port\n";
+            "  --port <number>                    listen on a fixed local port\n" +
+            "  --install-shortcut                 add the app to the Linux application menu\n" +
+            "  --remove-shortcut                  take it out of the menu again\n";
 
         public static Options Parse(string[] args)
         {
             string? mods = null, game = null, nxm = null;
-            bool noBrowser = false, check = false, help = false, browser = false, version = false;
+            bool noBrowser = false, check = false, help = false, browser = false, version = false, installShortcut = false, removeShortcut = false;
             var port = 0;
             for (var i = 0; i < args.Length; i++)
             {
@@ -236,6 +266,8 @@ internal static class Program
                     case "--no-browser": noBrowser = true; break;
                     case "--check": check = true; break;
                     case "--browser": browser = true; break;
+                    case "--install-shortcut": installShortcut = true; break;
+                    case "--remove-shortcut": removeShortcut = true; break;
                     case "--version" or "-v": version = true; break;
                     case "--help" or "-h" or "/?": help = true; break;
                     default:
@@ -244,7 +276,7 @@ internal static class Program
                         break;
                 }
             }
-            return new Options(mods, game, noBrowser, check, help, port, nxm, browser, version);
+            return new Options(mods, game, noBrowser, check, help, port, nxm, browser, version, installShortcut, removeShortcut);
         }
     }
 }

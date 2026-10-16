@@ -10,7 +10,7 @@ Download the file for your system from the [Releases page](https://github.com/Kk
 
 **Windows 10 and 11.** Unzip it and run `StardewModUpdater.exe`. Windows may show a "protected your PC" notice for an app it has not seen before. Choose "More info", then "Run anyway".
 
-**Linux, including Steam Deck.** Unpack the `.tar.gz`, then run `./StardewModUpdater` from the folder (on the Deck, use Desktop Mode). It uses a Chromium-based browser for its own window (Chrome, Chromium, Brave or Edge, including the Snap build of Chromium). With only Firefox it opens a normal browser tab instead. It finds Steam (native, Flatpak and extra libraries such as the SD card) and GOG installs by itself.
+**Linux, including Steam Deck.** Unpack the `.tar.gz`, then run `./StardewModUpdater` from the folder (on the Deck, use Desktop Mode). It uses a Chromium-based browser for its own window (Chrome, Chromium, Brave or Edge, including the Snap build of Chromium). With only Firefox it opens a normal browser tab instead. It finds Steam (native, Flatpak and extra libraries such as the SD card) and GOG installs by itself. To start it from your application menu, use **Add to the application menu** under "Nexus and settings", or run `./StardewModUpdater --install-shortcut` once (`--remove-shortcut` undoes it). It writes only a `.desktop` file and an icon under `~/.local/share`, and points at the program where it is, so put the program where you want it first.
 
 The Linux build is new and has had less testing than the Windows one. If something does not work, the **Report a problem** button collects what is needed for a bug report.
 
@@ -73,6 +73,7 @@ StardewModUpdater --check              print what is outdated, change nothing
 StardewModUpdater --game <folder>      use this Stardew Valley folder
 StardewModUpdater --browser            use a normal browser tab
 StardewModUpdater --version            print the version
+StardewModUpdater --install-shortcut   add it to the Linux application menu
 ```
 
 Settings, history, backups and logs live in `%LOCALAPPDATA%\StardewModUpdater` on Windows and in `~/.local/share/StardewModUpdater` on Linux. To remove the app, delete the program and that folder.

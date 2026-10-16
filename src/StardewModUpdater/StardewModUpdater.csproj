@@ -42,6 +42,7 @@
     <EmbeddedResource Include="Web\index.html" LogicalName="index.html" />
     <EmbeddedResource Include="Web\inter.woff2" LogicalName="inter.woff2" />
     <EmbeddedResource Include="Web\chicken.png" LogicalName="chicken.png" />
+    <EmbeddedResource Include="Web\icon-256.png" LogicalName="icon-256.png" />
   </ItemGroup>
 
   <ItemGroup>

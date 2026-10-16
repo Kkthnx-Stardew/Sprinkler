@@ -12,7 +12,9 @@ First public build.
 - Finds required mods that are missing, which SMAPI otherwise skips without a clear message.
 - Backs up each mod before replacing it, keeps `config.json`, rolls back on any failure, and offers Undo for every change.
 - Installs from `.zip`, `.7z` and `.rar` files, including files dropped onto the window.
-- Opens in its own app window using Edge, Chrome or Brave already on the PC, with a normal browser tab as a fallback.
+- Runs on Windows and Linux (including Steam Deck, Flatpak Steam and extra Steam libraries). The Linux build is new and has had less testing.
+- On Linux, adds itself to the application menu with an icon (`--install-shortcut` or a button in settings), and finds mods whose manifest is spelled `Manifest.json`, as SMAPI does there.
+- Opens in its own app window using Edge, Chrome, Chromium or Brave, whichever is installed, with a normal browser tab as a fallback.
 - First-run tour, built-in help and FAQ, light and dark looks, and a Report a problem button that copies details for an issue.
 - Reads SMAPI's log from your last game session and lists the mods it skipped, with SMAPI's reason and what to do about it.
 - Switch a mod off or on from the All mods tab. A warning lists any mods that need it.

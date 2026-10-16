@@ -193,7 +193,7 @@ internal static class NxmRegistration
     internal static string DesktopFileText(string exe)
     {
         // Exec values are quoted, and a literal percent sign is written twice
-        var quoted = "\"" + exe.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("`", "\\`").Replace("$", "\\$").Replace("%", "%%") + "\"";
+        var quoted = LinuxShortcut.QuoteExec(exe);
         var sb = new StringBuilder();
         sb.AppendLine("[Desktop Entry]");
         sb.AppendLine("Type=Application");

@@ -588,6 +588,7 @@ function chooseGameCard() {
     el('details', { 'data-k': 'findgame' }, el('summary', null, 'How do I find the folder?'),
       el('p', { class: 'small muted' }, findGameHelp())));
 }
+function dataDirText() { return (S && S.app && S.app.dataDir) || 'the app data folder'; }
 function osName() { return (S && S.app && S.app.os) || 'Windows'; }
 function findGameHelp() {
   const steam = 'Steam: right-click Stardew Valley in your library, choose Manage, then Browse local files, and copy the address at the top. ';
@@ -839,7 +840,13 @@ function settingsView() {
       el('input', { type: 'radio', name: 'win', class: 'check', checked: String(S.settings.appWindow) === v, onchange: () => post('window', { on: v === 'true' }) }),
       v === 'true' ? el('span', null, el('strong', null, 'App window (recommended). '), 'No tabs or address bar, like a normal program.')
         : el('span', null, el('strong', null, 'Browser tab. '), 'Open in your default browser instead.'))));
-  return [nexusCard, nxmCard, polCard, folderCard, winCard, lookCard];
+  const sc = S.app.shortcut;
+  const menuCard = !sc ? null : el('div', { class: 'panel' }, el('h2', null, px('pointer', 22), 'Application menu'),
+    el('p', { class: 'muted small', style: 'margin:0 0 8px' }, 'Adds Stardew Mod Updater to your desktop\'s application menu (in Desktop Mode on a Steam Deck too), with its icon, so you can start it like any other program. It points at the program where it is now, so move it first if you want it somewhere else.'),
+    sc.installed ? el('div', null, el('span', { class: 'chip ok' }, 'In your application menu'), ' ',
+        el('button', { class: 'btn slim', onclick: async () => { const r = await post('shortcut', { on: false }); toast(r && r.error ? r.error : 'Removed from the menu.', r && r.error ? 'bad' : undefined); } }, 'Remove'))
+      : el('button', { class: 'btn', onclick: async () => { const r = await post('shortcut', { on: true }); toast(r && r.error ? r.error : 'Added to your application menu.', r && r.error ? 'bad' : undefined); } }, 'Add to the application menu'));
+  return [nexusCard, nxmCard, polCard, folderCard, winCard, menuCard, lookCard].filter(Boolean);
 }
 
 // ---------------------------------------------------------------- help
@@ -848,9 +855,9 @@ const FAQ = [
   ['Why do I have to click on Nexus Mods?', 'Nexus only gives files to logged-in users, and a free account has to press the download button itself. The app opens the exact file page for you, then installs the file the moment it lands in your Downloads folder. With Nexus Premium and a saved key it is fully automatic.'],
   ['What does "Cannot check" mean?', 'The mod author did not put update information in the mod\'s manifest, so there is nothing to look up. You can still update such a mod: download it yourself and drop the .zip onto this window.'],
   ['What is a "missing required mod"?', 'Some mods need a framework mod, such as Content Patcher or SpaceCore. If it is not installed, SMAPI skips the mod without a clear message. The app finds these and offers to install them.'],
-  ['Where are my backups?', 'In %LOCALAPPDATA%\\StardewModUpdater\\backups. The History tab lists them with an Undo button, and the app keeps the newest five per mod.'],
+  ['Where are my backups?', () => 'In the backups folder inside ' + dataDirText() + '. The History tab lists them with an Undo button, and the app keeps the newest five per mod.'],
   ['Will it change my settings or saves?', 'No. Your config.json files are kept when a mod is updated, and save games are never touched.'],
-  ['How do I remove the app?', 'Delete the exe and the folder %LOCALAPPDATA%\\StardewModUpdater. If you turned on "Let this app handle Nexus links", turn it off first under Nexus and settings.'],
+  ['How do I remove the app?', () => 'Delete the program and the folder ' + dataDirText() + '. If you turned on "Let this app handle Nexus links" or added the app to your menu, turn those off first under Nexus and settings.'],
 ];
 const FIXES = [
   ['SMAPI not found', 'Mods only load through SMAPI. Install it from smapi.io, then press Check again.'],
@@ -861,7 +868,7 @@ const FIXES = [
 ];
 function helpView() {
   const step = (n, title, text) => el('div', { class: 'qstep' }, el('div', { class: 'qnum' }, n), el('div', null, el('strong', null, title), el('div', { class: 'small muted' }, text)));
-  const acc = rows => rows.map(([q, a]) => el('details', { class: 'faq', 'data-k': 'faq:' + q }, el('summary', null, q), el('p', { class: 'small', style: 'margin:8px 0 2px' }, a)));
+  const acc = rows => rows.map(([q, a]) => el('details', { class: 'faq', 'data-k': 'faq:' + q }, el('summary', null, q), el('p', { class: 'small', style: 'margin:8px 0 2px' }, typeof a === 'function' ? a() : a)));
   const repo = S.app.repo;
   return el('div', null,
     el('div', { class: 'panel' }, el('h2', null, px('chicken', 26), 'Getting started'),

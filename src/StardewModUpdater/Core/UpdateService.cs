@@ -1725,6 +1725,8 @@ internal sealed class UpdateService : IDisposable
                     version = AppEnvironment.Version,
                     repo = AppEnvironment.RepoUrl,
                     os = Platform.SmapiName,
+                    dataDir = AppEnvironment.DataDir,
+                    shortcut = Platform.IsLinux ? new { installed = LinuxShortcut.IsInstalled() } : null,
                     update = _appUpdate is null ? null : new { version = _appUpdate.Value.Version, url = _appUpdate.Value.Url },
                 },
                 game = game is null ? null : new

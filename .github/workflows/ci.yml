@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 9.0.x
+      - name: Test
+        run: dotnet test tests/StardewModUpdater.Tests -c Release
+      - name: Publish the single-file build
+        run: dotnet publish src/StardewModUpdater -c Release -p:PublishSingleFile=true -o artifacts/publish
+      - name: Smoke test the published exe
+        shell: pwsh
+        run: |
+          if (-not (Test-Path artifacts/publish/StardewModUpdater.exe)) { throw "exe missing" }
+          $p = Start-Process artifacts/publish/StardewModUpdater.exe -ArgumentList "--version" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "exe exited with code $($p.ExitCode)" }

@@ -1,0 +1,36 @@
+name: Bug report
+description: Something did not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The quickest way is the **Report a problem** button in the app (Help tab). It copies the details below to your clipboard.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: App details
+      description: Paste what the Report a problem button copied. Please read it first and remove anything you do not want to share.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Where did it go wrong?
+      options:
+        - Checking for updates
+        - Downloading from Nexus Mods
+        - Downloading from CurseForge or GitHub
+        - Installing or undoing
+        - The window or the page
+        - Something else
+    validations:
+      required: false

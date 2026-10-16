@@ -8,12 +8,12 @@ Use the **Report a problem** button in the app (Help tab or footer). It copies t
 
 ## Building
 
-You need the .NET 9 SDK on Windows.
+You need the .NET 9 SDK on Windows or Linux. One project builds for both with a single `net9.0` target, and the few system differences live in `Core/Platform.cs` and its neighbours (`GameLocator`, `GameProcess`, `SecretStore`, `Nxm`, `Web/AppWindow`). The analyzer that checks platform-specific calls runs on every build, so a Windows-only call outside a guard fails the build.
 
 ```
 dotnet test tests/StardewModUpdater.Tests
 dotnet run --project src/StardewModUpdater
-dotnet publish src/StardewModUpdater -c Release -p:PublishSingleFile=true -o artifacts/publish
+dotnet publish src/StardewModUpdater -c Release -r win-x64 -p:PublishSingleFile=true -o artifacts/publish   # or -r linux-x64
 ```
 
 Useful flags while developing:
@@ -40,10 +40,11 @@ The UI talks to the app through `/api/*` on 127.0.0.1 with a per-run token. The 
 ## Ground rules
 
 - Nothing may change the user's mods until they confirm. Every install goes through `Installer`, which backs up first and rolls back on failure.
-- Never log or send the Nexus key. It is stored encrypted for the current Windows user.
+- Never log or send the Nexus key. It is stored through `SecretStores` (DPAPI on Windows, the desktop keyring or a mode-600 file on Linux).
 - Treat every archive as hostile. Paths are validated in `ArchiveFile`, and the manifest ID must match the mod being updated.
+- Keep system-specific behavior behind the platform classes, and test path and parsing logic with fake folders so the test runs on every system. CI runs the tests on Windows and Ubuntu. Say in the pull request if you could only try a change on one system.
 - Add a test for each bug you fix. The fake-server tests in `ServiceTests.cs` show how.
-- Keep the app light. Avoid new dependencies unless they earn their size; the published exe is about 32 MB.
+- Keep the app light. Avoid new dependencies unless they earn their size; the published download is about 32 MB.
 - No telemetry, ads or accounts of our own.
 
 ## Before a wide release: register with Nexus
@@ -56,4 +57,4 @@ Keep each pull request to one change, explain what and why in the description, a
 
 ## Releases
 
-The version lives only in `src/StardewModUpdater/StardewModUpdater.csproj`. To release, update `CHANGELOG.md`, bump the version, and push a tag named `v<version>`. The release workflow checks the tag matches the project version, builds the exe and publishes it with a checksum. Released versions are never changed.
+The version lives only in `src/StardewModUpdater/StardewModUpdater.csproj`. To release, update `CHANGELOG.md`, bump the version, and push a tag named `v<version>`. The release workflow checks the tag matches the project version, builds the Windows zip and the Linux tar.gz and publishes them with checksums. Released versions are never changed.

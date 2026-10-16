@@ -1,0 +1,16 @@
+# Changelog
+
+All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
+
+## 0.1.0-alpha.1 (not released)
+
+First public build.
+
+- Checks every mod in your Mods folder against the SMAPI update service. No account or key needed.
+- Downloads from Nexus Mods first, with CurseForge and GitHub as fallbacks when they have the same version.
+- Nexus support for Premium accounts (fully automatic), free accounts (one click per mod through the Mod Manager Download button), and no key (the app installs the file when it lands in Downloads).
+- Finds required mods that are missing, which SMAPI otherwise skips without a clear message.
+- Backs up each mod before replacing it, keeps `config.json`, rolls back on any failure, and offers Undo for every change.
+- Installs from `.zip`, `.7z` and `.rar` files, including files dropped onto the window.
+- Opens in its own app window using Edge, Chrome or Brave already on the PC, with a normal browser tab as a fallback.
+- First-run tour, built-in help and FAQ, light and dark looks, and a Report a problem button that copies details for an issue.

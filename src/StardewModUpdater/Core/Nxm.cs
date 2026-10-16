@@ -39,6 +39,29 @@ internal static class NxmRegistration
 {
     private const string KeyPath = @"Software\Classes\nxm";
 
+    private static (bool Ours, bool Other, DateTime At) _status;
+    private static readonly object StatusGate = new();
+
+    /// <summary>Registry state for the UI, cached for a few seconds because the UI asks on every refresh.</summary>
+    public static (bool Ours, bool Other) Status()
+    {
+        lock (StatusGate)
+        {
+            if (DateTime.UtcNow - _status.At > TimeSpan.FromSeconds(10))
+            {
+                var ours = IsRegisteredToThisApp();
+                _status = (ours, !ours && CurrentHandler() is not null, DateTime.UtcNow);
+            }
+            return (_status.Ours, _status.Other);
+        }
+    }
+
+    private static void ForgetStatus()
+    {
+        lock (StatusGate)
+            _status = default;
+    }
+
     public static bool IsRegisteredToThisApp()
     {
         try
@@ -79,22 +102,30 @@ internal static class NxmRegistration
         root.SetValue("URL Protocol", "");
         using var cmd = root.CreateSubKey(@"shell\open\command");
         cmd.SetValue("", $"\"{exe}\" \"%1\"");
+        ForgetStatus();
         return previous;
     }
 
     /// <summary>Removes this app as the handler, putting back the previous command when there was one.</summary>
     public static void Unregister(string? previousCommand)
     {
-        if (!IsRegisteredToThisApp())
-            return;
-
-        if (string.IsNullOrWhiteSpace(previousCommand))
+        try
         {
-            Registry.CurrentUser.DeleteSubKeyTree(KeyPath, throwOnMissingSubKey: false);
-            return;
-        }
+            if (!IsRegisteredToThisApp())
+                return;
 
-        using var cmd = Registry.CurrentUser.CreateSubKey(KeyPath + @"\shell\open\command");
-        cmd.SetValue("", previousCommand);
+            if (string.IsNullOrWhiteSpace(previousCommand))
+            {
+                Registry.CurrentUser.DeleteSubKeyTree(KeyPath, throwOnMissingSubKey: false);
+                return;
+            }
+
+            using var cmd = Registry.CurrentUser.CreateSubKey(KeyPath + @"\shell\open\command");
+            cmd.SetValue("", previousCommand);
+        }
+        finally
+        {
+            ForgetStatus();
+        }
     }
 }

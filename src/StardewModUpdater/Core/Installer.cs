@@ -101,6 +101,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         try
         {
             using var archive = ArchiveFile.Open(plan.ArchivePath);
+            EnsureSpace(plan, archive, modsPath, history.BackupsDir, stagingRoot, FreeBytes);
 
             var staged = new List<(PlannedFolder Folder, string Dir)>();
             for (var i = 0; i < plan.Folders.Count; i++)
@@ -133,15 +134,17 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                     throw new InstallException($"After copying, {folder.Source.Manifest.Name} did not read back correctly, so the change was undone.");
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InstallException or ArchiveException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            Log.Write("Install failed, rolling back: " + ex.Message);
+            Log.Write("Install failed, rolling back: " + ex);
             Rollback(done, backedUp, backupPath, modsPath);
             TryDeleteFile(backupPath);
             TryDeleteDirectory(stagingRoot);
-            throw ex is InstallException or ArchiveException
-                ? ex
-                : new InstallException("A file could not be written (" + ex.Message + "). Close the game and any program showing the Mods folder, then try again. Nothing was changed.");
+            if (ex is InstallException or ArchiveException)
+                throw;
+            throw ex is IOException or UnauthorizedAccessException
+                ? new InstallException("A file could not be written (" + ex.Message + "). Close the game and any program showing the Mods folder, then try again. Nothing was changed.")
+                : new InstallException("The download could not be unpacked (" + ex.Message + "). The file may be damaged. Nothing was changed.");
         }
 
         TryDeleteDirectory(stagingRoot);
@@ -181,26 +184,99 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         if (needsBackup && (backupPath is null || !File.Exists(backupPath)))
             throw new InstallException("The backup for this change was removed to save space, so it cannot be undone.");
 
-        foreach (var f in entry.Folders)
+        // Unpack the backup somewhere safe first. Only when that worked is anything in the Mods folder touched,
+        // so a damaged backup or a full disk cannot leave a mod half restored.
+        var temp = Path.Combine(AppEnvironment.StagingDir, "undo-" + historyId);
+        try
         {
-            var target = SafeJoin(modsPath, f.RelativePath);
-            if (Directory.Exists(target))
-                Directory.Delete(target, recursive: true);
-        }
-
-        if (needsBackup)
-        {
-            using var zip = ZipFile.OpenRead(backupPath!);
-            foreach (var e in zip.Entries)
+            if (needsBackup)
             {
-                if (e.FullName.EndsWith('/'))
-                    continue;
-                var dest = SafeJoin(modsPath, e.FullName);
-                Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                e.ExtractToFile(dest, overwrite: true);
+                Directory.CreateDirectory(temp);
+                using var zip = ZipFile.OpenRead(backupPath!);
+                foreach (var e in zip.Entries)
+                {
+                    if (e.FullName.EndsWith('/'))
+                        continue;
+                    var dest = SafeJoin(temp, e.FullName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                    e.ExtractToFile(dest, overwrite: true);
+                }
+            }
+
+            foreach (var f in entry.Folders.Where(f => !f.WasNew))
+            {
+                if (!Directory.Exists(SafeJoin(temp, f.RelativePath)))
+                    throw new InstallException("The backup does not contain " + f.RelativePath + ", so nothing was changed.");
+            }
+
+            foreach (var f in entry.Folders)
+            {
+                var target = SafeJoin(modsPath, f.RelativePath);
+                if (Directory.Exists(target))
+                    Directory.Delete(target, recursive: true);
+                if (!f.WasNew)
+                    CopyDirectory(SafeJoin(temp, f.RelativePath), target);
             }
         }
+        catch (Exception ex) when (ex is InvalidDataException or NotSupportedException)
+        {
+            throw new InstallException("The backup is damaged, so nothing was changed. (" + ex.Message + ")");
+        }
+        finally
+        {
+            TryDeleteDirectory(temp);
+        }
         history.MarkUndone(historyId);
+    }
+
+    private static void CopyDirectory(string from, string to)
+    {
+        Directory.CreateDirectory(to);
+        foreach (var file in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
+        {
+            var dest = Path.Combine(to, Path.GetRelativePath(from, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            File.Copy(file, dest, overwrite: true);
+        }
+    }
+
+    private static long FreeBytes(string path)
+    {
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            return string.IsNullOrEmpty(root) ? long.MaxValue : new DriveInfo(root).AvailableFreeSpace;
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return long.MaxValue;
+        }
+    }
+
+    /// <summary>Refuses an install that cannot fit: staging copy, backup of the old folders and the final copy.</summary>
+    internal static void EnsureSpace(InstallPlan plan, ArchiveFile archive, string modsPath, string backupsDir, string stagingRoot, Func<string, long> freeBytes)
+    {
+        long oldBytes = 0;
+        foreach (var f in plan.Folders.Where(f => f.Replaces is not null && Directory.Exists(f.TargetPath)))
+            oldBytes += Directory.EnumerateFiles(f.TargetPath, "*", SearchOption.AllDirectories).Sum(p => new FileInfo(p).Length);
+
+        var need = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        void Add(string path, long bytes)
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(path)) ?? path;
+            need[root] = need.GetValueOrDefault(root) + bytes;
+        }
+        Add(stagingRoot, archive.TotalBytes);
+        Add(modsPath, archive.TotalBytes);
+        Add(backupsDir, oldBytes);
+
+        foreach (var (root, bytes) in need)
+        {
+            var wanted = bytes + bytes / 20 + 50L * 1024 * 1024;
+            var free = freeBytes(root);
+            if (free < wanted)
+                throw new InstallException($"There is not enough free space on drive {root.TrimEnd('\\')}. About {wanted / (1024 * 1024)} MB is needed and {free / (1024 * 1024)} MB is free. Nothing was changed.");
+        }
     }
 
     private static List<string> Merge(string stagedDir, string target, bool replacing)
@@ -253,6 +329,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         var prefix = rootPath.Length == 0 ? "" : rootPath + "/";
         var fullDest = Path.GetFullPath(destDir) + Path.DirectorySeparatorChar;
         Directory.CreateDirectory(destDir);
+        long written = 0;
 
         foreach (var entry in archive.Entries)
         {
@@ -269,7 +346,17 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             using var input = archive.OpenEntry(entry.Path);
             using var output = File.Create(dest);
-            input.CopyTo(output);
+
+            // header sizes can be falsified, so count what is really written
+            var buffer = new byte[81920];
+            int n;
+            while ((n = input.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                written += n;
+                if (written > ArchiveFile.MaxTotalBytes)
+                    throw new ArchiveException("The archive unpacks to far more data than it declares, so it was stopped.");
+                output.Write(buffer, 0, n);
+            }
         }
     }
 

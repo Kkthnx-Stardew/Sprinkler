@@ -192,6 +192,8 @@ internal sealed class UpdateService : IDisposable
         {
             if (Directory.Exists(Path.Combine(folder, "Mods")) && GameLocator.Inspect(Path.GetDirectoryName(folder.TrimEnd('\\', '/')) ?? "") is { } parent)
                 inspect = parent;
+            else if (GameLocator.IsLegacyInstall(folder))
+                return "This looks like Stardew Valley from before version 1.6. Current SMAPI and mods need game version 1.6 or newer, so update the game first.";
             else
                 return "That folder does not look like a Stardew Valley install. It should contain \"Stardew Valley.dll\" (the game's main file).";
         }
@@ -897,7 +899,22 @@ internal sealed class UpdateService : IDisposable
                 }
             });
 
-            await Task.WhenAll(chosen.Select(i => RunItemAsync(i, ct)));
+            try
+            {
+                await Task.WhenAll(chosen.Select(i => RunItemAsync(i, ct)));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log.Write("Apply crashed: " + ex);
+                Update(() =>
+                {
+                    foreach (var i in chosen.Where(i => i.Status is ItemStatus.Working or ItemStatus.Queued or ItemStatus.WaitingForYou))
+                    {
+                        i.Status = ItemStatus.Failed;
+                        i.Message = "Something unexpected went wrong. Nothing was changed. The log has details.";
+                    }
+                });
+            }
             await RescanQuietlyAsync();
 
             Update(() =>
@@ -915,6 +932,10 @@ internal sealed class UpdateService : IDisposable
             _opGate.Release();
         }
     }
+
+    /// <summary>The order sources are tried in after the user switches to another one: everything already tried stays, the new choice goes next.</summary>
+    internal static List<int> NextOrder(List<int> order, int pos, int to) =>
+        order.Take(pos + 1).Concat(new[] { to }).Concat(order.Skip(pos + 1).Where(i => i != to)).ToList();
 
     private async Task RunItemAsync(UpdateItem item, CancellationToken ct)
     {
@@ -944,8 +965,7 @@ internal sealed class UpdateService : IDisposable
                     return;
                 if (wait.SwitchTo is { } to)
                 {
-                    order.RemoveAll(i => i == to);
-                    order.Insert(pos + 1, to);
+                    order = NextOrder(order, pos, to);
                     continue;
                 }
                 Update(() =>
@@ -971,6 +991,13 @@ internal sealed class UpdateService : IDisposable
                     Update(() => { item.Status = ItemStatus.Failed; item.Message = ex.Message; });
                     return;
                 }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                // anything unexpected must end this item, never leave it spinning
+                Log.Write($"{item.Name} via {offer.Label} crashed: {ex}");
+                Update(() => { item.Status = ItemStatus.Failed; item.Message = "Something unexpected went wrong (" + ex.Message + "). Nothing was changed. The log has details."; });
+                return;
             }
         }
 
@@ -1228,9 +1255,11 @@ internal sealed class UpdateService : IDisposable
                 Downloader.Cleanup(f.Path);
             _ = CheckAsync();
         }
-        catch (Exception ex) when (ex is InstallException or ArchiveException or IOException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            Update(() => { f.Busy = false; f.Error = ex.Message; });
+            if (ex is not (InstallException or ArchiveException or IOException))
+                Log.Write("Installing a found file crashed: " + ex);
+            Update(() => { f.Busy = false; f.Error = ex is InstallException or ArchiveException or IOException ? ex.Message : "The file could not be installed (" + ex.Message + "). Nothing was changed."; });
         }
     }
 
@@ -1293,14 +1322,17 @@ internal sealed class UpdateService : IDisposable
                 }
             });
         }
-        catch (Exception ex) when (ex is InstallException or ArchiveException)
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
             Update(() =>
             {
                 for (var n = 0; n < items.Count; n++)
                     (items[n].Status, items[n].Message, items[n].Progress) = before[n];
             });
-            throw;
+            if (ex is InstallException or ArchiveException)
+                throw;
+            Log.Write("Install crashed: " + ex);
+            throw new InstallException("The file could not be installed (" + ex.Message + "). Nothing was changed.");
         }
         finally
         {
@@ -1634,6 +1666,7 @@ internal sealed class UpdateService : IDisposable
         {
             var game = _game;
             var running = game is not null && GameLocator.IsGameRunning();
+            var nxmStatus = NxmRegistration.Status();
             return new
             {
                 version = _version,
@@ -1668,8 +1701,8 @@ internal sealed class UpdateService : IDisposable
                     user = _nexusUser?.Name,
                     premium = _nexusUser?.IsPremium ?? false,
                     message = _nexusMessage,
-                    nxm = Settings.Data.NxmRegistered && NxmRegistration.IsRegisteredToThisApp(),
-                    otherHandler = !NxmRegistration.IsRegisteredToThisApp() && NxmRegistration.CurrentHandler() is not null,
+                    nxm = Settings.Data.NxmRegistered && nxmStatus.Ours,
+                    otherHandler = nxmStatus.Other,
                 },
                 settings = new
                 {

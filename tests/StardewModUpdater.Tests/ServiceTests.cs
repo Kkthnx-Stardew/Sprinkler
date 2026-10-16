@@ -514,3 +514,140 @@ public class AppInfoTests
         Assert.False(StardewModUpdater.Web.WebHost.TryOpenable("file:///C:/Windows/System32/calc.exe", out _));
     }
 }
+
+public class SmapiLogTests
+{
+    // Lines follow what SMAPI's own source writes (LogManager.LogModInfo and ModResolver).
+    private const string Sample = """
+[03:20:32 INFO  SMAPI] SMAPI 4.5.2 with Stardew Valley 1.6.15 build 24356 on Windows 11 (10.0.26200.0)
+[03:20:44 INFO  SMAPI] Loaded 18 mods:
+[03:20:44 INFO  SMAPI]    Content Patcher 2.9.1 by Pathoschild | Loads content packs.
+[03:20:44 INFO  SMAPI] Loaded 17 content packs:
+[03:20:44 ERROR SMAPI]    Skipped mods
+[03:20:44 ERROR SMAPI]    --------------------------------------------------
+[03:20:44 ERROR SMAPI]       These mods could not be added to your game.
+[03:20:44 ERROR SMAPI]
+[03:20:44 ERROR SMAPI]       - Sunberry Village 1.1.2 because it requires mods which aren't installed (Esca's Modding Plugins, Item Extensions).
+[03:20:44 ERROR SMAPI]       - Old Thing 0.9 because it's no longer compatible. Please check for a new version at https://www.nexusmods.com/stardewvalley/mods/1.
+[03:20:44 ERROR SMAPI]       - Odd Mod because something unexpected happened.
+[03:20:44 ERROR SMAPI]
+[03:20:44 WARN  SMAPI]    Changed save serializer
+[03:20:44 WARN  SMAPI]    --------------------------------------------------
+[03:20:44 WARN  SMAPI]       - SpaceCore
+[03:21:10 ERROR Some Mod] Something broke
+[03:21:11 ERROR Some Mod] Something broke again
+[03:21:12 ERROR Other Mod] Oops
+[03:21:13 ERROR game] Not counted
+""";
+
+    [Fact]
+    public void FindsSkippedModsAndTheReasonsSmapiGave()
+    {
+        var log = SmapiLog.Parse(Sample.Split('\n'), DateTime.Now);
+        Assert.Equal(18, log.LoadedMods);
+        Assert.Equal(17, log.LoadedContentPacks);
+        Assert.Equal(3, log.Skipped.Count);
+
+        var sunberry = log.Skipped[0];
+        Assert.Equal("Sunberry Village", sunberry.Name);
+        Assert.Equal("1.1.2", sunberry.Version);
+        Assert.Equal(SkipKind.MissingMods, sunberry.Kind);
+        Assert.Contains("Item Extensions", sunberry.Reason);
+        Assert.Equal(SkipKind.Incompatible, log.Skipped[1].Kind);
+        Assert.Equal(SkipKind.Other, log.Skipped[2].Kind);
+        Assert.Null(log.Skipped[2].Version);
+    }
+
+    [Fact]
+    public void ModsInOtherWarningGroupsAreNotSkippedMods()
+    {
+        var log = SmapiLog.Parse(Sample.Split('\n'), DateTime.Now);
+        Assert.DoesNotContain(log.Skipped, s => s.Name == "SpaceCore");
+    }
+
+    [Fact]
+    public void CountsErrorsByModAndIgnoresSmapiAndGame()
+    {
+        var log = SmapiLog.Parse(Sample.Split('\n'), DateTime.Now);
+        Assert.Equal(new[] { ("Some Mod", 2), ("Other Mod", 1) }, log.Errors.Select(e => (e.Source, e.Count)).ToArray());
+    }
+
+    [Fact]
+    public void ReadsALogThatTheGameStillHasOpen()
+    {
+        using var d = new TempDir();
+        var path = d.Write("SMAPI-latest.txt", Sample);
+        using var held = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+        Assert.Equal(3, SmapiLog.Read(path)!.Skipped.Count);
+        Assert.Null(SmapiLog.Read(d.Combine("missing.txt")));
+    }
+
+    [Theory]
+    [InlineData("Nexus:1915")]
+    [InlineData("nexus:1915")]
+    [InlineData("NEXUS:1915")]
+    public void UpdateKeysAreCaseInsensitive(string key) => Assert.Equal(SourceKind.Nexus, UpdateKey.Parse(key)!.Site);
+}
+
+public class ToggleTests
+{
+    private static async Task<(TempDir Dir, FakeWeb Web, UpdateService Service)> MakeAsync()
+    {
+        var dir = new TempDir();
+        var web = new FakeWeb { Handler = (path, _) => path == "/smapi" ? FakeWeb.Json("[]") : null };
+        Directory.CreateDirectory(dir.Combine("game", "Mods"));
+        File.WriteAllText(dir.Combine("game", "Stardew Valley.dll"), "");
+        dir.Write("game/Mods/Framework/manifest.json", Zips.Manifest("fw.Core", "1.0.0", "Framework"));
+        dir.Write("game/Mods/Pack/manifest.json", Zips.Manifest("me.Pack", "1.0.0", "Pack", ", \"ContentPackFor\": {\"UniqueID\":\"fw.Core\"}"));
+        var service = new UpdateService(new SettingsStore(dir.Combine("settings.json")), new HistoryStore(dir.Combine("history.json"), dir.Combine("backups")), _ => { });
+        await service.SetGameFolderAsync(dir.Combine("game"));
+        return (dir, web, service);
+    }
+
+    [Fact]
+    public async Task TurnsAModOffAndOnWithTheDotConvention()
+    {
+        var (dir, web, service) = await MakeAsync();
+        using (dir) using (web) using (service)
+        {
+            var (error, deps) = await service.SetModEnabledAsync("me.Pack", enable: false, force: false);
+            Assert.Null(error); Assert.Null(deps);
+            Assert.True(Directory.Exists(dir.Combine("game", "Mods", ".Pack")));
+            Assert.False(Directory.Exists(dir.Combine("game", "Mods", "Pack")));
+
+            (error, _) = await service.SetModEnabledAsync("me.Pack", enable: true, force: false);
+            Assert.Null(error);
+            Assert.True(Directory.Exists(dir.Combine("game", "Mods", "Pack")));
+        }
+    }
+
+    [Fact]
+    public async Task WarnsBeforeTurningOffAModThatOthersNeed()
+    {
+        var (dir, web, service) = await MakeAsync();
+        using (dir) using (web) using (service)
+        {
+            var (error, deps) = await service.SetModEnabledAsync("fw.Core", enable: false, force: false);
+            Assert.Null(error);
+            Assert.Equal(new[] { "Pack" }, deps);
+            Assert.True(Directory.Exists(dir.Combine("game", "Mods", "Framework")));
+
+            (error, deps) = await service.SetModEnabledAsync("fw.Core", enable: false, force: true);
+            Assert.Null(error); Assert.Null(deps);
+            Assert.True(Directory.Exists(dir.Combine("game", "Mods", ".Framework")));
+        }
+    }
+
+    [Fact]
+    public async Task RefusesWhenTheTargetNameIsTaken()
+    {
+        var (dir, web, service) = await MakeAsync();
+        using (dir) using (web) using (service)
+        {
+            Directory.CreateDirectory(dir.Combine("game", "Mods", ".Pack"));
+            var (error, _) = await service.SetModEnabledAsync("me.Pack", enable: false, force: false);
+            Assert.Contains("already exists", error);
+            Assert.True(Directory.Exists(dir.Combine("game", "Mods", "Pack")));
+        }
+    }
+}

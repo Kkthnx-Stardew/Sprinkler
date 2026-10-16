@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stardew Mod Updater</title>
+<link rel="icon" href="data:,">
+<style>
+@font-face { font-family: "Inter"; src: url("/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-2: #f3f4f6;
+  --ink: #111827;
+  --muted: #667085;
+  --line: #e4e7ec;
+  --accent: #16a34a;
+  --accent-hover: #15803d;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8f7ee;
+  --info: #2563eb;
+  --info-soft: #e8efff;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --violet: #7c3aed;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.08);
+  --shadow-lg: 0 12px 32px rgba(16,24,40,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1116; --panel: #151a21; --panel-2: #1b212a; --ink: #e8ecf1; --muted: #9aa4b2; --line: #262e39;
+    --accent: #34c76b; --accent-hover: #4cd67d; --accent-ink: #052612; --accent-soft: #12301f;
+    --info: #7aa7ff; --info-soft: #16264a; --warn: #f5b94f; --warn-soft: #3a2b0e; --bad: #ff7b7b; --bad-soft: #3d1618; --violet: #a78bfa;
+    --shadow: 0 1px 2px rgba(0,0,0,.4); --shadow-lg: 0 12px 32px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1116; --panel: #151a21; --panel-2: #1b212a; --ink: #e8ecf1; --muted: #9aa4b2; --line: #262e39;
+  --accent: #34c76b; --accent-hover: #4cd67d; --accent-ink: #052612; --accent-soft: #12301f;
+  --info: #7aa7ff; --info-soft: #16264a; --warn: #f5b94f; --warn-soft: #3a2b0e; --bad: #ff7b7b; --bad-soft: #3d1618; --violet: #a78bfa;
+  --shadow: 0 1px 2px rgba(0,0,0,.4); --shadow-lg: 0 12px 32px rgba(0,0,0,.55);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.55 "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv11", "ss03"; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--info); text-underline-offset: 2px; }
+button, input { font: inherit; color: inherit; }
+h1, h2, h3 { margin: 0; letter-spacing: -.01em; font-weight: 650; }
+h2 { font-size: 17px; } h3 { font-size: 15px; margin-top: 18px; }
+:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+.px { image-rendering: pixelated; shape-rendering: crispEdges; }
+.ic { display: inline-block; vertical-align: middle; flex: none; }
+.ic-accent { color: var(--accent); } .ic-info { color: var(--info); } .ic-warn { color: var(--warn); } .ic-bad { color: var(--bad); } .ic-violet { color: var(--violet); } .ic-muted { color: var(--muted); }
+
+/* ---------- top bar ---------- */
+header.top { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { display: flex; align-items: center; gap: 14px; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo { width: 58px; height: 58px; border-radius: 14px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--line)); display: grid; place-items: center; flex: none; }
+.brand h1 { font-size: 18px; line-height: 1.2; white-space: nowrap; }
+.brand .sub { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.bar .grow { flex: 1; }
+.bar .right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 1px 9px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); font-size: 12.5px; font-weight: 550; color: var(--muted); }
+.chip.ok { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.chip.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.info { background: var(--info-soft); color: var(--info); border-color: transparent; }
+button.chip { cursor: pointer; } button.chip:hover { border-color: var(--muted); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: var(--shadow); transition: background .12s, border-color .12s, transform .05s; white-space: nowrap; }
+.btn:hover { background: var(--panel-2); border-color: color-mix(in srgb, var(--muted) 45%, var(--line)); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.primary .ic { color: inherit; }
+.btn.big { height: 44px; padding: 0 20px; font-size: 15px; border-radius: 12px; }
+.btn.slim { height: 30px; padding: 0 11px; font-size: 13px; box-shadow: none; }
+.btn.icon { width: 36px; padding: 0; }
+.link { background: none; border: 0; color: var(--info); cursor: pointer; padding: 0; font-weight: 600; font-size: inherit; }
+.link:hover { text-decoration: underline; } .link.danger { color: var(--bad); }
+
+/* ---------- tabs ---------- */
+nav.tabs { display: flex; gap: 4px; margin: 18px 0 6px; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+nav.tabs button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 0; background: none; color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+nav.tabs button:hover { color: var(--ink); }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs .count { background: var(--accent); color: var(--accent-ink); border-radius: 99px; font-size: 11.5px; min-width: 20px; text-align: center; padding: 0 6px; font-weight: 700; }
+
+/* ---------- panels ---------- */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin: 14px 0; box-shadow: var(--shadow); }
+.panel > h2 { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.panel.center { text-align: center; padding: 40px 20px; }
+.panel.center h2 { justify-content: center; margin-top: 10px; }
+.banner { border-radius: 12px; padding: 12px 14px; margin: 12px 0; display: flex; gap: 12px; align-items: flex-start; border: 1px solid transparent; }
+.banner.bad { background: var(--bad-soft); color: var(--bad); } .banner.warn { background: var(--warn-soft); color: var(--warn); }
+.banner.info { background: var(--info-soft); color: var(--info); } .banner.ok { background: var(--accent-soft); color: var(--accent); }
+.banner .grow { flex: 1; color: var(--ink); } .banner .grow strong { color: inherit; }
+.banner .x { background: none; border: 0; cursor: pointer; font-size: 20px; line-height: 1; color: var(--muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 14px 0; }
+.tile { display: flex; align-items: center; gap: 14px; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; cursor: pointer; box-shadow: var(--shadow); transition: border-color .12s, transform .05s; }
+.tile:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--line)); }
+.tile .dot { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2); flex: none; }
+.tile .n { font-size: 24px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 13px; color: var(--muted); }
+
+.hero { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 14px 0; padding: 20px 22px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); background: linear-gradient(120deg, var(--accent-soft), var(--panel) 70%); box-shadow: var(--shadow); }
+.hero-art { width: 88px; height: 88px; border-radius: 20px; background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; flex: none; box-shadow: var(--shadow); }
+.hero-title { font-size: 22px; letter-spacing: -.02em; }
+.steps { display: flex; gap: 6px; flex-wrap: wrap; margin: 16px 0 0; font-size: 13px; font-weight: 600; }
+.steps span { padding: 3px 12px; border-radius: 99px; background: var(--panel-2); color: var(--muted); }
+.steps span.on { background: var(--accent-soft); color: var(--accent); }
+.steps span.done { background: var(--panel-2); color: var(--ink); }
+
+/* ---------- update cards ---------- */
+.item { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; margin: 12px 0; box-shadow: var(--shadow); }
+.item.done { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.item.failed { border-color: color-mix(in srgb, var(--bad) 55%, var(--line)); }
+.item .head { display: flex; gap: 12px; align-items: center; padding: 14px 16px 6px; }
+.item .art { width: 40px; height: 40px; border-radius: 12px; background: var(--panel-2); display: grid; place-items: center; flex: none; }
+.item .name { font-weight: 650; font-size: 16px; line-height: 1.25; }
+.item .ver { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.item .ver b { color: var(--accent); background: var(--accent-soft); padding: 2px 9px; border-radius: 8px; font-weight: 650; }
+.item .body { padding: 0 16px 14px 68px; }
+.check { width: 20px; height: 20px; accent-color: var(--accent); flex: none; cursor: pointer; }
+.tag { display: inline-block; font-size: 11.5px; font-weight: 650; padding: 1px 8px; border-radius: 6px; background: var(--panel-2); color: var(--muted); vertical-align: middle; }
+.tag.new { background: var(--info-soft); color: var(--info); } .tag.auto { background: var(--accent-soft); color: var(--accent); } .tag.click { background: var(--warn-soft); color: var(--warn); }
+.sources { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+.src { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 5px 10px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.src:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--line)); }
+.src[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+.src:disabled { opacity: .5; cursor: not-allowed; text-decoration: line-through; }
+.badge { width: 20px; height: 20px; border-radius: 6px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; flex: none; }
+.badge.Nexus { background: #e8802a; } .badge.CurseForge { background: #f16436; } .badge.GitHub { background: #3a3f4b; } .badge.ModDrop { background: #3b82c4; }
+.note { font-size: 13px; color: var(--muted); margin: 3px 0; }
+.wait { background: var(--warn-soft); border-radius: 12px; padding: 12px 14px; margin: 8px 0; display: flex; gap: 12px; }
+.wait .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.wait .pointer { animation: bob 1.1s ease-in-out infinite alternate; }
+@keyframes bob { from { transform: translateX(0) } to { transform: translateX(4px) } }
+.bar-track { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; margin: 8px 0; }
+.bar-track > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .2s; }
+.bar-track.indeterminate > i { width: 35% !important; animation: slide 1.1s ease-in-out infinite alternate; }
+@keyframes slide { from { margin-left: 0 } to { margin-left: 65% } }
+details > summary { cursor: pointer; color: var(--info); font-weight: 600; font-size: 13.5px; }
+ul.clean { margin: 6px 0; padding-left: 20px; }
+.actions-bar { position: sticky; bottom: 12px; z-index: 4; margin-top: 16px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); }
+.actions-bar .grow { flex: 1; }
+
+/* ---------- lists ---------- */
+.tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+input[type=text], input[type=password], input[type=search] { width: 100%; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); }
+input:focus { border-color: var(--info); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 22%, transparent); }
+.tools input[type=search] { flex: 1; min-width: 200px; width: auto; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 3px 12px; font-weight: 600; font-size: 13px; color: var(--muted); }
+.filters button[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.mrow { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center; padding: 11px 2px; border-top: 1px solid var(--line); }
+.mrow .nm { font-weight: 600; } .mrow .meta { font-size: 13px; color: var(--muted); }
+.mrow .acts { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; align-items: center; font-size: 13px; }
+.fieldrow { display: flex; gap: 8px; margin: 10px 0; }
+.kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; font-size: 14px; margin: 10px 0; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; word-break: break-all; }
+.cands .btn { width: 100%; justify-content: flex-start; margin: 6px 0; height: 42px; }
+.legend { display: grid; gap: 8px; margin-top: 8px; } .legend div { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.timeline { list-style: none; margin: 8px 0 0; padding: 0; }
+.timeline li { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.helpgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.helpgrid .panel { margin: 0; }
+.overlay { position: fixed; inset: 0; background: rgba(8,12,18,.55); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.dialog { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; max-width: 560px; width: 100%; padding: 22px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow: auto; }
+.dialog h2 { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.dialog .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.drop { position: fixed; inset: 0; z-index: 30; background: color-mix(in srgb, var(--accent) 88%, #000); color: #fff; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; font-size: 22px; font-weight: 700; text-align: center; padding: 20px; }
+.drop.on { display: flex; }
+#toasts { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: grid; gap: 8px; max-width: min(380px, calc(100vw - 32px)); }
+.toast { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; box-shadow: var(--shadow-lg); animation: pop .16s ease-out; font-weight: 550; font-size: 14px; }
+@keyframes pop { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
+.bob { animation: hop 1.2s ease-in-out infinite; display: inline-block; } @keyframes hop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+.big-center { text-align: center; padding: 30px 16px; }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0 24px; }
+.quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.qstep { display: flex; gap: 12px; align-items: flex-start; }
+.qnum { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 750; display: grid; place-items: center; flex: none; }
+.faq { border-top: 1px solid var(--line); padding: 10px 0; }
+.faq:first-of-type { border-top: 0; }
+.faq summary { color: var(--ink); font-weight: 600; font-size: 14.5px; }
+.tour { text-align: center; max-width: 460px; }
+.tour-art { width: 96px; height: 96px; margin: 4px auto 14px; border-radius: 24px; background: var(--accent-soft); display: grid; place-items: center; }
+.dots { display: flex; gap: 6px; justify-content: center; margin: 18px 0 4px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.dots i.on { background: var(--accent); width: 22px; border-radius: 99px; }
+footer a { color: var(--muted); }
+@media (max-width: 640px) {
+  .wrap { padding: 0 14px; }
+  .item .body { padding-left: 16px; } .item .head { flex-wrap: wrap; } .item .ver { margin-left: 0; text-align: left; width: 100%; }
+  .mrow { grid-template-columns: 26px 1fr; } .mrow .acts { grid-column: 2; justify-content: flex-start; }
+  .kv { grid-template-columns: 1fr; } .brand h1 { font-size: 16px; white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="drop" id="drop"><div id="dropicon"></div>Drop a mod .zip, .7z or .rar to install it</div>
+<header class="top"><div class="wrap bar" id="topbar"></div></header>
+<div class="wrap">
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  <main id="main" aria-live="polite"></main>
+  <footer>Stardew Mod Updater <span id="appver"></span>. A fan-made tool, not affiliated with ConcernedApe, SMAPI or Nexus Mods.<br><span id="flinks"></span></footer>
+</div>
+<div id="modal"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const q = new URLSearchParams(location.hash.slice(1));
+let TOKEN = q.get('t') || sessionStorage.getItem('smu-token') || '';
+if (q.get('t')) { sessionStorage.setItem('smu-token', TOKEN); history.replaceState(null, '', location.pathname); }
+
+let S = null, tab = 'updates', lost = false, version = null, prevPhase = null;
+const ui = { filter: 'all', search: '', keyBusy: false, keyError: '', gamePathError: '', nxmNote: '', theme: 'auto' };
+try { ui.theme = localStorage.getItem('smu-theme') || 'auto'; } catch {}
+if (q.get('tab')) tab = q.get('tab');
+if (q.get('theme')) ui.theme = q.get('theme');
+const wantTour = q.get('tour') === '1';
+if (q.get('notour') === '1') { try { localStorage.setItem('smu-tour', '1'); } catch {} }
+applyTheme();
+
+// ---------------------------------------------------------------- icons
+const NS = 'http://www.w3.org/2000/svg';
+// Simple line icons (24 grid, 2px stroke). Each entry is a list of SVG path strings.
+const LINE = {
+  package: ['M16.5 9.4 7.5 4.2', 'M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z', 'M3.3 7 12 12l8.7-5', 'M12 22V12'],
+  check: ['M22 11.1V12a10 10 0 1 1-5.9-9.1', 'M22 4 12 14l-3-3'],
+  arrowup: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M16 12l-4-4-4 4', 'M12 16V8'],
+  download: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M7 10l5 5 5-5', 'M12 15V3'],
+  pointer: ['M9 9l5 12 1.8-5.2L21 14 9 9z', 'M16 16l4.2 4.2', 'M7.2 2.2l.8 2.9', 'M5.1 8l-2.9-.8', 'M14 4l-2.1 2.1', 'M5 14l2.1-2.1'],
+  sliders: ['M4 21v-7', 'M4 10V3', 'M12 21v-9', 'M12 8V3', 'M20 21v-5', 'M20 12V3', 'M1 14h6', 'M9 8h6', 'M17 16h6'],
+  book: ['M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z', 'M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'],
+  key: ['M21 2l-2 2', 'M11.4 11.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8z', 'M15.5 7.5l3 3L22 7l-3-3', 'M11.4 11.6 15.5 7.5'],
+  alert: ['M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z', 'M12 9v4', 'M12 17h.01'],
+  xcircle: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M15 9l-6 6', 'M9 9l6 6'],
+  gift: ['M20 12v10H4V12', 'M2 7h20v5H2z', 'M12 22V7', 'M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z', 'M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z'],
+  play: ['M6 4l14 8-14 8V4z'],
+  folder: ['M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'],
+  clock: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M12 6v6l4 2'],
+  help: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3', 'M12 17h.01'],
+  sun: ['M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', 'M12 1v2', 'M12 21v2', 'M4.2 4.2l1.4 1.4', 'M18.4 18.4l1.4 1.4', 'M1 12h2', 'M21 12h2', 'M4.2 19.8l1.4-1.4', 'M18.4 5.6l1.4-1.4'],
+  moon: ['M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z'],
+  power: ['M18.4 6.6a9 9 0 1 1-12.8 0', 'M12 2v10'],
+  skip: ['M5 4l10 8-10 8V4z', 'M19 5v14'],
+  refresh: ['M1 4v6h6', 'M3.5 15a9 9 0 1 0 2.1-9.4L1 10'],
+  shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 'M9 12l2 2 4-4'],
+  upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12'],
+};
+const ALIAS = { turnip: 'chicken', star: 'check', up: 'arrowup', down: 'download', hand: 'pointer', chest: 'package', gear: 'sliders', warn: 'alert', bad: 'xcircle', ask: 'help', off: 'power', box: 'package' };
+const TONE = { check: 'accent', arrowup: 'accent', download: 'info', pointer: 'warn', alert: 'warn', xcircle: 'bad', gift: 'violet', help: 'muted', power: 'muted', skip: 'muted', shield: 'accent' };
+
+function px(name, size = 20) {
+  const n = ALIAS[name] || name;
+  if (n === 'chicken') { const im = document.createElement('img'); im.src = '/chicken.png'; im.width = size; im.height = size; im.alt = ''; im.className = 'px ic'; im.setAttribute('aria-hidden', 'true'); return im; }
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('width', size); svg.setAttribute('height', size);
+  svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', size >= 36 ? 1.6 : 2);
+  svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true');
+  const tone = TONE[n]; svg.setAttribute('class', 'ic' + (tone ? ' ic-' + tone : ''));
+  for (const d of (LINE[n] || LINE.help)) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); svg.append(p); }
+  if (n === 'play') svg.setAttribute('fill', 'currentColor');
+  return svg;
+}
+document.querySelector('link[rel=icon]').href = '/chicken.png';
+
+// ---------------------------------------------------------------- helpers
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false && k.startsWith('aria-')) { e.setAttribute(k, 'false'); continue; }
+    if (v === false || v == null) continue;
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'checked' || k === 'disabled' || k === 'value') e[k] = v;
+    else e.setAttribute(k, v === true ? (k.startsWith('aria-') ? 'true' : '') : v);
+  }
+  for (const kid of kids.flat(Infinity)) { if (kid == null || kid === false) continue; e.append(kid.nodeType ? kid : document.createTextNode(String(kid))); }
+  return e;
+}
+async function api(path, body) {
+  const r = await fetch('/api/' + path, {
+    method: body === undefined && (path.startsWith('state') || path === 'ping') ? 'GET' : 'POST',
+    headers: { 'X-Token': TOKEN, 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const t = await r.text();
+  return t ? JSON.parse(t) : {};
+}
+const post = (p, b) => api(p, b ?? {}).catch(e => { console.warn(p, e); return null; });
+const openUrl = url => post('open', { url });
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const fmtBytes = n => n > 1e9 ? (n / 1e9).toFixed(1) + ' GB' : n > 1e6 ? (n / 1e6).toFixed(0) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB';
+function fmtTime(s) { try { return new Date(s).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch { return s; } }
+function ago(s) { const m = Math.round((Date.now() - new Date(s)) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : fmtTime(s); }
+function link(text, url) { return el('a', { href: url, onclick: e => { e.preventDefault(); openUrl(url); } }, text); }
+function toast(text, kind = 'ok') {
+  const t = el('div', { class: 'toast ' + kind }, px(kind === 'ok' ? 'check' : 'alert', 20), el('span', null, text));
+  document.getElementById('toasts').append(t); setTimeout(() => t.remove(), 5200);
+}
+function applyTheme() { const r = document.documentElement; if (ui.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', ui.theme); }
+function setTheme(v) { ui.theme = v; try { localStorage.setItem('smu-theme', v); } catch {} applyTheme(); render(); }
+function cycleTheme() { setTheme(ui.theme === 'auto' ? 'light' : ui.theme === 'light' ? 'dark' : 'auto'); toast('Look: ' + { auto: 'follows your PC', light: 'light', dark: 'dark' }[ui.theme]); }
+const isDark = () => ui.theme === 'dark' || (ui.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+const MODE = { Auto: ['Automatic', 'auto'], OneClick: ['One click', 'click'], Manual: ['You download', 'click'] };
+const SITE_LETTER = { Nexus: 'N', CurseForge: 'C', GitHub: 'G', ModDrop: 'M' };
+const SITE_NAME = { Nexus: 'Nexus Mods', CurseForge: 'CurseForge', GitHub: 'GitHub', ModDrop: 'ModDrop' };
+
+// ---------------------------------------------------------------- polling
+async function poll() {
+  for (;;) {
+    try {
+      const s = await api('state' + (version == null ? '' : '?v=' + version));
+      lost = false; version = s.version; S = s; onState(); scheduleRender();
+    } catch (e) { if (!lost) { lost = true; scheduleRender(); } await new Promise(r => setTimeout(r, 1500)); }
+  }
+}
+function onState() {
+  if (prevPhase && prevPhase !== S.phase && S.phase === 'Finished') toast('Finished: ' + (S.summary || ''), S.summary && /failed/.test(S.summary) ? 'bad' : 'ok');
+  prevPhase = S.phase;
+  maybeTour();
+}
+setInterval(() => post('heartbeat'), 5000); post('heartbeat');
+let renderQueued = false;
+function scheduleRender() { if (renderQueued) return; renderQueued = true; setTimeout(() => { renderQueued = false; render(); }, 100); }
+
+// ---------------------------------------------------------------- shell
+function render() {
+  renderTop();
+  const a = document.activeElement;
+  if (a && a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio' && document.getElementById('main').contains(a)) return;
+  renderTabs();
+  document.getElementById('main').replaceChildren(...views());
+  if (S) {
+    document.getElementById('appver').textContent = 'v' + S.app.version;
+    document.getElementById('flinks').replaceChildren(
+      el('button', { class: 'link', onclick: () => openUrl(S.app.repo) }, 'Source code'), ' · ',
+      el('button', { class: 'link', onclick: reportProblem }, 'Report a problem'), ' · ',
+      el('button', { class: 'link', onclick: () => showTour(0) }, 'Quick tour'));
+  }
+}
+function renderTop() {
+  const g = S && S.game;
+  document.getElementById('topbar').replaceChildren(
+    el('div', { class: 'brand' }, el('div', { class: 'logo' }, px('chicken', 48)),
+      el('div', null, el('h1', null, 'Stardew Mod Updater'),
+        el('div', { class: 'sub' },
+          g ? el('span', { class: 'chip', title: g.path }, g.store + ' · game ' + (g.gameVersion || '?')) : null,
+          g ? el('span', { class: 'chip ' + (g.smapi ? 'ok' : 'bad') }, g.smapi ? 'SMAPI ' + g.smapi : 'SMAPI not found') : null,
+          S && S.nexus.connected ? el('span', { class: 'chip ok', title: 'Nexus account connected' }, px('key', 13), S.nexus.user + (S.nexus.premium ? ' · Premium' : ''))
+            : S ? el('button', { class: 'chip', onclick: () => { tab = 'settings'; render(); } }, px('key', 13), 'Connect Nexus') : null,
+          S && S.app.update ? el('button', { class: 'chip info', title: 'A newer version is available', onclick: () => openUrl(S.app.update.url) }, px('gift', 13), 'Version ' + S.app.update.version + ' is out') : null))),
+    el('div', { class: 'grow' }),
+    el('div', { class: 'right' },
+      g && g.running ? el('span', { class: 'chip warn' }, 'Game is running') : null,
+      S && S.game ? el('button', { class: 'btn', disabled: busy(), onclick: () => post('check') }, px('refresh', 16), 'Check again') : null,
+      g && g.canLaunch && !g.running ? el('button', { class: 'btn primary', title: 'Start Stardew Valley through SMAPI', onclick: launch }, px('play', 15), 'Play') : null,
+      el('button', { class: 'btn icon', title: 'Quick tour and help', 'aria-label': 'Quick tour', onclick: () => showTour(0) }, px('help', 18)),
+      el('button', { class: 'btn icon', title: 'Switch light or dark', 'aria-label': 'Switch theme', onclick: cycleTheme }, px(isDark() ? 'moon' : 'sun', 18))));
+}
+async function launch() { const r = await post('launch'); if (r && r.error) toast(r.error, 'bad'); else toast('Starting Stardew Valley with SMAPI...'); }
+function busy() { return !S || ['Scanning', 'Checking', 'Applying', 'Starting'].includes(S.phase); }
+function renderTabs() {
+  const upd = S ? S.items.filter(i => i.status === 'Ready').length : 0;
+  const tabs = [['updates', 'arrowup', 'Updates', upd], ['mods', 'package', 'All mods', 0], ['history', 'clock', 'History', 0], ['settings', 'sliders', 'Nexus and settings', 0], ['help', 'book', 'Help', 0]];
+  document.getElementById('tabs').replaceChildren(...tabs.map(([id, icon, label, n]) =>
+    el('button', { role: 'tab', 'aria-selected': tab === id, onclick: () => { tab = id; render(); } }, px(icon, 17), label, n ? el('span', { class: 'count' }, n) : null)));
+}
+function views() {
+  if (lost) return [banner('bad', 'The app stopped answering. If you closed its window, start it again. This page reconnects by itself.')];
+  if (!S) return [el('div', { class: 'panel center' }, px('chicken', 64), el('h2', null, 'Starting up...'))];
+  const out = [];
+  if (S.error) out.push(banner('bad', S.error, () => post('dismiss')));
+  if (S.game && S.game.running) out.push(banner('warn', 'Stardew Valley or SMAPI is running. You can look around, but close the game before updating, because it locks the files it uses.'));
+  if (S.game && !S.game.smapi) out.push(banner('warn', 'SMAPI was not found in this game folder. Mods only load through SMAPI, so install it first from smapi.io.'));
+  for (const f of S.found) out.push(foundCard(f));
+  if (tab === 'updates') out.push(...updatesView());
+  else if (tab === 'mods') out.push(modsView());
+  else if (tab === 'history') out.push(historyView());
+  else if (tab === 'settings') out.push(...settingsView());
+  else out.push(helpView());
+  return out;
+}
+function banner(kind, text, onClose, icon) {
+  return el('div', { class: 'banner ' + kind, role: kind === 'bad' ? 'alert' : null },
+    px(icon || (kind === 'bad' ? 'xcircle' : kind === 'ok' ? 'check' : kind === 'warn' ? 'alert' : 'help'), 20),
+    el('div', { class: 'grow' }, text), onClose ? el('button', { class: 'x', onclick: onClose, 'aria-label': 'Dismiss' }, '×') : null);
+}
+
+// ---------------------------------------------------------------- updates tab
+function steps(active) {
+  const names = ['Find your game', 'Check mods', 'Choose', 'Update'];
+  return el('div', { class: 'steps', 'aria-label': 'Progress' }, names.map((n, i) => el('span', { class: i < active ? 'done' : i === active ? 'on' : '' }, (i < active ? '✓ ' : (i + 1) + '. ') + n)));
+}
+function updatesView() {
+  if (S.phase === 'Starting') return [el('div', { class: 'panel center' }, el('div', { class: 'bob' }, px('chicken', 64)), el('h2', null, 'Looking for Stardew Valley...'), steps(0))];
+  if (S.phase === 'ChooseGame') return [steps(0), chooseGameCard()];
+  if (S.phase === 'Scanning' || S.phase === 'Checking') {
+    return [el('div', { class: 'panel center' }, el('div', { class: 'bob' }, px('chicken', 64)), el('h2', null, S.status || 'Working...'),
+      el('p', { class: 'muted' }, 'The app reads each mod\'s manifest, then asks SMAPI\'s update service (smapi.io) for the newest version of each. Nothing on your PC changes during this step.'), steps(1))];
+  }
+  if (S.phase === 'Idle') {
+    return [el('div', { class: 'panel center' }, px('alert', 44), el('h2', null, 'The check did not finish'),
+      el('p', { class: 'muted' }, S.error ? 'See the message above, then try again.' : 'Press the button to try again.'),
+      el('button', { class: 'btn primary big', onclick: () => post('check') }, px('refresh', 18), 'Try again'))];
+  }
+  const out = [];
+  if (!S.welcomed && S.game) out.push(welcomeCard());
+  if (S.smapiUpdate) out.push(banner('info', el('span', null, `SMAPI ${S.smapiUpdate.version} is out (you have ${S.game.smapi}). SMAPI has its own installer, so this app leaves it alone. `, link('Get SMAPI', S.smapiUpdate.url)), null, 'gift'));
+  const items = S.items, applying = S.phase === 'Applying' || S.phase === 'Finished';
+  const shown = applying ? items.filter(i => i.status !== 'Ready') : items;
+  if (S.phase === 'Review') out.push(overview(items));
+  if (S.phase === 'Review' && items.length) {
+    out.push(el('div', { class: 'panel', style: 'padding:14px 18px' },
+      el('div', { style: 'display:flex;gap:10px;align-items:center' }, px('arrowup', 20), el('strong', null, 'Tick what you want, then press Update')), legend()));
+  }
+  if (S.phase === 'Applying') out.push(steps(3));
+  if (S.phase === 'Finished') {
+    out.push(el('div', { class: 'panel center' }, px('check', 52), el('h2', null, 'Finished'), el('p', { class: 'muted' }, (S.summary || '') + ' You can undo any change from History.'),
+      el('div', { style: 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap' },
+        S.game.canLaunch && !S.game.running ? el('button', { class: 'btn primary big', onclick: launch }, px('play', 16), 'Play Stardew Valley') : null,
+        el('button', { class: 'btn big', onclick: () => post('back') }, 'Back to the list'),
+        el('button', { class: 'btn big', onclick: () => post('check') }, px('refresh', 16), 'Check again'))));
+  }
+  for (const i of shown) out.push(itemCard(i));
+  if (S.phase === 'Review' && items.length) out.push(actionsBar());
+  if (S.problems.length) {
+    out.push(el('div', { class: 'panel' }, el('h2', null, px('alert', 22), 'Heads up'),
+      el('p', { class: 'muted small', style: 'margin:0 0 8px' }, 'Things the app noticed that may affect your game.'),
+      S.problems.map(p => banner(p.level === 'error' ? 'bad' : 'warn', el('div', null, el('strong', null, p.title), el('div', { class: 'small' }, p.detail),
+        p.url ? el('div', { class: 'small' }, link(p.urlLabel || 'Open', p.url)) : null)))));
+  }
+  return out;
+}
+function legend() {
+  return el('details', { style: 'margin-top:10px' }, el('summary', null, 'What do the labels mean?'),
+    el('div', { class: 'legend' },
+      el('div', null, el('span', { class: 'tag auto' }, 'Automatic'), 'The app downloads and installs it by itself.'),
+      el('div', null, el('span', { class: 'tag click' }, 'One click'), 'You click "Mod Manager Download" on Nexus, and the app does the rest.'),
+      el('div', null, el('span', { class: 'tag click' }, 'You download'), 'You press the download button on the site. The app installs the file the moment it lands in your Downloads folder.'),
+      el('div', null, el('span', { class: 'tag new' }, 'New install'), 'A mod you need but do not have yet. SMAPI skips other mods until it is installed.')));
+}
+function overview(items) {
+  const rows = S.rows, c = k => rows.filter(r => k.includes(r.state)).length;
+  const tile = (icon, n, label, filter) => el('button', { class: 'tile', onclick: () => { ui.filter = filter; tab = 'mods'; render(); } },
+    el('div', { class: 'dot' }, px(icon, 22)), el('div', null, el('div', { class: 'n' }, n), el('div', { class: 'l' }, label)));
+  return el('div', null, steps(2), hero(items), el('div', { class: 'tiles' },
+    tile('package', rows.length, 'mods in your folder', 'all'), tile('arrowup', items.length, 'updates or installs', 'update'),
+    tile('check', c(['UpToDate']), 'up to date', 'ok'), tile('help', c(['NoInfo', 'Error']), 'cannot be checked', 'nocheck')));
+}
+function hero(items) {
+  const g = S.game, ready = items.length, nNew = items.filter(i => i.isNew).length, nUpd = ready - nNew;
+  const title = ready === 0 ? 'Everything is up to date'
+    : [nUpd ? plural(nUpd, 'update', 'updates') : null, nNew ? plural(nNew, 'missing mod', 'missing mods') : null].filter(Boolean).join(' and ') + ' ready';
+  const sub = ready === 0 ? `${plural(S.rows.length, 'mod', 'mods')} checked${S.lastChecked ? ' ' + ago(S.lastChecked) : ''}. Nothing needs your attention.`
+    : 'Review them below. Each mod is backed up first, and you can undo any change from History.';
+  return el('div', { class: 'hero' },
+    el('div', { class: 'hero-art' }, px('chicken', 64)),
+    el('div', { style: 'flex:1;min-width:220px' }, el('h2', { class: 'hero-title' }, title), el('p', { class: 'muted', style: 'margin:4px 0 0' }, sub)),
+    ready === 0 && g.canLaunch && !g.running ? el('button', { class: 'btn primary big', onclick: launch }, px('play', 16), 'Play Stardew Valley') : null);
+}
+function welcomeCard() {
+  const g = S.game;
+  return el('div', { class: 'panel' },
+    el('h2', null, px('chicken', 26), 'Welcome'),
+    el('p', { class: 'muted' }, 'This keeps your Stardew Valley mods up to date. Here is what I found on this PC:'),
+    el('dl', { class: 'kv' }, el('dt', null, 'Game folder'), el('dd', null, g.path), el('dt', null, 'Mods folder'), el('dd', null, g.mods),
+      el('dt', null, 'SMAPI'), el('dd', null, g.smapi ? g.smapi : 'Not found. Install it from smapi.io, or mods will not load.')),
+    el('div', { class: 'helpgrid', style: 'margin:14px 0' },
+      mini('shield', 'Nothing changes yet', 'You see the plan first and press Update yourself.'),
+      mini('package', 'Backups and undo', 'Every mod is saved before it is replaced. Your config.json files stay.'),
+      mini('key', 'No hidden accounts', 'No ads, no tracking. Your Nexus key stays on this PC.')),
+    el('p', { class: 'muted small' }, 'Wrong folder? Change it under Nexus and settings.'),
+    el('button', { class: 'btn primary big', onclick: () => post('welcome') }, px('check', 18), 'Looks right, continue'));
+}
+function mini(icon, title, text) { return el('div', { style: 'display:flex;gap:10px;align-items:flex-start' }, px(icon, 22), el('div', null, el('strong', null, title), el('div', { class: 'small muted' }, text))); }
+function chooseGameCard() {
+  const c = S.candidates || [];
+  return el('div', { class: 'panel' },
+    el('h2', null, px('folder', 22), c.length ? 'Which Stardew Valley is yours?' : 'Where is Stardew Valley installed?'),
+    el('p', { class: 'muted' }, c.length ? 'I found these installs. Pick the one whose mods you want to update.' : 'I could not find it by myself. Paste the folder that contains "Stardew Valley.dll".'),
+    el('div', { class: 'cands' }, c.map(x => el('button', { class: 'btn', onclick: () => setGame(x.path) }, px('folder', 16), `${x.store}: ${x.path}` + (x.smapi ? `  (SMAPI ${x.smapi})` : '')))),
+    gamePathField(),
+    el('details', null, el('summary', null, 'How do I find the folder?'),
+      el('p', { class: 'small muted' }, 'Steam: right-click Stardew Valley in your library, choose Manage, then Browse local files, and copy the address at the top. GOG: it is usually under GOG Games. Xbox app: C:\\XboxGames\\Stardew Valley\\Content.')));
+}
+function gamePathField() {
+  const input = el('input', { type: 'text', placeholder: 'D:\\SteamLibrary\\steamapps\\common\\Stardew Valley', id: 'gamepath', 'aria-label': 'Game folder', onkeydown: e => { if (e.key === 'Enter') setGame(input.value); } });
+  return el('div', null, el('div', { class: 'fieldrow' }, input, el('button', { class: 'btn primary', onclick: () => setGame(input.value) }, 'Use this folder')),
+    ui.gamePathError ? el('div', { class: 'small', style: 'color:var(--bad)' }, ui.gamePathError) : null);
+}
+async function setGame(path) { const r = await post('game', { path }); ui.gamePathError = r && r.error ? r.error : ''; render(); }
+
+function itemArt(i) {
+  const st = i.status;
+  return px(st === 'Done' ? 'check' : st === 'Failed' ? 'xcircle' : st === 'Skipped' ? 'skip' : st === 'Working' ? 'download' : st === 'WaitingForYou' ? 'pointer' : st === 'Queued' ? 'clock' : i.isNew ? 'gift' : 'arrowup', 22);
+}
+function itemCard(i) {
+  const st = i.status, offer = i.offers[i.chosen], canEdit = ['Ready', 'Failed', 'Skipped'].includes(st);
+  const head = el('div', { class: 'head' },
+    canEdit ? el('input', { class: 'check', type: 'checkbox', checked: i.selected, disabled: !i.offers.some(o => o.usable), 'aria-label': 'Include ' + i.name, onchange: e => post('select', { id: i.id, selected: e.target.checked }) }) : null,
+    el('div', { class: 'art' }, itemArt(i)),
+    el('div', { style: 'min-width:0' }, el('div', { class: 'name' }, i.name),
+      el('div', null, i.isNew ? el('span', { class: 'tag new' }, 'New install') : null, i.isNew && i.parts > 1 ? ' ' : null, i.parts > 1 ? el('span', { class: 'tag' }, i.parts + ' parts') : null)),
+    el('div', { class: 'ver' }, i.installed ? [i.installed + '  →  ', el('b', null, i.target)] : el('b', null, i.target)));
+  const body = el('div', { class: 'body' });
+  if (i.why) body.append(el('div', { class: 'note' }, i.why));
+  if (canEdit) {
+    if (i.offers.length) {
+      body.append(el('div', { class: 'sources', role: 'group', 'aria-label': 'Download source' }, i.offers.map((o, idx) => {
+        const m = MODE[o.mode] || MODE.Manual;
+        return el('button', { class: 'src', 'aria-pressed': idx === i.chosen, disabled: !o.usable, title: o.note, onclick: () => post('source', { id: i.id, index: idx }) },
+          el('span', { class: 'badge ' + o.source }, SITE_LETTER[o.source] || '?'), SITE_NAME[o.source] || o.label, el('span', { class: 'tag ' + (o.usable ? m[1] : '') }, o.usable ? m[0] : 'not available'));
+      }), !i.alternativesLoaded ? el('button', { class: 'link small', onclick: () => post('alternatives', { id: i.id }) }, 'Other sources') : null));
+      if (offer) body.append(el('div', { class: 'note' }, offer.note));
+    } else body.append(el('div', { class: 'note' }, i.message || 'Looking up where to download this...'));
+    if (st === 'Failed') body.append(el('div', { style: 'color:var(--bad);font-weight:600' }, i.message));
+    if (i.details.length) body.append(el('ul', { class: 'clean small' }, i.details.map(d => el('li', null, d))));
+    if (i.changelog.length) body.append(el('details', null, el('summary', null, 'What changed in ' + i.target), el('ul', { class: 'clean small' }, i.changelog.map(c => el('li', null, c)))));
+    else if (i.pageUrl) body.append(el('div', { class: 'small' }, link('Mod page and changelog', i.pageUrl)));
+  }
+  if (st === 'Queued') body.append(el('div', { class: 'note' }, i.message));
+  if (st === 'Working') body.append(el('div', { class: 'note' }, i.message),
+    el('div', { class: 'bar-track' + (i.progress > 0 && i.progress < 100 ? '' : ' indeterminate'), role: 'progressbar', 'aria-valuenow': i.progress }, el('i', { style: `width:${Math.max(i.progress, 3)}%` })));
+  if (st === 'WaitingForYou') {
+    const others = i.offers.map((o, idx) => ({ o, idx })).filter(x => x.idx !== i.chosen && x.o.usable);
+    body.append(el('div', { class: 'wait' }, el('div', { class: 'pointer' }, px('pointer', 24)),
+      el('div', null, el('strong', null, 'Your turn: '), i.message,
+        el('div', { class: 'acts' }, el('button', { class: 'btn slim', onclick: () => post('reopen', { id: i.id }) }, 'Open the page again'),
+          others.map(x => el('button', { class: 'btn slim', title: x.o.note, onclick: () => post('source', { id: i.id, index: x.idx }) }, 'Use ' + x.o.label + ' instead')),
+          el('button', { class: 'btn slim', onclick: () => post('skip', { id: i.id }) }, 'Skip this one')))));
+  }
+  if (st === 'Done') {
+    body.append(el('div', { style: 'font-weight:600' }, i.message));
+    if (i.details.length) body.append(el('ul', { class: 'clean small muted' }, i.details.map(d => el('li', null, d))));
+    if (i.historyId) body.append(el('button', { class: 'link small', onclick: () => undo(i.historyId) }, 'Undo this update'));
+  }
+  if (st === 'Skipped' && i.message) body.append(el('div', { class: 'note' }, i.message));
+  return el('div', { class: 'item' + (st === 'Done' ? ' done' : st === 'Failed' ? ' failed' : '') }, head, body);
+}
+function foundCard(f) {
+  return el('div', { class: 'panel', style: 'border-color:var(--info)' }, el('h2', null, px('gift', 22), 'Found a mod file'),
+    el('div', { class: 'muted small' }, f.file + ' · from ' + f.origin),
+    f.lines.length ? el('ul', { class: 'clean' }, f.lines.map(l => el('li', null, l))) : null,
+    f.error ? el('div', { style: 'color:var(--bad);font-weight:600' }, f.error) : null,
+    el('div', { class: 'fieldrow' }, f.error && !f.lines.length ? null : el('button', { class: 'btn primary', disabled: f.busy, onclick: () => post('found/install', { id: f.id }) }, f.busy ? 'Installing...' : 'Install it'),
+      el('button', { class: 'btn', onclick: () => post('found/dismiss', { id: f.id }) }, 'Ignore')));
+}
+function actionsBar() {
+  const sel = S.items.filter(i => i.selected && i.offers.some(o => o.usable)), none = sel.length === 0;
+  return el('div', { class: 'actions-bar' },
+    el('button', { class: 'btn primary big', disabled: none || S.game.running, onclick: () => confirmApply(sel) }, px('arrowup', 18), none ? 'Nothing selected' : `Update ${plural(sel.length, 'mod', 'mods')}`),
+    el('button', { class: 'btn', onclick: () => post('select', { selected: true }) }, 'Select all'),
+    el('button', { class: 'btn', onclick: () => post('select', { selected: false }) }, 'Select none'),
+    el('span', { class: 'grow' }), S.game.running ? el('span', { class: 'small', style: 'color:var(--warn);font-weight:600' }, 'Close the game to continue.') : null);
+}
+function confirmApply(sel) {
+  const auto = sel.filter(i => i.offers[i.chosen].mode === 'Auto'), hand = sel.filter(i => i.offers[i.chosen].mode !== 'Auto');
+  const dlg = el('div', { class: 'overlay', onclick: e => { if (e.target === dlg) close(); } },
+    el('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Confirm update' },
+      el('h2', null, px('arrowup', 24), `Update ${plural(sel.length, 'mod', 'mods')}?`),
+      auto.length ? el('p', null, el('strong', null, plural(auto.length, 'mod', 'mods')), ' will download and install by themselves:', el('br'), el('span', { class: 'muted small' }, auto.map(i => `${i.name} (from ${i.offers[i.chosen].label})`).join(', '))) : null,
+      hand.length ? el('p', null, el('strong', null, plural(hand.length, 'mod', 'mods')), ' need a click on a website. I open the pages three at a time and install each file the moment it lands in your Downloads folder:', el('br'), el('span', { class: 'muted small' }, hand.map(i => `${i.name} (${i.offers[i.chosen].label})`).join(', '))) : null,
+      el('ul', { class: 'clean small muted' }, el('li', null, 'Each mod folder is backed up first. Your config.json files are kept.'),
+        el('li', null, 'If anything goes wrong while copying, that mod is put back exactly as it was.'), el('li', null, 'Make sure Stardew Valley is closed.')),
+      el('div', { class: 'btns' }, el('button', { class: 'btn', onclick: close }, 'Not yet'),
+        el('button', { class: 'btn primary', onclick: () => { close(); tab = 'updates'; post('apply', { ids: sel.map(i => i.id) }); } }, 'Yes, update'))));
+  function close() { dlg.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey); document.getElementById('modal').append(dlg); dlg.querySelector('.btn.primary').focus();
+}
+async function undo(id) {
+  if (!await ask('Put the previous version back?', 'Your current version of this mod will be replaced by the backup.', 'Yes, undo it')) return;
+  const r = await post('undo', { id }); if (r && r.error) toast(r.error, 'bad'); else toast('Undone. The old version is back.');
+}
+function ask(title, text, yes) {
+  return new Promise(resolve => {
+    const done = v => { dlg.remove(); resolve(v); };
+    const dlg = el('div', { class: 'overlay', onclick: e => { if (e.target === dlg) done(false); } },
+      el('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true' }, el('h2', null, title), el('p', null, text),
+        el('div', { class: 'btns' }, el('button', { class: 'btn', onclick: () => done(false) }, 'Cancel'), el('button', { class: 'btn primary', onclick: () => done(true) }, yes))));
+    document.getElementById('modal').append(dlg); dlg.querySelector('.btn.primary').focus();
+  });
+}
+
+// ---------------------------------------------------------------- all mods
+const STATE_META = { UpToDate: ['check', 'Up to date', 'ok'], Update: ['arrowup', 'Update available', 'warn'], NoInfo: ['help', 'Cannot check', ''], Error: ['xcircle', 'Check failed', 'bad'],
+  Disabled: ['power', 'Switched off', ''], Bundled: ['sliders', 'Part of SMAPI', ''], Ignored: ['skip', 'Skipped by you', ''], Warning: ['alert', 'Warning', 'warn'] };
+const FILTERS = [['all', 'All', () => true], ['update', 'Updates', r => r.state === 'Update'], ['ok', 'Up to date', r => r.state === 'UpToDate'],
+  ['nocheck', 'Cannot check', r => r.state === 'NoInfo' || r.state === 'Error'], ['off', 'Off or skipped', r => r.state === 'Disabled' || r.state === 'Ignored']];
+function modsView() {
+  if (!S.rows.length) return el('div', { class: 'panel center' }, px('package', 48), el('h2', null, 'No mods found yet'), el('p', { class: 'muted' }, 'Put mods in your Mods folder, or drop a downloaded .zip onto this page.'));
+  const search = el('input', { type: 'search', placeholder: 'Search mods or authors', 'aria-label': 'Search mods', value: ui.search, oninput: e => { ui.search = e.target.value; fillMods(); } });
+  const chips = el('div', { class: 'filters', role: 'group', 'aria-label': 'Filter' }, FILTERS.map(([id, label, fn]) => el('button', { 'aria-pressed': ui.filter === id, onclick: () => { ui.filter = id; render(); } }, `${label} ${S.rows.filter(fn).length}`)));
+  const list = el('div', { id: 'modslist' }); setTimeout(fillMods, 0);
+  return el('div', { class: 'panel' }, el('h2', null, px('package', 22), `${plural(S.rows.length, 'mod', 'mods')} in your Mods folder`),
+    el('p', { class: 'muted small', style: 'margin:0' }, '"Cannot check" means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this page.'),
+    el('div', { class: 'tools' }, search, chips), list);
+}
+function fillMods() {
+  const list = document.getElementById('modslist'); if (!list) return;
+  const fn = FILTERS.find(f => f[0] === ui.filter)[2], term = ui.search.trim().toLowerCase();
+  const rows = S.rows.filter(fn).filter(r => !term || (r.name + ' ' + (r.author || '') + ' ' + r.uniqueId).toLowerCase().includes(term));
+  list.replaceChildren(...(rows.length ? rows.map(modRow) : [el('p', { class: 'muted big-center' }, 'Nothing matches.')]));
+}
+function modRow(r) {
+  const [icon, label, kind] = STATE_META[r.state] || STATE_META.UpToDate;
+  return el('div', { class: 'mrow' }, px(r.isContentPack ? 'book' : icon, 20),
+    el('div', null, el('div', { class: 'nm' }, r.name, ' ', el('span', { class: 'muted small' }, r.version), r.isContentPack ? el('span', { class: 'tag', style: 'margin-left:6px' }, 'content pack') : null),
+      el('div', { class: 'meta' }, (r.author ? r.author + ' · ' : '') + r.note)),
+    el('div', { class: 'acts' }, el('span', { class: 'chip ' + kind }, label),
+      r.url ? el('button', { class: 'link', onclick: () => openUrl(r.url) }, 'Page') : null,
+      el('button', { class: 'link', onclick: () => post('reveal-mod', { id: r.uniqueId }) }, 'Folder'),
+      ['Bundled', 'Disabled'].includes(r.state) ? null : el('button', { class: 'link' + (r.state === 'Ignored' ? '' : ' danger'), onclick: () => post('ignore', { id: r.uniqueId, ignore: r.state !== 'Ignored' }) }, r.state === 'Ignored' ? 'Check again' : 'Never update')));
+}
+
+// ---------------------------------------------------------------- history
+function historyView() {
+  const h = S.history;
+  return el('div', { class: 'panel' }, el('h2', null, px('clock', 22), 'History and backups'),
+    el('p', { class: 'muted small', style: 'margin:0' }, `Backups use ${fmtBytes(S.backupBytes)}. The app keeps the newest ${S.settings.backupsPerMod} per mod and removes older ones. `, el('button', { class: 'link', onclick: () => post('reveal', { what: 'backups' }) }, 'Open the backup folder')),
+    h.length === 0 ? el('div', { class: 'big-center muted' }, px('shield', 44), el('p', null, 'Nothing has been changed yet. Updates you make will show up here, ready to undo.')) :
+      el('ul', { class: 'timeline' }, h.map(e => el('li', null, px(e.undone ? 'skip' : e.from ? 'arrowup' : 'gift', 22),
+        el('div', null, el('strong', null, e.name), el('div', { class: 'small muted' }, (e.from ? `${e.from} → ${e.to}` : `${e.to} (new install)`) + ' · from ' + e.source + ' · ' + fmtTime(e.when))),
+        e.undone ? el('span', { class: 'chip' }, 'Undone') : e.canUndo ? el('button', { class: 'btn slim', onclick: () => undo(e.id) }, 'Undo') : el('span', { class: 'small muted' }, 'Backup removed')))));
+}
+
+// ---------------------------------------------------------------- settings
+function settingsView() {
+  const n = S.nexus;
+  const keyInput = el('input', { type: 'password', placeholder: 'Paste your Personal API Key here', id: 'nexuskey', autocomplete: 'off', 'aria-label': 'Nexus API key' });
+  const connect = async () => { ui.keyBusy = true; ui.keyError = ''; render(); const r = await post('nexus/key', { key: keyInput.value }); ui.keyBusy = false; ui.keyError = r && r.error ? r.error : ''; if (!ui.keyError) toast('Nexus connected.'); render(); };
+  keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  const nexusCard = el('div', { class: 'panel' }, el('h2', null, px('key', 22), 'Nexus Mods account'),
+    n.connected
+      ? el('div', null, el('p', null, 'Connected as ', el('strong', null, n.user), n.premium ? ' (Premium).' : ' (free account).'),
+          el('p', { class: 'muted small' }, n.premium ? 'With Premium, the app downloads from Nexus by itself. No clicks needed.' : 'With a free account, Nexus wants one click per mod on its website. The app makes that click quick and does everything else.'),
+          el('button', { class: 'btn', onclick: () => post('nexus/disconnect') }, 'Disconnect and forget the key'))
+      : el('div', null,
+          el('p', null, 'Nexus Mods is where most mods live, and it only gives files to logged-in users. Connect your account so the app can find the exact file, show what changed, and (with Premium) download by itself.'),
+          el('ol', null, el('li', null, 'Log in to Nexus Mods in your browser. ', link('Open the API keys page', 'https://www.nexusmods.com/settings/api-keys')),
+            el('li', null, 'Scroll to "Personal API Key", press Request, and copy the long key.'), el('li', null, 'Paste it below.')),
+          el('div', { class: 'fieldrow' }, keyInput, el('button', { class: 'btn primary', disabled: ui.keyBusy, onclick: connect }, ui.keyBusy ? 'Checking...' : 'Connect')),
+          ui.keyError ? el('div', { class: 'small', style: 'color:var(--bad);font-weight:600' }, ui.keyError) : null,
+          n.message ? el('div', { class: 'small', style: 'color:var(--warn)' }, n.message) : null,
+          el('p', { class: 'muted small' }, 'The key stays on this PC, encrypted so only your Windows account can read it, and is only sent to Nexus. You can skip this: the app still works, you just press Nexus download buttons yourself.')));
+  const nxmCard = el('div', { class: 'panel' }, el('h2', null, px('pointer', 22), 'Nexus "Mod Manager Download" button'),
+    el('p', { class: 'muted' }, 'On a free account, this button is how Nexus lets a program download for you. If this app handles it, one click on Nexus starts the download and install.'),
+    n.nxm ? el('div', null, el('span', { class: 'chip ok' }, 'This app handles Nexus links'), ' ', el('button', { class: 'btn slim', onclick: () => post('nexus/nxm', { on: false }) }, 'Stop handling them'))
+      : el('div', null,
+          !n.connected ? el('p', { class: 'small', style: 'color:var(--warn)' }, 'Connect your Nexus account first; links do not work without the key.') : null,
+          n.otherHandler ? el('p', { class: 'small', style: 'color:var(--warn)' }, 'Another program (such as Vortex or Mod Organizer) handles Nexus links right now. Switching affects it too, and you can switch back here.') : null,
+          el('button', { class: 'btn', disabled: !n.connected, onclick: async () => { const r = await post('nexus/nxm', { on: true }); ui.nxmNote = r && r.note ? r.note : ''; render(); } }, 'Let this app handle Nexus links')),
+    ui.nxmNote ? el('p', { class: 'small muted' }, ui.nxmNote) : null);
+  const pol = S.settings.policy;
+  const polCard = el('div', { class: 'panel' }, el('h2', null, px('download', 22), 'Where to download from'),
+    ['NexusFirst', 'InstantFirst'].map(v => el('label', { style: 'display:flex;gap:10px;margin:10px 0;cursor:pointer' },
+      el('input', { type: 'radio', name: 'pol', class: 'check', checked: pol === v, onchange: () => post('policy', { policy: v }) }),
+      v === 'NexusFirst' ? el('span', null, el('strong', null, 'Nexus first (default). '), 'Use Nexus Mods, and switch to CurseForge or GitHub only if Nexus fails or you choose it.')
+        : el('span', null, el('strong', null, 'Fastest first. '), 'If CurseForge or GitHub has the same version and downloads without clicks, use it. Otherwise use Nexus.'))));
+  const dl = el('input', { type: 'text', value: S.settings.downloads, id: 'dlpath', 'aria-label': 'Downloads folder' });
+  const folderCard = el('div', { class: 'panel' }, el('h2', null, px('folder', 22), 'Folders'),
+    el('dl', { class: 'kv' }, el('dt', null, 'Game'), el('dd', null, S.game ? S.game.path : 'Not set'), el('dt', null, 'Mods'), el('dd', null, S.game ? S.game.mods : 'Not set')),
+    el('div', { style: 'display:flex;gap:14px;flex-wrap:wrap' }, el('button', { class: 'link', onclick: () => post('reveal', { what: 'mods' }) }, 'Open Mods folder'), el('button', { class: 'link', onclick: () => post('reveal', { what: 'logs' }) }, 'Open log folder')),
+    el('h3', null, 'Change the game folder'), gamePathField(), el('h3', null, 'Downloads folder the app watches'),
+    el('p', { class: 'muted small', style: 'margin:0' }, 'When you download a mod in your browser, the app notices it here and installs it.'),
+    el('div', { class: 'fieldrow' }, dl, el('button', { class: 'btn', onclick: () => { post('downloads', { path: dl.value }); toast('Saved.'); } }, 'Save')));
+  const lookCard = el('div', { class: 'panel' }, el('h2', null, px(isDark() ? 'moon' : 'sun', 22), 'Look'),
+    el('div', { class: 'filters' }, [['auto', 'Follow my PC'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => el('button', { 'aria-pressed': ui.theme === v, onclick: () => setTheme(v) }, l))));
+  const winCard = el('div', { class: 'panel' }, el('h2', null, px('package', 22), 'Window style'),
+    el('p', { class: 'muted small', style: 'margin:0 0 8px' }, 'The app opens in its own window using Microsoft Edge, Chrome or Brave, which are already on your PC. It uses a private profile, so it never touches your browsing. Takes effect the next time you start the app.'),
+    ['true', 'false'].map(v => el('label', { style: 'display:flex;gap:10px;margin:8px 0;cursor:pointer' },
+      el('input', { type: 'radio', name: 'win', class: 'check', checked: String(S.settings.appWindow) === v, onchange: () => post('window', { on: v === 'true' }) }),
+      v === 'true' ? el('span', null, el('strong', null, 'App window (recommended). '), 'No tabs or address bar, like a normal program.')
+        : el('span', null, el('strong', null, 'Browser tab. '), 'Open in your default browser instead.'))));
+  return [nexusCard, nxmCard, polCard, folderCard, winCard, lookCard];
+}
+
+// ---------------------------------------------------------------- help
+const FAQ = [
+  ['Is it safe to use?', 'Nothing changes until you press Update. Before a mod is replaced, its folder is saved as a zip, and every change can be undone from History. The app only talks to smapi.io, Nexus Mods, CurseForge and GitHub, and it never touches your save games.'],
+  ['Why do I have to click on Nexus Mods?', 'Nexus only gives files to logged-in users, and a free account has to press the download button itself. The app opens the exact file page for you, then installs the file the moment it lands in your Downloads folder. With Nexus Premium and a saved key it is fully automatic.'],
+  ['What does "Cannot check" mean?', 'The mod author did not put update information in the mod\'s manifest, so there is nothing to look up. You can still update such a mod: download it yourself and drop the .zip onto this window.'],
+  ['What is a "missing required mod"?', 'Some mods need a framework mod, such as Content Patcher or SpaceCore. If it is not installed, SMAPI skips the mod without a clear message. The app finds these and offers to install them.'],
+  ['Where are my backups?', 'In %LOCALAPPDATA%\\StardewModUpdater\\backups. The History tab lists them with an Undo button, and the app keeps the newest five per mod.'],
+  ['Will it change my settings or saves?', 'No. Your config.json files are kept when a mod is updated, and save games are never touched.'],
+  ['How do I remove the app?', 'Delete the exe and the folder %LOCALAPPDATA%\\StardewModUpdater. If you turned on "Let this app handle Nexus links", turn it off first under Nexus and settings.'],
+];
+const FIXES = [
+  ['SMAPI not found', 'Mods only load through SMAPI. Install it from smapi.io, then press Check again.'],
+  ['The app says to close the game', 'Stardew Valley locks the files of the mods it loaded. Close the game and SMAPI, then try again.'],
+  ['Nexus did not accept my key', 'Copy the "Personal API Key" again from nexusmods.com/settings/api-keys and paste it without spaces.'],
+  ['An update failed', 'The app puts the old version back when anything goes wrong, so nothing is left half-installed. The card says why. Try again, or pick another source on the card.'],
+  ['The window does not open', 'Start the app with --browser to use a normal browser tab, or switch the window style under Nexus and settings.'],
+];
+function helpView() {
+  const step = (n, title, text) => el('div', { class: 'qstep' }, el('div', { class: 'qnum' }, n), el('div', null, el('strong', null, title), el('div', { class: 'small muted' }, text)));
+  const acc = rows => rows.map(([q, a]) => el('details', { class: 'faq' }, el('summary', null, q), el('p', { class: 'small', style: 'margin:8px 0 2px' }, a)));
+  const repo = S.app.repo;
+  return el('div', null,
+    el('div', { class: 'panel' }, el('h2', null, px('chicken', 26), 'Getting started'),
+      el('p', { class: 'muted', style: 'margin:0 0 14px' }, 'Three steps. You are always asked before anything changes.'),
+      el('div', { class: 'quick' },
+        step(1, 'It checks', 'The app reads your Mods folder and asks SMAPI\'s update list which mods are out of date.'),
+        step(2, 'You choose', 'Tick the updates you want. Each card shows where the file comes from.'),
+        step(3, 'Press Update', 'Files are backed up, installed and checked. Undo any change from History.')),
+      el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap;margin-top:14px' },
+        el('button', { class: 'btn', onclick: () => showTour(0) }, px('play', 14), 'Show the quick tour'),
+        el('button', { class: 'btn', onclick: () => { tab = 'settings'; render(); } }, px('key', 16), 'Connect Nexus'))),
+    el('div', { class: 'helpgrid' },
+      el('div', { class: 'panel' }, el('h2', null, px('download', 22), 'Where files come from'),
+        el('p', null, 'Nexus Mods first. Nexus only hands files to logged-in users, so what happens depends on your setup:'),
+        el('ul', { class: 'clean' }, el('li', null, el('strong', null, 'Premium and a saved key: '), 'fully automatic.'),
+          el('li', null, el('strong', null, 'Free account, key, and Nexus links on: '), 'one click per mod on Nexus.'),
+          el('li', null, el('strong', null, 'No key: '), 'you press download on Nexus and the app installs the file from your Downloads folder.')),
+        el('p', null, 'If Nexus fails, or you pick another source, CurseForge or GitHub are used when they have the same version.')),
+      el('div', { class: 'panel' }, el('h2', null, px('package', 22), 'How an update is applied'),
+        el('ol', null, el('li', null, 'The download is opened and its manifest read. The mod ID must match, or it is rejected.'),
+          el('li', null, 'The old folder is zipped into the backup folder.'),
+          el('li', null, 'New files are copied over. Your config.json stays, and old .dll files the new version dropped are removed.'),
+          el('li', null, 'The new manifest is read back. If anything fails, the old folder is restored.'))),
+      el('div', { class: 'panel' }, el('h2', null, px('upload', 22), 'Drag and drop'),
+        el('p', null, 'Drag any mod .zip, .7z or .rar onto this window. The app reads what is inside, shows what it would change, and installs it after you confirm.'))),
+    el('div', { class: 'panel' }, el('h2', null, px('help', 22), 'Questions'), acc(FAQ)),
+    el('div', { class: 'panel' }, el('h2', null, px('alert', 22), 'If something goes wrong'), acc(FIXES)),
+    el('div', { class: 'panel' }, el('h2', null, px('shield', 22), 'About'),
+      el('p', { class: 'small', style: 'margin:0 0 10px' }, `Stardew Mod Updater ${S.app.version}. Free and open source (MIT). Update checks come from the SMAPI update service; downloads come from Nexus Mods, CurseForge and GitHub.`),
+      el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' },
+        el('button', { class: 'btn', onclick: () => openUrl(repo) }, 'Source code on GitHub'),
+        el('button', { class: 'btn', onclick: reportProblem }, px('alert', 16), 'Report a problem'))));
+}
+
+async function reportProblem() {
+  const r = await api('diagnostics').catch(() => null);
+  let copied = false;
+  if (r && r.text) { try { await navigator.clipboard.writeText(r.text); copied = true; } catch {} }
+  toast(copied ? 'Details copied. Paste them into the new issue.' : 'Opening the issue page.');
+  openUrl(S.app.repo + '/issues/new');
+}
+
+// ---------------------------------------------------------------- quick tour
+const TOUR = [
+  ['chicken', 'Welcome to Stardew Mod Updater', 'It checks your mods against SMAPI\'s update list, shows what is out of date, and installs updates with a backup. This takes 30 seconds.'],
+  ['package', '1. It checks for you', 'On launch the app reads your Mods folder and asks smapi.io which mods have newer versions. Nothing is changed during the check.'],
+  ['arrowup', '2. You choose', 'Every update has a card. Tick the ones you want. The source buttons show where the file comes from, and "Automatic" ones need nothing from you.'],
+  ['download', '3. Press Update', 'Mods that need a click open on Nexus a few at a time. When the file lands in Downloads, the app installs it. Every mod is backed up first.'],
+  ['shield', 'Undo any time', 'History has an Undo button for every change. When you are done, press Play to start the game through SMAPI.'],
+  ['key', 'Optional: connect Nexus', 'A free Nexus key lets the app pick the exact file and show what changed. With Premium it downloads by itself. You will find it under Nexus and settings.'],
+];
+function showTour(start = 0) {
+  let i = start;
+  const holder = el('div', { class: 'overlay' });
+  const done = () => { try { localStorage.setItem('smu-tour', '1'); } catch {} holder.remove(); document.removeEventListener('keydown', onKey); };
+  const draw = () => {
+    const [icon, title, text] = TOUR[i];
+    holder.replaceChildren(el('div', { class: 'dialog tour', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Quick tour' },
+      el('div', { class: 'tour-art' }, px(icon, icon === 'chicken' ? 64 : 44)),
+      el('h2', { style: 'justify-content:center;text-align:center' }, title),
+      el('p', { class: 'muted', style: 'text-align:center;margin:8px 0 0' }, text),
+      el('div', { class: 'dots' }, TOUR.map((_, n) => el('i', { class: n === i ? 'on' : '' }))),
+      el('div', { class: 'btns', style: 'justify-content:space-between' },
+        el('button', { class: 'btn', onclick: done }, i === TOUR.length - 1 ? 'Close' : 'Skip'),
+        el('div', { style: 'display:flex;gap:8px' },
+          i > 0 ? el('button', { class: 'btn', onclick: () => { i--; draw(); } }, 'Back') : null,
+          el('button', { class: 'btn primary', onclick: () => { if (i === TOUR.length - 1) done(); else { i++; draw(); } } }, i === TOUR.length - 1 ? 'Done' : 'Next')))));
+    holder.querySelector('.btn.primary').focus();
+  };
+  const onKey = e => { if (e.key === 'Escape') done(); else if (e.key === 'ArrowRight' && i < TOUR.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
+  document.addEventListener('keydown', onKey);
+  document.getElementById('modal').append(holder); draw();
+}
+let tourChecked = false;
+function maybeTour() {
+  if (tourChecked || !S || S.phase !== 'Review' || !S.welcomed) return;
+  tourChecked = true;
+  if (wantTour) { showTour(0); return; }
+  let seen = '1'; try { seen = localStorage.getItem('smu-tour'); } catch {}
+  if (seen !== '1') showTour(0);
+}
+
+// ---------------------------------------------------------------- drag and drop
+let dragDepth = 0;
+const dropEl = document.getElementById('drop');
+document.getElementById('dropicon').append(px('upload', 56));
+window.addEventListener('dragenter', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; dropEl.classList.add('on'); } });
+window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) dropEl.classList.remove('on'); });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', async e => {
+  e.preventDefault(); dragDepth = 0; dropEl.classList.remove('on');
+  for (const f of e.dataTransfer.files) {
+    if (!/\.(zip|7z|rar)$/i.test(f.name)) { toast(f.name + ' is not a .zip, .7z or .rar file.', 'bad'); continue; }
+    toast('Reading ' + f.name + '...');
+    await fetch('/api/upload?name=' + encodeURIComponent(f.name), { method: 'POST', headers: { 'X-Token': TOKEN }, body: f });
+  }
+  tab = 'updates'; render();
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render());
+poll();
+</script>
+</body>
+</html>

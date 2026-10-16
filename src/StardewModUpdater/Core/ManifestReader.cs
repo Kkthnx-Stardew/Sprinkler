@@ -12,6 +12,27 @@ internal static class ManifestReader
         AllowTrailingCommas = true,
     };
 
+    /// <summary>
+    /// The manifest file of a mod folder. SMAPI takes "manifest.json" exactly, and also matches other capitalizations
+    /// when its UseCaseInsensitivePaths setting is on, which is the default on Linux. Windows and macOS file systems
+    /// already ignore case, so this only changes the result on Linux.
+    /// </summary>
+    public static string? FindManifest(string folder)
+    {
+        var exact = Path.Combine(folder, "manifest.json");
+        if (File.Exists(exact))
+            return exact;
+        try
+        {
+            return Directory.EnumerateFiles(folder)
+                .FirstOrDefault(f => Path.GetFileName(f).Equals("manifest.json", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     public static ModInfo? ReadFile(string manifestPath, string folderPath, bool disabled = false)
     {
         try

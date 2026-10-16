@@ -15,16 +15,23 @@ internal static class ModScanner
             .ToList();
     }
 
+    /// <summary>Folder names SMAPI never treats as mods (its ModScanner ignore list): Vortex and macOS leftovers.</summary>
+    internal static bool IsIgnoredFolder(string name) =>
+        name.Equals("__folder_managed_by_vortex", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("__MACOSX", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("mcs", StringComparison.OrdinalIgnoreCase)
+        || name.StartsWith("._", StringComparison.Ordinal);
+
     private static void ScanFolder(string folder, List<ModInfo> mods, bool disabled, bool isRoot)
     {
         var name = Path.GetFileName(folder);
-        if (!isRoot && name.Equals("__MACOSX", StringComparison.OrdinalIgnoreCase))
+        if (!isRoot && IsIgnoredFolder(name))
             return;
 
         var isDisabled = disabled || (!isRoot && name.StartsWith('.'));
 
-        var manifest = Path.Combine(folder, "manifest.json");
-        if (!isRoot && File.Exists(manifest))
+        var manifest = isRoot ? null : ManifestReader.FindManifest(folder);
+        if (manifest is not null)
         {
             var info = ManifestReader.ReadFile(manifest, folder, isDisabled);
             if (info is not null)

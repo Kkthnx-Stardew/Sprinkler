@@ -127,7 +127,8 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 done.Add(folder);
                 messages.AddRange(Merge(dir, folder.TargetPath, folder.Replaces is not null));
 
-                var written = ManifestReader.ReadFile(Path.Combine(folder.TargetPath, "manifest.json"), folder.TargetPath);
+                var writtenPath = ManifestReader.FindManifest(folder.TargetPath);
+                var written = writtenPath is null ? null : ManifestReader.ReadFile(writtenPath, folder.TargetPath);
                 if (written is null
                     || !written.UniqueId.Equals(folder.Source.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase)
                     || written.Version != folder.Source.Manifest.Version)
@@ -292,7 +293,17 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         var keptConfig = false;
         foreach (var rel in newFiles)
         {
-            var dest = Path.Combine(target, rel);
+            // A mod shipped as "Manifest.json" is written as "manifest.json", so an older copy is replaced rather than
+            // left beside it on a case-sensitive file system, where SMAPI would read the stale one first.
+            var isManifest = rel.Equals("manifest.json", StringComparison.OrdinalIgnoreCase);
+            var dest = Path.Combine(target, isManifest ? "manifest.json" : rel);
+            if (isManifest)
+            {
+                foreach (var other in Directory.EnumerateFiles(target).Where(f =>
+                             Path.GetFileName(f).Equals("manifest.json", StringComparison.OrdinalIgnoreCase)
+                             && !Path.GetFileName(f).Equals("manifest.json", StringComparison.Ordinal)).ToList())
+                    File.Delete(other);
+            }
             if (replacing && rel.Equals("config.json", StringComparison.OrdinalIgnoreCase) && File.Exists(dest))
             {
                 keptConfig = true;

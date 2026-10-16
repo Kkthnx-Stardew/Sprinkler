@@ -5,10 +5,15 @@ namespace StardewModUpdater.Web;
 
 /// <summary>
 /// Opens the UI in its own chrome-less window (no tabs, no address bar) using a Chromium browser that is already
-/// installed, with a private profile so it never touches the user's browsing. Falls back to a normal browser tab.
+/// installed. Each run gets a throwaway private profile, so the window never touches the user's browsing and a window
+/// left over from an earlier run cannot take over the new one. Falls back to a normal browser tab.
 /// </summary>
 internal static class AppWindow
 {
+    private static string? _profile;
+
+    private static string ProfilesRoot => Path.Combine(AppEnvironment.DataDir, "window-profiles");
+
     public static string? FindBrowser()
     {
         var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
@@ -33,12 +38,12 @@ internal static class AppWindow
         {
             try
             {
-                var profile = Path.Combine(AppEnvironment.DataDir, "window-profile");
-                Directory.CreateDirectory(profile);
+                _profile = Path.Combine(ProfilesRoot, $"{Environment.ProcessId}-{DateTime.UtcNow.Ticks}");
+                Directory.CreateDirectory(_profile);
                 var psi = new ProcessStartInfo(exe)
                 {
                     UseShellExecute = false,
-                    Arguments = $"--app=\"{url}\" --user-data-dir=\"{profile}\" --no-first-run --no-default-browser-check --disable-sync --disable-extensions "
+                    Arguments = $"--app=\"{url}\" --user-data-dir=\"{_profile}\" --no-first-run --no-default-browser-check --disable-sync --disable-extensions "
                         + "--disable-background-mode --disable-features=Translate,msEdgeShopping,msEdgeSidebar,msImplicitSignin,msEdgeImplicitSignin --window-size=1120,820",
                 };
                 var process = Process.Start(psi);
@@ -53,5 +58,27 @@ internal static class AppWindow
 
         WebHost.OpenInBrowser(url);
         return null;
+    }
+
+    /// <summary>Removes this run's profile, and any older ones that a crash left behind.</summary>
+    public static void Cleanup()
+    {
+        try
+        {
+            if (!Directory.Exists(ProfilesRoot))
+                return;
+            foreach (var dir in Directory.EnumerateDirectories(ProfilesRoot))
+            {
+                var mine = _profile is not null && string.Equals(Path.GetFullPath(dir), Path.GetFullPath(_profile), StringComparison.OrdinalIgnoreCase);
+                var old = Directory.GetLastWriteTimeUtc(dir) < DateTime.UtcNow.AddDays(-1);
+                if (mine || old)
+                {
+                    try { Directory.Delete(dir, recursive: true); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
     }
 }

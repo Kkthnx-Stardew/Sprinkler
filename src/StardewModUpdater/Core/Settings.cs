@@ -27,6 +27,8 @@ internal sealed class SettingsData
     public bool Welcomed { get; set; }
     public bool AppWindow { get; set; } = true;
     public long LogDismissedTicks { get; set; }
+    public string Theme { get; set; } = "auto";
+    public bool TourSeen { get; set; }
 }
 
 /// <summary>Settings stored as JSON. The Nexus key is encrypted for the current Windows user.</summary>

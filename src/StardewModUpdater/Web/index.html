@@ -233,11 +233,11 @@ if (q.get('t')) { sessionStorage.setItem('smu-token', TOKEN); history.replaceSta
 
 let S = null, tab = 'updates', lost = false, version = null, prevPhase = null;
 const ui = { filter: 'all', search: '', keyBusy: false, keyError: '', gamePathError: '', nxmNote: '', theme: 'auto' };
-try { ui.theme = localStorage.getItem('smu-theme') || 'auto'; } catch {}
+const themeFromUrl = q.get('theme');
 if (q.get('tab')) tab = q.get('tab');
 if (q.get('theme')) ui.theme = q.get('theme');
 const wantTour = q.get('tour') === '1';
-if (q.get('notour') === '1') { try { localStorage.setItem('smu-tour', '1'); } catch {} }
+const skipTourFromUrl = q.get('notour') === '1';
 applyTheme();
 
 // ---------------------------------------------------------------- icons
@@ -320,7 +320,7 @@ function toast(text, kind = 'ok') {
   document.getElementById('toasts').append(t); setTimeout(() => t.remove(), 5200);
 }
 function applyTheme() { const r = document.documentElement; if (ui.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', ui.theme); }
-function setTheme(v) { ui.theme = v; try { localStorage.setItem('smu-theme', v); } catch {} applyTheme(); render(); }
+function setTheme(v) { ui.theme = v; post('prefs', { theme: v }); applyTheme(); render(); }
 function cycleTheme() { setTheme(ui.theme === 'auto' ? 'light' : ui.theme === 'light' ? 'dark' : 'auto'); toast('Look: ' + { auto: 'follows your PC', light: 'light', dark: 'dark' }[ui.theme]); }
 const isDark = () => ui.theme === 'dark' || (ui.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
 const MODE = { Auto: ['Automatic', 'auto'], OneClick: ['One click', 'click'], Manual: ['You download', 'click'] };
@@ -336,7 +336,14 @@ async function poll() {
     } catch (e) { if (!lost) { lost = true; scheduleRender(); } await new Promise(r => setTimeout(r, 1500)); }
   }
 }
+let prefsApplied = false;
 function onState() {
+  if (!prefsApplied) {
+    prefsApplied = true;
+    if (themeFromUrl) ui.theme = themeFromUrl; else ui.theme = S.settings.theme || 'auto';
+    applyTheme();
+    if (skipTourFromUrl && !S.settings.tourSeen) { S.settings.tourSeen = true; post('prefs', { tourSeen: true }); }
+  }
   if (prevPhase && prevPhase !== S.phase && S.phase === 'Finished') toast('Finished: ' + (S.summary || ''), S.summary && /failed/.test(S.summary) ? 'bad' : 'ok');
   prevPhase = S.phase;
   maybeTour();
@@ -801,7 +808,7 @@ const TOUR = [
 function showTour(start = 0) {
   let i = start;
   const holder = el('div', { class: 'overlay' });
-  const done = () => { try { localStorage.setItem('smu-tour', '1'); } catch {} holder.remove(); document.removeEventListener('keydown', onKey); };
+  const done = () => { post('prefs', { tourSeen: true }); holder.remove(); document.removeEventListener('keydown', onKey); };
   const draw = () => {
     const [icon, title, text] = TOUR[i];
     holder.replaceChildren(el('div', { class: 'dialog tour', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Quick tour' },
@@ -825,7 +832,7 @@ function maybeTour() {
   if (tourChecked || !S || S.phase !== 'Review' || !S.welcomed) return;
   tourChecked = true;
   if (wantTour) { showTour(0); return; }
-  let seen = '1'; try { seen = localStorage.getItem('smu-tour'); } catch {}
+  const seen = S.settings.tourSeen ? '1' : '0';
   if (seen !== '1') showTour(0);
 }
 

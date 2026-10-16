@@ -651,3 +651,25 @@ public class ToggleTests
         }
     }
 }
+
+public class PrefsTests
+{
+    [Fact]
+    public void ThemeAndTourAreRememberedByTheApp()
+    {
+        using var dir = new TempDir();
+        var path = dir.Combine("settings.json");
+        using (var service = new UpdateService(new SettingsStore(path), new HistoryStore(dir.Combine("h.json"), dir.Combine("b")), _ => { }))
+        {
+            service.SetPrefs("dark", true);
+            service.SetPrefs("not-a-theme", null);
+            var s = JsonSerializer.SerializeToElement(service.Snapshot(), AppEnvironment.Json).GetProperty("settings");
+            Assert.Equal("dark", s.GetProperty("theme").GetString());
+            Assert.True(s.GetProperty("tourSeen").GetBoolean());
+        }
+
+        var reloaded = new SettingsStore(path);
+        Assert.Equal("dark", reloaded.Data.Theme);
+        Assert.True(reloaded.Data.TourSeen);
+    }
+}

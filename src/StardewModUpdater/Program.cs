@@ -43,6 +43,7 @@ internal static class Program
             settings.Data.GamePath = options.GamePath;
         if (options.ModsPath is not null)
             settings.Data.ModsPath = options.ModsPath;
+        AppWindow.Cleanup();
 
         using var service = new UpdateService(settings, history, url =>
         {
@@ -108,7 +109,19 @@ internal static class Program
         {
         }
 
-        try { File.Delete(AppEnvironment.InstanceFile); } catch (IOException) { }
+        // only remove the file if it still describes this run; another instance may have replaced it
+        try
+        {
+            var current = JsonDocument.Parse(File.ReadAllText(AppEnvironment.InstanceFile));
+            if (current.RootElement.TryGetProperty("pid", out var pid) && pid.GetInt32() == Environment.ProcessId)
+                File.Delete(AppEnvironment.InstanceFile);
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+        }
+
+        await Task.Delay(500);
+        AppWindow.Cleanup();
         return 0;
     }
 

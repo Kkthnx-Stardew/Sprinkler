@@ -212,6 +212,12 @@ internal sealed class WebHost : IAsyncDisposable
             return Results.Json(new { error, dependents });
         });
 
+        api.MapPost("/prefs", (PrefsBody body) =>
+        {
+            _service.SetPrefs(body.Theme, body.TourSeen);
+            return Results.Ok();
+        });
+
         api.MapPost("/log/dismiss", () => { _service.DismissLog(); return Results.Ok(); });
 
         api.MapPost("/diagnostics", () => Results.Json(new { text = _service.Diagnostics() }));
@@ -333,6 +339,7 @@ internal sealed class WebHost : IAsyncDisposable
     private sealed record KeyBody(string? Key);
     private sealed record FlagBody(bool On);
     private sealed record PolicyBody(string? Policy);
+    private sealed record PrefsBody(string? Theme, bool? TourSeen);
     private sealed record ToggleBody(string? Id, bool Enable, bool Force);
     private sealed record IgnoreBody(string? Id, bool Ignore);
 }

@@ -1548,6 +1548,19 @@ internal sealed class UpdateService : IDisposable
         return (null, null);
     }
 
+    public void SetPrefs(string? theme, bool? tourSeen)
+    {
+        lock (_gate)
+        {
+            if (theme is "auto" or "light" or "dark")
+                Settings.Data.Theme = theme;
+            if (tourSeen is { } seen)
+                Settings.Data.TourSeen = seen;
+            Settings.Save();
+            Update(() => { });
+        }
+    }
+
     public void DismissLog()
     {
         lock (_gate)
@@ -1662,6 +1675,8 @@ internal sealed class UpdateService : IDisposable
                 {
                     policy = Settings.Data.Policy,
                     appWindow = Settings.Data.AppWindow,
+                    theme = Settings.Data.Theme,
+                    tourSeen = Settings.Data.TourSeen,
                     downloads = Settings.DownloadsPath,
                     watching = _watcher.Folder is not null,
                     backupsPerMod = Settings.Data.BackupsPerMod,

@@ -20,26 +20,66 @@ internal static partial class GameLocator
                 found.TryAdd(Path.GetFullPath(install.GamePath).TrimEnd('\\'), install);
         }
 
+        // These locations follow SMAPI's own installer (GameScanner in SMAPI.Toolkit), so a game SMAPI can find is found here too.
+
+        // a path the player set for SMAPI development in %USERPROFILE%\stardewvalley.targets
+        Add(CustomTargetsPath(), "Custom");
+
+        // Steam: the game's own uninstall entry, then every library folder
+        Add(RegistryValue(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 413150", "InstallLocation"), "Steam");
         foreach (var lib in SteamLibraries())
             Add(Path.Combine(lib, "steamapps", "common", "Stardew Valley"), "Steam");
 
-        Add(RegistryValue(@"SOFTWARE\WOW6432Node\GOG.com\Games\1453375253", "path"), "GOG");
-        Add(RegistryValue(@"SOFTWARE\GOG.com\Games\1453375253", "path"), "GOG");
+        // GOG
+        Add(RegistryValue(@"SOFTWARE\WOW6432Node\GOG.com\Games\1453375253", "PATH"), "GOG");
 
+        foreach (var programFiles in new[] { @"C:\Program Files", @"C:\Program Files (x86)" })
+        {
+            Add($@"{programFiles}\GalaxyClient\Games\Stardew Valley", "GOG");
+            Add($@"{programFiles}\GOG Galaxy\Games\Stardew Valley", "GOG");
+            Add($@"{programFiles}\GOG Games\Stardew Valley", "GOG");
+            Add($@"{programFiles}\Steam\steamapps\common\Stardew Valley", "Steam");
+        }
+
+        // Xbox app: the install drive can change, the folder on it cannot. This is the mods-enabled path, not the read-only one.
+        for (var letter = 'C'; letter <= 'Z'; letter++)
+            Add($@"{letter}:\Program Files\ModifiableWindowsApps\Stardew Valley", "Xbox");
+
+        // common manual layouts on any fixed drive
         foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
         {
             var root = drive.RootDirectory.FullName;
-            Add(Path.Combine(root, "XboxGames", "Stardew Valley", "Content"), "Xbox");
             Add(Path.Combine(root, "SteamLibrary", "steamapps", "common", "Stardew Valley"), "Steam");
             Add(Path.Combine(root, "Steam", "steamapps", "common", "Stardew Valley"), "Steam");
-            Add(Path.Combine(root, "Program Files (x86)", "Steam", "steamapps", "common", "Stardew Valley"), "Steam");
-            Add(Path.Combine(root, "Program Files", "Steam", "steamapps", "common", "Stardew Valley"), "Steam");
             Add(Path.Combine(root, "GOG Games", "Stardew Valley"), "GOG");
             Add(Path.Combine(root, "Games", "Stardew Valley"), "Manual");
         }
 
         return found.Values.ToList();
     }
+
+    /// <summary>Reads GamePath from the optional stardewvalley.targets file that SMAPI's tools also honor.</summary>
+    private static string? CustomTargetsPath()
+    {
+        try
+        {
+            var file = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "stardewvalley.targets");
+            if (!File.Exists(file))
+                return null;
+            var root = System.Xml.Linq.XElement.Load(file);
+            return root.Descendants().FirstOrDefault(e => e.Name.LocalName == "GamePath")?.Value.Trim();
+        }
+        catch (Exception ex) when (ex is IOException or System.Xml.XmlException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>True for a game older than 1.6, which SMAPI 4 and current mods do not support.</summary>
+    public static bool IsLegacyInstall(string folder) =>
+        Directory.Exists(folder)
+        && !File.Exists(Path.Combine(folder, "Stardew Valley.dll"))
+        && File.Exists(Path.Combine(folder, "Stardew Valley.exe"));
 
     /// <summary>Checks a folder is a game install and reads the game and SMAPI versions.</summary>
     public static GameInstall? Inspect(string gamePath, string store = "Manual")
@@ -49,21 +89,11 @@ internal static partial class GameLocator
             if (!Directory.Exists(gamePath))
                 return null;
 
-            var hasGame = File.Exists(Path.Combine(gamePath, "Stardew Valley.dll"))
-                || File.Exists(Path.Combine(gamePath, "Stardew Valley.exe"));
-            if (!hasGame)
+            // SMAPI treats a folder as the game when Stardew Valley.dll exists (game 1.6 and newer)
+            var gameDll = Path.Combine(gamePath, "Stardew Valley.dll");
+            if (!File.Exists(gameDll))
                 return null;
-
-            string? gameVersion = null;
-            foreach (var name in new[] { "Stardew Valley.dll", "Stardew Valley.exe" })
-            {
-                var p = Path.Combine(gamePath, name);
-                if (File.Exists(p))
-                {
-                    gameVersion = TrimVersion(FileVersionInfo.GetVersionInfo(p).FileVersion, 3);
-                    break;
-                }
-            }
+            var gameVersion = TrimVersion(FileVersionInfo.GetVersionInfo(gameDll).FileVersion, 3);
 
             string? smapiVersion = null;
             var smapi = Path.Combine(gamePath, "StardewModdingAPI.dll");

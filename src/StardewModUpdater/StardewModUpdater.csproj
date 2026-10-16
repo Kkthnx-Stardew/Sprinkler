@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.1.0-alpha.1</Version>
+    <AssemblyName>StardewModUpdater</AssemblyName>
+    <RootNamespace>StardewModUpdater</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ApplicationIcon Condition="Exists('app.ico')">app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <PublishTrimmed>true</PublishTrimmed>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TrimmerSingleWarn>true</TrimmerSingleWarn>
+    <NoWarn>$(NoWarn);IL2026;IL2087;IL2091;IL3050;RDG012;RDG002</NoWarn>
+    <TrimMode>partial</TrimMode>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <TieredPGO>false</TieredPGO>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpCompress" Version="1.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Web\index.html" LogicalName="index.html" />
+    <EmbeddedResource Include="Web\inter.woff2" LogicalName="inter.woff2" />
+    <EmbeddedResource Include="Web\chicken.png" LogicalName="chicken.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StardewModUpdater.Tests" />
+  </ItemGroup>
+
+</Project>

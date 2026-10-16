@@ -206,6 +206,14 @@ internal sealed class WebHost : IAsyncDisposable
             return Results.Ok();
         });
 
+        api.MapPost("/toggle", async (ToggleBody body) =>
+        {
+            var (error, dependents) = await _service.SetModEnabledAsync(body.Id ?? "", body.Enable, body.Force);
+            return Results.Json(new { error, dependents });
+        });
+
+        api.MapPost("/log/dismiss", () => { _service.DismissLog(); return Results.Ok(); });
+
         api.MapPost("/diagnostics", () => Results.Json(new { text = _service.Diagnostics() }));
 
         api.MapPost("/launch", () => Results.Json(new { error = _service.LaunchGame() }));
@@ -325,5 +333,6 @@ internal sealed class WebHost : IAsyncDisposable
     private sealed record KeyBody(string? Key);
     private sealed record FlagBody(bool On);
     private sealed record PolicyBody(string? Policy);
+    private sealed record ToggleBody(string? Id, bool Enable, bool Force);
     private sealed record IgnoreBody(string? Id, bool Ignore);
 }

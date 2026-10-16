@@ -26,6 +26,7 @@ internal sealed class SettingsData
     public int BackupsPerMod { get; set; } = 5;
     public bool Welcomed { get; set; }
     public bool AppWindow { get; set; } = true;
+    public long LogDismissedTicks { get; set; }
 }
 
 /// <summary>Settings stored as JSON. The Nexus key is encrypted for the current Windows user.</summary>

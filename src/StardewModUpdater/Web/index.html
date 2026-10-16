@@ -15,8 +15,9 @@
   --ink: #111827;
   --muted: #5b6475;
   --line: #e4e7ec;
-  --accent: #16a34a;
-  --accent-hover: #15803d;
+  --accent: #15803d;
+  --accent-hover: #166534;
+  --accent-text: #166534;
   --accent-ink: #ffffff;
   --accent-soft: #e8f7ee;
   --info: #1d4ed8;
@@ -430,6 +431,7 @@ function updatesView() {
   const items = S.items, applying = S.phase === 'Applying' || S.phase === 'Finished';
   const shown = applying ? items.filter(i => i.status !== 'Ready') : items;
   if (S.phase === 'Review') out.push(overview(items));
+  if (S.phase === 'Review') { const hc = healthCard(); if (hc) out.push(hc); }
   if (S.phase === 'Review' && items.length) {
     out.push(el('div', { class: 'panel', style: 'padding:14px 18px' },
       el('div', { style: 'display:flex;gap:10px;align-items:center' }, px('arrowup', 20), el('strong', null, 'Tick what you want, then press Update')), legend()));
@@ -451,6 +453,23 @@ function updatesView() {
         p.url ? el('div', { class: 'small' }, link(p.urlLabel || 'Open', p.url)) : null)))));
   }
   return out;
+}
+// What SMAPI said about the last game session: which mods it skipped, and why.
+function healthCard() {
+  const g = S.gameLog;
+  if (!g || g.dismissed || (g.skipped.length === 0 && g.errors.length === 0)) return null;
+  const n = g.skipped.length;
+  const title = n ? (n === 1 ? '1 mod did not load last time you played' : n + ' mods did not load last time you played') : 'Some mods reported errors last time you played';
+  return el('div', { class: 'panel', style: 'border-color:color-mix(in srgb, var(--warn) 45%, var(--line))' },
+    el('h2', null, px('alert', 22), title),
+    el('p', { class: 'muted small', style: 'margin:0 0 6px' }, `From SMAPI's own log of your last game session (${fmtTime(g.writtenAt)}). ${g.loadedMods} mods and ${g.loadedPacks} content packs loaded.`),
+    n ? el('ul', { class: 'clean' }, g.skipped.map(s => el('li', null,
+      el('strong', null, s.name + (s.version ? ' ' + s.version : '')), el('div', { class: 'small' }, 'SMAPI says ' + s.reason), el('div', { class: 'small muted' }, 'What to do: ' + s.hint)))) : null,
+    g.errors.length ? el('details', null, el('summary', null, 'Mods that logged errors'),
+      el('ul', { class: 'clean small' }, g.errors.map(e => el('li', null, `${e.source}: ${plural(e.count, 'error', 'errors')}`)))) : null,
+    el('div', { class: 'fieldrow' },
+      el('button', { class: 'btn slim', onclick: () => post('check') }, px('refresh', 14), 'Check again'),
+      el('button', { class: 'btn slim', onclick: () => post('log/dismiss') }, 'Dismiss until the next game session')));
 }
 function legend() {
   return el('details', { style: 'margin-top:10px' }, el('summary', null, 'What do the labels mean?'),
@@ -623,6 +642,17 @@ function fillMods() {
   const rows = S.rows.filter(fn).filter(r => !term || (r.name + ' ' + (r.author || '') + ' ' + r.uniqueId).toLowerCase().includes(term));
   list.replaceChildren(...(rows.length ? rows.map(modRow) : [el('p', { class: 'muted big-center' }, 'Nothing matches.')]));
 }
+async function toggleMod(r, enable, force = false) {
+  const res = await post('toggle', { id: r.uniqueId, enable, force });
+  if (!res) return;
+  if (res.error) { toast(res.error, 'bad'); return; }
+  if (res.dependents && res.dependents.length) {
+    const ok = await ask('Turn off ' + r.name + '?', 'These mods need it and will stop loading: ' + res.dependents.join(', ') + '.', 'Turn it off anyway');
+    if (ok) toggleMod(r, enable, true);
+    return;
+  }
+  toast(enable ? r.name + ' is on again.' : r.name + ' is off. SMAPI skips it next time you play.');
+}
 function modRow(r) {
   const [icon, label, kind] = STATE_META[r.state] || STATE_META.UpToDate;
   return el('div', { class: 'mrow' }, px(r.isContentPack ? 'book' : icon, 20),
@@ -631,6 +661,7 @@ function modRow(r) {
     el('div', { class: 'acts' }, el('span', { class: 'chip ' + kind }, label),
       r.url ? el('button', { class: 'link', onclick: () => openUrl(r.url) }, 'Page') : null,
       el('button', { class: 'link', onclick: () => post('reveal-mod', { id: r.uniqueId }) }, 'Folder'),
+      r.state === 'Bundled' ? null : el('button', { class: 'link', title: r.state === 'Disabled' ? 'Turn this mod back on' : 'SMAPI skips a mod that is switched off', onclick: () => toggleMod(r, r.state === 'Disabled') }, r.state === 'Disabled' ? 'Turn on' : 'Turn off'),
       ['Bundled', 'Disabled'].includes(r.state) ? null : el('button', { class: 'link' + (r.state === 'Ignored' ? '' : ' danger'), onclick: () => post('ignore', { id: r.uniqueId, ignore: r.state !== 'Ignored' }) }, r.state === 'Ignored' ? 'Check again' : 'Never update')));
 }
 
@@ -663,7 +694,7 @@ function settingsView() {
           el('div', { class: 'fieldrow' }, keyInput, el('button', { class: 'btn primary', disabled: ui.keyBusy, onclick: connect }, ui.keyBusy ? 'Checking...' : 'Connect')),
           ui.keyError ? el('div', { class: 'small', style: 'color:var(--bad);font-weight:600' }, ui.keyError) : null,
           n.message ? el('div', { class: 'small', style: 'color:var(--warn)' }, n.message) : null,
-          el('p', { class: 'muted small' }, 'The key stays on this PC, encrypted so only your Windows account can read it, and is only sent to Nexus. You can skip this: the app still works, you just press Nexus download buttons yourself.')));
+          el('p', { class: 'muted small' }, 'The key stays on this PC, encrypted so only your Windows account can read it, and is only sent to Nexus. Nexus allows a personal key for your own use, so do not share it. You can skip this: the app still works, you just press Nexus download buttons yourself.')));
   const nxmCard = el('div', { class: 'panel' }, el('h2', null, px('pointer', 22), 'Nexus "Mod Manager Download" button'),
     el('p', { class: 'muted' }, 'On a free account, this button is how Nexus lets a program download for you. If this app handles it, one click on Nexus starts the download and install.'),
     n.nxm ? el('div', null, el('span', { class: 'chip ok' }, 'This app handles Nexus links'), ' ', el('button', { class: 'btn slim', onclick: () => post('nexus/nxm', { on: false }) }, 'Stop handling them'))

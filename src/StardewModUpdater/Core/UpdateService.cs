@@ -121,6 +121,7 @@ internal sealed class UpdateService : IDisposable
     private string? _lastSummary;
     private volatile bool _disposed;
     private (string Version, string Url)? _appUpdate;
+    private GameLog? _gameLog;
 
     public SettingsStore Settings { get; }
     public HistoryStore History { get; }
@@ -268,9 +269,11 @@ internal sealed class UpdateService : IDisposable
             });
 
             var mods = await Task.Run(() => ModScanner.Scan(game.ModsPath), ct);
+            var gameLog = await Task.Run(() => SmapiLog.Read(), ct);
             Update(() =>
             {
                 _mods = mods;
+                _gameLog = gameLog;
                 _phase = Phase.Checking;
                 _status = $"Found {mods.Count} mods. Asking SMAPI which ones have updates";
             });
@@ -1485,6 +1488,79 @@ internal sealed class UpdateService : IDisposable
         return string.IsNullOrEmpty(profile) ? text : text.Replace(profile, "%USERPROFILE%", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Switches a mod on or off the way SMAPI documents: a folder whose name starts with a dot is skipped.
+    /// Turning off a mod that others need asks for confirmation first.
+    /// </summary>
+    public async Task<(string? Error, string[]? Dependents)> SetModEnabledAsync(string uniqueId, bool enable, bool force)
+    {
+        if (GameLocator.IsGameRunning(fresh: true))
+            return ("Close Stardew Valley first. It keeps its mod files open while it runs.", null);
+
+        ModInfo? mod;
+        List<ModInfo> all;
+        lock (_gate)
+        {
+            all = _mods.ToList();
+            mod = all.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase) && m.Disabled == enable)
+                ?? all.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
+        }
+        if (mod is null || mod.Bundled)
+            return ("That mod was not found, or it is part of SMAPI.", null);
+
+        var folder = mod.FolderPath.TrimEnd('\\', '/');
+        var parent = Path.GetDirectoryName(folder)!;
+        var name = Path.GetFileName(folder);
+
+        if (!enable)
+        {
+            if (name.StartsWith('.'))
+                return (null, null);
+            var dependents = all
+                .Where(m => !m.Disabled && !m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)
+                    && (string.Equals(m.ContentPackFor, mod.UniqueId, StringComparison.OrdinalIgnoreCase)
+                        || m.Dependencies.Any(d => d.Required && d.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase))))
+                .Select(m => m.Name).Distinct().ToArray();
+            if (dependents.Length > 0 && !force)
+                return (null, dependents);
+        }
+        else if (!name.StartsWith('.'))
+        {
+            return ("This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in File Explorer.", null);
+        }
+
+        var target = Path.Combine(parent, enable ? name.TrimStart('.') : "." + name);
+        if (target.Length == parent.Length + 1 || Directory.Exists(target) || File.Exists(target))
+            return ("A folder with the new name already exists, so nothing was changed.", null);
+
+        try
+        {
+            Directory.Move(folder, target);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return ("The folder could not be renamed (" + ex.Message + "). Close anything that is using it and try again.", null);
+        }
+
+        Log.Write($"{(enable ? "Enabled" : "Disabled")} {mod.Name}: {name} -> {Path.GetFileName(target)}");
+        await RescanQuietlyAsync();
+        _ = CheckAsync();
+        return (null, null);
+    }
+
+    public void DismissLog()
+    {
+        lock (_gate)
+        {
+            if (_gameLog is not null)
+            {
+                Settings.Data.LogDismissedTicks = _gameLog.WrittenAt.Ticks;
+                Settings.Save();
+            }
+            Update(() => { });
+        }
+    }
+
     public string? LaunchGame()
     {
         var game = _game;
@@ -1634,6 +1710,15 @@ internal sealed class UpdateService : IDisposable
                     undone = h.Undone,
                     canUndo = !h.Undone && (h.BackupFile is not null || h.Folders.All(f => f.WasNew)),
                 }),
+                gameLog = _gameLog is null ? null : new
+                {
+                    writtenAt = _gameLog.WrittenAt,
+                    loadedMods = _gameLog.LoadedMods,
+                    loadedPacks = _gameLog.LoadedContentPacks,
+                    skipped = _gameLog.Skipped.Select(s => new { name = s.Name, version = s.Version, reason = s.Reason, kind = s.Kind, hint = s.Hint }),
+                    errors = _gameLog.Errors,
+                    dismissed = _gameLog.WrittenAt.Ticks <= Settings.Data.LogDismissedTicks,
+                },
                 backupBytes = History.BackupBytes(),
             };
         }

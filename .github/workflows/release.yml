@@ -7,11 +7,20 @@ on:
 permissions:
   contents: write
 
+env:
+  TAG: ${{ github.ref_name }}
+
 jobs:
-  release:
-    runs-on: windows-latest
-    env:
-      TAG: ${{ github.ref_name }}
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -29,9 +38,10 @@ jobs:
         run: dotnet test tests/StardewModUpdater.Tests -c Release
 
       - name: Publish
-        run: dotnet publish src/StardewModUpdater -c Release -p:PublishSingleFile=true -o artifacts/publish
+        run: dotnet publish src/StardewModUpdater -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
 
-      - name: Package
+      - name: Package for Windows
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $name = "StardewModUpdater-$env:TAG-win-x64"
@@ -41,6 +51,36 @@ jobs:
           Compress-Archive -Path dist/* -DestinationPath "$name.zip"
           $hash = (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash  $name.zip" | Out-File "$name.zip.sha256" -Encoding ascii
+
+      - name: Package for Linux
+        if: runner.os == 'Linux'
+        run: |
+          name="StardewModUpdater-$TAG-linux-x64"
+          mkdir -p "dist/$name"
+          cp artifacts/publish/StardewModUpdater "dist/$name/"
+          chmod +x "dist/$name/StardewModUpdater"
+          cp LICENSE THIRD-PARTY-NOTICES.md README.md "dist/$name/"
+          tar -C dist -czf "$name.tar.gz" "$name"
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.rid }}
+          path: |
+            StardewModUpdater-*.zip
+            StardewModUpdater-*.tar.gz
+            StardewModUpdater-*.sha256
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: packages
+          merge-multiple: true
 
       - name: Release notes from the changelog
         shell: pwsh
@@ -53,11 +93,9 @@ jobs:
           $notes | Out-File release-notes.md -Encoding utf8
 
       - name: Publish the release
-        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $name = "StardewModUpdater-$env:TAG-win-x64"
-          $ghArgs = @('release', 'create', $env:TAG, "$name.zip", "$name.zip.sha256", '--title', "Stardew Mod Updater $env:TAG", '--notes-file', 'release-notes.md')
-          if ($env:TAG -match '-') { $ghArgs += '--prerelease' }
-          gh @ghArgs
+          flags=""
+          case "$TAG" in *-*) flags="--prerelease" ;; esac
+          gh release create "$TAG" packages/* --title "Stardew Mod Updater $TAG" --notes-file release-notes.md $flags

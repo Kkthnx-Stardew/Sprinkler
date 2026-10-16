@@ -10,7 +10,15 @@ permissions:
 
 jobs:
   test:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -19,10 +27,30 @@ jobs:
       - name: Test
         run: dotnet test tests/StardewModUpdater.Tests -c Release
       - name: Publish the single-file build
-        run: dotnet publish src/StardewModUpdater -c Release -p:PublishSingleFile=true -o artifacts/publish
+        run: dotnet publish src/StardewModUpdater -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
+
       - name: Smoke test the published exe
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if (-not (Test-Path artifacts/publish/StardewModUpdater.exe)) { throw "exe missing" }
           $p = Start-Process artifacts/publish/StardewModUpdater.exe -ArgumentList "--version" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "exe exited with code $($p.ExitCode)" }
+
+      - name: Smoke test the published binary
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x artifacts/publish/StardewModUpdater
+          artifacts/publish/StardewModUpdater --version
+          # start the server without a window and ask it to answer a request with its per-run token
+          export SMU_DATA="$RUNNER_TEMP/smu-data"
+          mkdir -p "$SMU_DATA"
+          artifacts/publish/StardewModUpdater --no-browser --port 5077 &
+          pid=$!
+          for i in $(seq 1 40); do
+            [ -f "$SMU_DATA/instance.json" ] && break
+            sleep 0.25
+          done
+          token=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['token'])" "$SMU_DATA/instance.json")
+          curl --fail --silent --show-error -H "X-Token: $token" http://127.0.0.1:5077/api/ping
+          kill "$pid"

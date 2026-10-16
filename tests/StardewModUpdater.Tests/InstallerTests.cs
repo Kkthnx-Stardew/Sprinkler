@@ -99,7 +99,7 @@ public class InstallerTests
         Assert.Throws<InstallException>(() => inst.Undo(result.HistoryId, mods));
     }
 
-    [Fact]
+    [WindowsFact]
     public void RollsBackWhenAFileIsLocked()
     {
         using var d = new TempDir();

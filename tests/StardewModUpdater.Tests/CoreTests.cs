@@ -51,7 +51,7 @@ public class ManifestTests
           "Dependencies": [ { "UniqueID": "a.b", "IsRequired": false }, { "UniqueID": "c.d" } ],
         }
         """;
-        var m = ManifestReader.Parse(System.Text.Encoding.UTF8.GetBytes(text), @"C:\Mods\Thing")!;
+        var m = ManifestReader.Parse(System.Text.Encoding.UTF8.GetBytes(text), System.IO.Path.Combine("mods", "Thing"))!;
         Assert.Equal("me.Thing", m.UniqueId);
         Assert.Equal("Pathoschild.ContentPatcher", m.ContentPackFor);
         Assert.Equal(2, m.UpdateKeys.Length);

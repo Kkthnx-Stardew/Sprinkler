@@ -169,9 +169,33 @@ input:focus { border-color: var(--info); outline: none; box-shadow: 0 0 0 3px co
 .filters { display: flex; gap: 6px; flex-wrap: wrap; }
 .filters button { cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 3px 12px; font-weight: 600; font-size: 13px; color: var(--muted); }
 .filters button[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent-text); }
-.mrow { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center; padding: 11px 2px; border-top: 1px solid var(--line); }
+.mtable { margin-top: 6px; }
+.mhead, .mrow { display: grid; grid-template-columns: 52px minmax(0, 1.7fr) 96px minmax(0, 1.1fr) 36px; gap: 12px; align-items: center; }
+.mhead { padding: 6px 4px; font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--line); }
+.mrow { padding: 10px 4px; border-top: 1px solid var(--line); }
+.mrow:hover { background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
+.mrow.is-off .mname, .mrow.is-off .mver { opacity: .6; }
 .mrow .nm { font-weight: 600; } .mrow .meta { font-size: 13px; color: var(--muted); }
-.mrow .acts { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; align-items: center; font-size: 13px; }
+.mrow .needs { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600; color: var(--warn); margin-top: 2px; }
+.mver { font-variant-numeric: tabular-nums; font-size: 14px; }
+.mstatus { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; justify-self: center; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch i { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .15s; pointer-events: none; }
+.switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
+.switch input:checked + i { background: var(--accent); }
+.switch input:checked + i::after { transform: translateX(18px); }
+.switch input:focus-visible + i { outline: 2px solid var(--info); outline-offset: 2px; }
+.switch input:disabled + i { opacity: .5; }
+.menu { position: relative; }
+.menu summary { list-style: none; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); font-size: 20px; line-height: 1; }
+.menu summary::-webkit-details-marker { display: none; }
+.menu summary:hover, .menu[open] summary { background: var(--panel-2); color: var(--ink); }
+.menu-list { position: absolute; right: 0; top: 34px; z-index: 6; min-width: 210px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px; box-shadow: var(--shadow-lg); display: grid; }
+.menu-list button { text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 14px; }
+.menu-list button:hover { background: var(--panel-2); } .menu-list button.danger { color: var(--bad); }
+select { height: 38px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; }
+.tools .filters { margin: 0; }
 .fieldrow { display: flex; gap: 8px; margin: 10px 0; }
 .kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; font-size: 14px; margin: 10px 0; }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; word-break: break-all; }
@@ -208,7 +232,10 @@ footer a { color: var(--muted); }
 @media (max-width: 640px) {
   .wrap { padding: 0 14px; }
   .item .body { padding-left: 16px; } .item .head { flex-wrap: wrap; } .item .ver { margin-left: 0; text-align: left; width: 100%; }
-  .mrow { grid-template-columns: 26px 1fr; } .mrow .acts { grid-column: 2; justify-content: flex-start; }
+  .mhead { display: none; }
+  .mrow { grid-template-columns: 44px minmax(0, 1fr) 32px; }
+  .mrow .mver, .mrow .mstatus { grid-column: 2; }
+  .mrow .menu { grid-column: 3; grid-row: 1; }
   .kv { grid-template-columns: 1fr; } .brand h1 { font-size: 16px; white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
@@ -232,7 +259,7 @@ let TOKEN = q.get('t') || sessionStorage.getItem('smu-token') || '';
 if (q.get('t')) { sessionStorage.setItem('smu-token', TOKEN); history.replaceState(null, '', location.pathname); }
 
 let S = null, tab = 'updates', lost = false, version = null, prevPhase = null;
-const ui = { filter: 'all', search: '', keyBusy: false, keyError: '', gamePathError: '', nxmNote: '', theme: 'auto' };
+const ui = { filter: 'all', sort: 'status', search: '', keyBusy: false, keyError: '', gamePathError: '', nxmNote: '', theme: 'auto' };
 const themeFromUrl = q.get('theme');
 if (q.get('tab')) tab = q.get('tab');
 if (q.get('theme')) ui.theme = q.get('theme');
@@ -325,7 +352,7 @@ function toast(text, kind = 'ok') {
 }
 function applyTheme() { const r = document.documentElement; if (ui.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', ui.theme); }
 function setTheme(v) { ui.theme = v; post('prefs', { theme: v }); applyTheme(); render(); }
-function cycleTheme() { setTheme(ui.theme === 'auto' ? 'light' : ui.theme === 'light' ? 'dark' : 'auto'); toast('Look: ' + { auto: 'follows your PC', light: 'light', dark: 'dark' }[ui.theme]); }
+function cycleTheme() { setTheme(ui.theme === 'auto' ? 'light' : ui.theme === 'light' ? 'dark' : 'auto'); toast('Look: ' + { auto: 'follows your system', light: 'light', dark: 'dark' }[ui.theme]); }
 const isDark = () => ui.theme === 'dark' || (ui.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
 const MODE = { Auto: ['Automatic', 'auto'], OneClick: ['One click', 'click'], Manual: ['You download', 'click'] };
 const SITE_LETTER = { Nexus: 'N', CurseForge: 'C', GitHub: 'G', ModDrop: 'M' };
@@ -357,6 +384,8 @@ let renderQueued = false;
 function scheduleRender() { if (renderQueued) return; renderQueued = true; setTimeout(() => { renderQueued = false; render(); }, 100); }
 
 // ---------------------------------------------------------------- shell
+// Close an open row menu when the user clicks anywhere else.
+document.addEventListener('click', e => { document.querySelectorAll('details.menu[open]').forEach(m => { if (!m.contains(e.target) || e.target.closest('.menu-list button')) m.open = false; }); });
 // The page is rebuilt on every state change. Remember what the user had open or focused so a progress update never closes a changelog or drops keyboard focus.
 const openDetails = new Set();
 document.addEventListener('toggle', e => {
@@ -454,7 +483,7 @@ function updatesView() {
   if (S.phase === 'ChooseGame') return [steps(0), chooseGameCard()];
   if (S.phase === 'Scanning' || S.phase === 'Checking') {
     return [el('div', { class: 'panel center' }, el('div', { class: 'bob' }, px('chicken', 64)), el('h2', null, S.status || 'Working...'),
-      el('p', { class: 'muted' }, 'The app reads each mod\'s manifest, then asks SMAPI\'s update service (smapi.io) for the newest version of each. Nothing on your PC changes during this step.'), steps(1))];
+      el('p', { class: 'muted' }, 'The app reads each mod\'s manifest, then asks SMAPI\'s update service (smapi.io) for the newest version of each. Nothing on your computer changes during this step.'), steps(1))];
   }
   if (S.phase === 'Idle') {
     return [el('div', { class: 'panel center' }, px('alert', 44), el('h2', null, 'The check did not finish'),
@@ -538,13 +567,13 @@ function welcomeCard() {
   const g = S.game;
   return el('div', { class: 'panel' },
     el('h2', null, px('chicken', 26), 'Welcome'),
-    el('p', { class: 'muted' }, 'This keeps your Stardew Valley mods up to date. Here is what I found on this PC:'),
+    el('p', { class: 'muted' }, 'This keeps your Stardew Valley mods up to date. Here is what I found on this computer:'),
     el('dl', { class: 'kv' }, el('dt', null, 'Game folder'), el('dd', null, g.path), el('dt', null, 'Mods folder'), el('dd', null, g.mods),
       el('dt', null, 'SMAPI'), el('dd', null, g.smapi ? g.smapi : 'Not found. Install it from smapi.io, or mods will not load.')),
     el('div', { class: 'helpgrid', style: 'margin:14px 0' },
       mini('shield', 'Nothing changes yet', 'You see the plan first and press Update yourself.'),
       mini('package', 'Backups and undo', 'Every mod is saved before it is replaced. Your config.json files stay.'),
-      mini('key', 'No hidden accounts', 'No ads, no tracking. Your Nexus key stays on this PC.')),
+      mini('key', 'No hidden accounts', 'No ads, no tracking. Your Nexus key stays on this computer.')),
     el('p', { class: 'muted small' }, 'Wrong folder? Change it under Nexus and settings.'),
     el('button', { class: 'btn primary big', onclick: () => post('welcome') }, px('check', 18), 'Looks right, continue'));
 }
@@ -557,10 +586,18 @@ function chooseGameCard() {
     el('div', { class: 'cands' }, c.map(x => el('button', { class: 'btn', onclick: () => setGame(x.path) }, px('folder', 16), `${x.store}: ${x.path}` + (x.smapi ? `  (SMAPI ${x.smapi})` : '')))),
     gamePathField(),
     el('details', { 'data-k': 'findgame' }, el('summary', null, 'How do I find the folder?'),
-      el('p', { class: 'small muted' }, 'Steam: right-click Stardew Valley in your library, choose Manage, then Browse local files, and copy the address at the top. GOG: it is usually under GOG Games. Xbox app: C:\\Program Files\\ModifiableWindowsApps\\Stardew Valley, which is the copy that allows mods.')));
+      el('p', { class: 'small muted' }, findGameHelp())));
+}
+function osName() { return (S && S.app && S.app.os) || 'Windows'; }
+function findGameHelp() {
+  const steam = 'Steam: right-click Stardew Valley in your library, choose Manage, then Browse local files, and copy the address at the top. ';
+  if (osName() === 'Linux') return steam + 'On a Steam Deck, a game on the SD card lives under /run/media/. GOG: it is usually in ~/GOG Games/Stardew Valley/game. The folder must contain "Stardew Valley.dll".';
+  if (osName() === 'Mac') return steam + 'The game folder is inside the app: Stardew Valley.app/Contents/MacOS.';
+  return steam + 'GOG: it is usually under GOG Games. Xbox app: C:\\Program Files\\ModifiableWindowsApps\\Stardew Valley, which is the copy that allows mods.';
 }
 function gamePathField() {
-  const input = el('input', { type: 'text', placeholder: 'D:\\SteamLibrary\\steamapps\\common\\Stardew Valley', id: 'gamepath', 'aria-label': 'Game folder', onkeydown: e => { if (e.key === 'Enter') setGame(input.value); } });
+  const example = osName() === 'Linux' ? '/home/you/.local/share/Steam/steamapps/common/Stardew Valley' : osName() === 'Mac' ? '/Users/you/Library/Application Support/Steam/steamapps/common/Stardew Valley/Contents/MacOS' : 'D:\\SteamLibrary\\steamapps\\common\\Stardew Valley';
+  const input = el('input', { type: 'text', placeholder: example, id: 'gamepath', 'aria-label': 'Game folder', onkeydown: e => { if (e.key === 'Enter') setGame(input.value); } });
   return el('div', null, el('div', { class: 'fieldrow' }, input, el('button', { class: 'btn primary', onclick: () => setGame(input.value) }, 'Use this folder')),
     ui.gamePathError ? el('div', { class: 'small', style: 'color:var(--bad)' }, ui.gamePathError) : null);
 }
@@ -593,6 +630,7 @@ function itemCard(i) {
     if (i.details.length) body.append(el('ul', { class: 'clean small' }, i.details.map(d => el('li', null, d))));
     if (i.changelog.length) body.append(el('details', { 'data-k': 'chg:' + i.id }, el('summary', null, 'What changed in ' + i.target), el('ul', { class: 'clean small' }, i.changelog.map(c => el('li', null, c)))));
     else if (i.pageUrl) body.append(el('div', { class: 'small' }, link('Mod page and changelog', i.pageUrl)));
+    if (!i.isNew && st === 'Ready') body.append(el('div', { class: 'small' }, el('button', { class: 'link', title: 'Hide this version. A newer one will show up again.', onclick: () => post('skipversion', { id: i.id }) }, 'Skip this version')));
   }
   if (st === 'Queued') body.append(el('div', { class: 'note' }, i.message));
   if (st === 'Working') body.append(el('div', { class: 'note' }, i.message),
@@ -659,27 +697,43 @@ function ask(title, text, yes) {
 }
 
 // ---------------------------------------------------------------- all mods
+// A single table like the managers people already know: one row per mod with an on/off switch,
+// version, status, what it still needs, and a menu for the less common actions.
 const STATE_META = { UpToDate: ['check', 'Up to date', 'ok'], Update: ['arrowup', 'Update available', 'warn'], NoInfo: ['help', 'Cannot check', ''], Error: ['xcircle', 'Check failed', 'bad'],
   Disabled: ['power', 'Switched off', ''], Bundled: ['sliders', 'Part of SMAPI', ''], Ignored: ['skip', 'Skipped by you', ''], Warning: ['alert', 'Warning', 'warn'] };
 const FILTERS = [['all', 'All', () => true], ['update', 'Updates', r => r.state === 'Update'], ['ok', 'Up to date', r => r.state === 'UpToDate'],
-  ['nocheck', 'Cannot check', r => r.state === 'NoInfo' || r.state === 'Error'], ['off', 'Off or skipped', r => r.state === 'Disabled' || r.state === 'Ignored']];
+  ['needs', 'Missing requirements', r => (r.needs || []).length > 0], ['nocheck', 'Cannot check', r => r.state === 'NoInfo' || r.state === 'Error'], ['off', 'Off or skipped', r => r.state === 'Disabled' || r.state === 'Ignored']];
+const SORTS = { name: 'Name', status: 'Needs attention first', author: 'Author' };
+const STATE_RANK = { Update: 0, Error: 1, NoInfo: 2, Warning: 3, UpToDate: 4, Ignored: 5, Disabled: 6, Bundled: 7 };
+
 function modsView() {
   if (!S.rows.length) return el('div', { class: 'panel center' }, px('package', 48), el('h2', null, 'No mods found yet'), el('p', { class: 'muted' }, 'Put mods in your Mods folder, or drop a downloaded .zip onto this page.'));
+  const on = S.rows.filter(r => r.state !== 'Disabled' && r.state !== 'Bundled').length;
   const search = el('input', { type: 'search', placeholder: 'Search mods or authors', 'aria-label': 'Search mods', value: ui.search, oninput: e => { ui.search = e.target.value; fillMods(); } });
-  const chips = el('div', { class: 'filters', role: 'group', 'aria-label': 'Filter' }, FILTERS.map(([id, label, fn]) => el('button', { 'aria-pressed': ui.filter === id, onclick: () => { ui.filter = id; render(); } }, `${label} ${S.rows.filter(fn).length}`)));
-  const list = el('div', { id: 'modslist' }); setTimeout(fillMods, 0);
-  return el('div', { class: 'panel' }, el('h2', null, px('package', 22), `${plural(S.rows.length, 'mod', 'mods')} in your Mods folder`),
-    el('p', { class: 'muted small', style: 'margin:0' }, '"Cannot check" means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this page.'),
-    el('div', { class: 'tools' }, search, chips), list);
+  const sort = el('select', { 'aria-label': 'Sort mods', onchange: e => { ui.sort = e.target.value; fillMods(); } },
+    Object.entries(SORTS).map(([v, l]) => el('option', { value: v, selected: ui.sort === v }, l)));
+  const chips = el('div', { class: 'filters', role: 'group', 'aria-label': 'Filter' }, FILTERS.map(([id, label, fn]) =>
+    el('button', { 'aria-pressed': ui.filter === id, onclick: () => { ui.filter = id; render(); } }, `${label} ${S.rows.filter(fn).length}`)));
+  const list = el('div', { id: 'modslist', class: 'mtable' }); setTimeout(fillMods, 0);
+  return el('div', { class: 'panel' }, el('h2', null, px('package', 22), `${plural(S.rows.length, 'mod', 'mods')}, ${on} switched on`),
+    el('p', { class: 'muted small', style: 'margin:0' }, 'Use the switch to turn a mod off or on. SMAPI skips a mod that is switched off. "Cannot check" means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this page.'),
+    el('div', { class: 'tools' }, search, sort), chips, list);
 }
+
 function fillMods() {
   const list = document.getElementById('modslist'); if (!list) return;
   const fn = FILTERS.find(f => f[0] === ui.filter)[2], term = ui.search.trim().toLowerCase();
-  const rows = S.rows.filter(fn).filter(r => !term || (r.name + ' ' + (r.author || '') + ' ' + r.uniqueId).toLowerCase().includes(term));
-  list.replaceChildren(...(rows.length ? rows.map(modRow) : [el('p', { class: 'muted big-center' }, 'Nothing matches.')]));
+  let rows = S.rows.filter(fn).filter(r => !term || (r.name + ' ' + (r.author || '') + ' ' + r.uniqueId).toLowerCase().includes(term));
+  const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  rows = rows.slice().sort(ui.sort === 'author' ? (a, b) => (a.author || '').localeCompare(b.author || '', undefined, { sensitivity: 'base' }) || byName(a, b)
+    : ui.sort === 'status' ? (a, b) => (STATE_RANK[a.state] ?? 9) - (STATE_RANK[b.state] ?? 9) || byName(a, b) : byName);
+  list.replaceChildren(el('div', { class: 'mhead', 'aria-hidden': 'true' }, el('span', null, 'On'), el('span', null, 'Mod'), el('span', null, 'Version'), el('span', null, 'Status'), el('span', null, '')),
+    ...(rows.length ? rows.map(modRow) : [el('p', { class: 'muted big-center' }, 'Nothing matches.')]));
 }
+
 async function toggleMod(r, enable, force = false) {
   const res = await post('toggle', { id: r.uniqueId, enable, force });
+  scheduleRender();
   if (!res) return;
   if (res.error) { toast(res.error, 'bad'); return; }
   if (res.dependents && res.dependents.length) {
@@ -689,16 +743,40 @@ async function toggleMod(r, enable, force = false) {
   }
   toast(enable ? r.name + ' is on again.' : r.name + ' is off. SMAPI skips it next time you play.');
 }
+
+function statusCell(r) {
+  const [, label, kind] = STATE_META[r.state] || STATE_META.UpToDate;
+  const parts = [];
+  if (r.state === 'Update') parts.push(el('span', { class: 'chip warn' }, 'Update ' + (r.note.split(': ')[1] || '')));
+  else if (r.skippedVersion) parts.push(el('span', { class: 'chip' }, 'Skipped ' + r.skippedVersion));
+  else parts.push(el('span', { class: 'chip ' + kind }, label));
+  if (r.unofficial) parts.push(el('button', { class: 'chip info', title: 'A community fix exists that is not the mod author\'s release', onclick: () => openUrl(r.unofficialUrl) }, 'Unofficial fix ' + r.unofficial));
+  return el('div', { class: 'mstatus' }, parts);
+}
+
+function modMenu(r) {
+  const items = [];
+  if (r.url) items.push(el('button', { onclick: () => openUrl(r.url) }, 'Open the mod page'));
+  items.push(el('button', { onclick: () => post('reveal-mod', { id: r.uniqueId }) }, 'Show the folder'));
+  if (r.skippedVersion) items.push(el('button', { onclick: () => post('unskipversion', { id: r.uniqueId }) }, 'Stop skipping ' + r.skippedVersion));
+  if (!['Bundled', 'Disabled'].includes(r.state))
+    items.push(el('button', { class: r.state === 'Ignored' ? '' : 'danger', onclick: () => post('ignore', { id: r.uniqueId, ignore: r.state !== 'Ignored' }) }, r.state === 'Ignored' ? 'Check this mod again' : 'Never check this mod'));
+  return el('details', { class: 'menu' }, el('summary', { 'aria-label': 'More actions for ' + r.name, title: 'More actions' }, '⋮'), el('div', { class: 'menu-list' }, items));
+}
+
 function modRow(r) {
-  const [icon, label, kind] = STATE_META[r.state] || STATE_META.UpToDate;
-  return el('div', { class: 'mrow' }, px(r.isContentPack ? 'book' : icon, 20),
-    el('div', null, el('div', { class: 'nm' }, r.name, ' ', el('span', { class: 'muted small' }, r.version), r.isContentPack ? el('span', { class: 'tag', style: 'margin-left:6px' }, 'content pack') : null),
-      el('div', { class: 'meta' }, (r.author ? r.author + ' · ' : '') + r.note)),
-    el('div', { class: 'acts' }, el('span', { class: 'chip ' + kind }, label),
-      r.url ? el('button', { class: 'link', onclick: () => openUrl(r.url) }, 'Page') : null,
-      el('button', { class: 'link', onclick: () => post('reveal-mod', { id: r.uniqueId }) }, 'Folder'),
-      r.state === 'Bundled' ? null : el('button', { class: 'link', title: r.state === 'Disabled' ? 'Turn this mod back on' : 'SMAPI skips a mod that is switched off', onclick: () => toggleMod(r, r.state === 'Disabled') }, r.state === 'Disabled' ? 'Turn on' : 'Turn off'),
-      ['Bundled', 'Disabled'].includes(r.state) ? null : el('button', { class: 'link' + (r.state === 'Ignored' ? '' : ' danger'), onclick: () => post('ignore', { id: r.uniqueId, ignore: r.state !== 'Ignored' }) }, r.state === 'Ignored' ? 'Check again' : 'Never update')));
+  const off = r.state === 'Disabled', locked = r.state === 'Bundled';
+  const sw = el('label', { class: 'switch', title: locked ? 'Part of SMAPI, always on' : off ? 'Turn this mod on' : 'Turn this mod off' },
+    el('input', { type: 'checkbox', role: 'switch', checked: !off, disabled: locked, 'aria-label': (off ? 'Turn on ' : 'Turn off ') + r.name, onchange: e => toggleMod(r, e.target.checked) }), el('i'));
+  return el('div', { class: 'mrow' + (off ? ' is-off' : '') },
+    sw,
+    el('div', { class: 'mname' },
+      el('div', { class: 'nm' }, r.name, r.isContentPack ? el('span', { class: 'tag', style: 'margin-left:6px' }, 'content pack') : null),
+      el('div', { class: 'meta' }, (r.author ? r.author + ' · ' : '') + r.note),
+      r.needs && r.needs.length ? el('div', { class: 'needs' }, px('alert', 14), 'Needs ' + r.needs.join(', ') + ' (not installed)') : null),
+    el('div', { class: 'mver' }, r.version),
+    statusCell(r),
+    modMenu(r));
 }
 
 // ---------------------------------------------------------------- history
@@ -730,10 +808,11 @@ function settingsView() {
           el('div', { class: 'fieldrow' }, keyInput, el('button', { class: 'btn primary', disabled: ui.keyBusy, onclick: connect }, ui.keyBusy ? 'Checking...' : 'Connect')),
           ui.keyError ? el('div', { class: 'small', style: 'color:var(--bad);font-weight:600' }, ui.keyError) : null,
           n.message ? el('div', { class: 'small', style: 'color:var(--warn)' }, n.message) : null,
-          el('p', { class: 'muted small' }, 'The key stays on this PC, encrypted so only your Windows account can read it, and is only sent to Nexus. Nexus allows a personal key for your own use, so do not share it. You can skip this: the app still works, you just press Nexus download buttons yourself.')));
+          el('p', { class: 'muted small' }, 'The key stays on this computer (' + (n.keyStorage || 'stored privately') + ') and is only sent to Nexus. Nexus allows a personal key for your own use, so do not share it. You can skip this: the app still works, you just press Nexus download buttons yourself.')));
   const nxmCard = el('div', { class: 'panel' }, el('h2', null, px('pointer', 22), 'Nexus "Mod Manager Download" button'),
     el('p', { class: 'muted' }, 'On a free account, this button is how Nexus lets a program download for you. If this app handles it, one click on Nexus starts the download and install.'),
-    n.nxm ? el('div', null, el('span', { class: 'chip ok' }, 'This app handles Nexus links'), ' ', el('button', { class: 'btn slim', onclick: () => post('nexus/nxm', { on: false }) }, 'Stop handling them'))
+    n.nxmSupported === false ? el('p', { class: 'small muted' }, 'This system cannot hand Nexus links to a program. Use the "Manual download" button on a mod page, then drop the file onto this window or leave it in your Downloads folder, and the app installs it.')
+    : n.nxm ? el('div', null, el('span', { class: 'chip ok' }, 'This app handles Nexus links'), ' ', el('button', { class: 'btn slim', onclick: () => post('nexus/nxm', { on: false }) }, 'Stop handling them'))
       : el('div', null,
           !n.connected ? el('p', { class: 'small', style: 'color:var(--warn)' }, 'Connect your Nexus account first; links do not work without the key.') : null,
           n.otherHandler ? el('p', { class: 'small', style: 'color:var(--warn)' }, 'Another program (such as Vortex or Mod Organizer) handles Nexus links right now. Switching affects it too, and you can switch back here.') : null,
@@ -753,9 +832,9 @@ function settingsView() {
     el('p', { class: 'muted small', style: 'margin:0' }, 'When you download a mod in your browser, the app notices it here and installs it.'),
     el('div', { class: 'fieldrow' }, dl, el('button', { class: 'btn', onclick: () => { post('downloads', { path: dl.value }); toast('Saved.'); } }, 'Save')));
   const lookCard = el('div', { class: 'panel' }, el('h2', null, px(isDark() ? 'moon' : 'sun', 22), 'Look'),
-    el('div', { class: 'filters' }, [['auto', 'Follow my PC'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => el('button', { 'aria-pressed': ui.theme === v, onclick: () => setTheme(v) }, l))));
+    el('div', { class: 'filters' }, [['auto', 'Follow my system'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => el('button', { 'aria-pressed': ui.theme === v, onclick: () => setTheme(v) }, l))));
   const winCard = el('div', { class: 'panel' }, el('h2', null, px('package', 22), 'Window style'),
-    el('p', { class: 'muted small', style: 'margin:0 0 8px' }, 'The app opens in its own window using Microsoft Edge, Chrome or Brave, which are already on your PC. It uses a private profile, so it never touches your browsing. Takes effect the next time you start the app.'),
+    el('p', { class: 'muted small', style: 'margin:0 0 8px' }, 'The app opens in its own window using Chrome, Chromium, Edge or Brave, whichever is already installed. It uses a private profile, so it never touches your browsing. Takes effect the next time you start the app.'),
     ['true', 'false'].map(v => el('label', { style: 'display:flex;gap:10px;margin:8px 0;cursor:pointer' },
       el('input', { type: 'radio', name: 'win', class: 'check', checked: String(S.settings.appWindow) === v, onchange: () => post('window', { on: v === 'true' }) }),
       v === 'true' ? el('span', null, el('strong', null, 'App window (recommended). '), 'No tabs or address bar, like a normal program.')

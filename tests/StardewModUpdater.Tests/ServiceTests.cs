@@ -717,3 +717,72 @@ public class StuckProtectionTests
         Assert.Equal("1.0.0", ManifestReader.ReadFile(dir.Combine("game", "Mods", "Thing", "manifest.json"), "x")!.Version);
     }
 }
+
+public class ModListDetailTests
+{
+    private static async Task<(TempDir Dir, FakeWeb Web, UpdateService Service)> MakeAsync(string smapiJson)
+    {
+        var dir = new TempDir();
+        var web = new FakeWeb { Handler = (path, _) => path == "/smapi" ? FakeWeb.Json(smapiJson) : null };
+        Directory.CreateDirectory(dir.Combine("game", "Mods"));
+        File.WriteAllText(dir.Combine("game", "Stardew Valley.dll"), "");
+        dir.Write("game/Mods/Thing/manifest.json", Zips.Manifest("me.Thing", "1.0.0", "Thing", ", \"UpdateKeys\": [\"Nexus:5\"], \"Dependencies\": [{\"UniqueID\":\"fw.Missing\"}]"));
+        var service = new UpdateService(new SettingsStore(dir.Combine("settings.json")), new HistoryStore(dir.Combine("history.json"), dir.Combine("backups")), _ => { });
+        await service.SetGameFolderAsync(dir.Combine("game"));
+        return (dir, web, service);
+    }
+
+    private static async Task<JsonElement> ReviewAsync(UpdateService s)
+    {
+        var end = DateTime.UtcNow.AddSeconds(20);
+        while (DateTime.UtcNow < end)
+        {
+            var snap = JsonSerializer.SerializeToElement(s.Snapshot(), AppEnvironment.Json);
+            if (snap.GetProperty("phase").GetString() == "Review") return snap;
+            await Task.Delay(100);
+        }
+        throw new TimeoutException();
+    }
+
+    private const string Suggests = """[{"id":"me.Thing","suggestedUpdate":{"version":"1.1.0","url":"x"},"metadata":{"name":"Thing","nexusID":5,"main":{"version":"1.1.0"},"unofficial":{"version":"1.0.5-fix","url":"https://github.com/x/y"}},"errors":[]},{"id":"fw.Missing","metadata":{"name":"The Missing Framework","nexusID":9,"main":{"version":"3.0.0"}},"errors":[]}]""";
+
+    [Fact]
+    public async Task EachRowSaysWhatItStillNeedsAndWhetherAnUnofficialFixExists()
+    {
+        var (dir, web, service) = await MakeAsync(Suggests);
+        using (dir) using (web) using (service)
+        {
+            var s = await ReviewAsync(service);
+            var row = s.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("uniqueId").GetString() == "me.Thing");
+            Assert.Equal("The Missing Framework", row.GetProperty("needs")[0].GetString());
+            Assert.Equal("1.0.5-fix", row.GetProperty("unofficial").GetString());
+            Assert.Equal("https://github.com/x/y", row.GetProperty("unofficialUrl").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task ASkippedVersionStaysHiddenAndTheNextOneComesBack()
+    {
+        var (dir, web, service) = await MakeAsync(Suggests);
+        using (dir) using (web) using (service)
+        {
+            var s = await ReviewAsync(service);
+            Assert.Contains(s.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetString() == "nexus:5");
+
+            service.SkipVersion("nexus:5");
+            await service.CheckAsync();
+            s = await ReviewAsync(service);
+            Assert.DoesNotContain(s.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetString() == "nexus:5");
+            var row = s.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("uniqueId").GetString() == "me.Thing");
+            Assert.Equal("1.1.0", row.GetProperty("skippedVersion").GetString());
+
+            // a newer version than the skipped one is offered again
+            web.Handler = (path, _) => path == "/smapi" ? FakeWeb.Json(Suggests.Replace("\"version\":\"1.1.0\"", "\"version\":\"1.2.0\"")) : null;
+            await service.CheckAsync();
+            s = await ReviewAsync(service);
+            Assert.Contains(s.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetString() == "nexus:5" && i.GetProperty("target").GetString() == "1.2.0");
+
+            service.UnskipVersion("me.Thing");
+        }
+    }
+}

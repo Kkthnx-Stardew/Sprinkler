@@ -13,7 +13,7 @@ using StardewModUpdater.Core;
 
 namespace StardewModUpdater.Web;
 
-/// <summary>The local web server behind the window. It only answers requests from this PC and requires a per-run token.</summary>
+/// <summary>The local web server behind the window. It only answers requests from this computer and requires a per-run token.</summary>
 internal sealed class WebHost : IAsyncDisposable
 {
     private static readonly string[] OpenableHosts =
@@ -38,10 +38,7 @@ internal sealed class WebHost : IAsyncDisposable
 
     public WebHost(UpdateService service) => _service = service;
 
-    public static void OpenInBrowser(string url)
-    {
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
-    }
+    public static void OpenInBrowser(string url) => Platform.OpenUrl(url);
 
     public async Task StartAsync(int port = 0)
     {
@@ -202,7 +199,7 @@ internal sealed class WebHost : IAsyncDisposable
             };
             if (path is null || !Directory.Exists(path))
                 return Results.NotFound();
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true })?.Dispose();
+            Platform.OpenFolder(path);
             return Results.Ok();
         });
 
@@ -218,6 +215,9 @@ internal sealed class WebHost : IAsyncDisposable
             return Results.Ok();
         });
 
+        api.MapPost("/skipversion", (IdBody body) => { _service.SkipVersion(body.Id ?? ""); return Results.Ok(); });
+        api.MapPost("/unskipversion", (IdBody body) => { _service.UnskipVersion(body.Id ?? ""); return Results.Ok(); });
+
         api.MapPost("/log/dismiss", () => { _service.DismissLog(); return Results.Ok(); });
 
         api.MapPost("/diagnostics", () => Results.Json(new { text = _service.Diagnostics() }));
@@ -229,7 +229,7 @@ internal sealed class WebHost : IAsyncDisposable
             var path = _service.ModFolder(body.Id ?? "");
             if (path is null || !Directory.Exists(path))
                 return Results.NotFound();
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true })?.Dispose();
+            Platform.OpenFolder(path);
             return Results.Ok();
         });
 

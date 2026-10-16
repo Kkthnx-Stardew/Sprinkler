@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 
 namespace StardewModUpdater.Core;
@@ -23,6 +21,7 @@ internal sealed class SettingsData
     public bool NxmRegistered { get; set; }
     public string? NxmPreviousHandler { get; set; }
     public List<string> Ignored { get; set; } = new();
+    public Dictionary<string, string> SkippedVersions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public int BackupsPerMod { get; set; } = 5;
     public bool Welcomed { get; set; }
     public bool AppWindow { get; set; } = true;
@@ -31,7 +30,7 @@ internal sealed class SettingsData
     public bool TourSeen { get; set; }
 }
 
-/// <summary>Settings stored as JSON. The Nexus key is encrypted for the current Windows user.</summary>
+/// <summary>Settings stored as JSON. The Nexus key goes to the safest place the system offers (see SecretStores).</summary>
 internal sealed class SettingsStore
 {
     private readonly string _file;
@@ -39,39 +38,25 @@ internal sealed class SettingsStore
 
     public SettingsData Data { get; private set; } = new();
 
+    private readonly ISecretStore _secrets;
+
     public SettingsStore(string? file = null)
     {
         _file = file ?? AppEnvironment.SettingsFile;
         Load();
+        _secrets = SecretStores.Create(Data, Save, Path.GetDirectoryName(Path.GetFullPath(_file))!);
     }
+
+    /// <summary>A short phrase saying where the Nexus key is kept, shown to the user.</summary>
+    public string KeyStorage => _secrets.Description;
 
     public string? NexusKey
     {
-        get
-        {
-            var protectedText = Data.NexusKeyProtected;
-            if (string.IsNullOrEmpty(protectedText))
-                return null;
-            try
-            {
-                var bytes = ProtectedData.Unprotect(Convert.FromBase64String(protectedText), null, DataProtectionScope.CurrentUser);
-                return Encoding.UTF8.GetString(bytes);
-            }
-            catch (Exception ex) when (ex is CryptographicException or FormatException)
-            {
-                return null;
-            }
-        }
-        set
-        {
-            Data.NexusKeyProtected = string.IsNullOrWhiteSpace(value)
-                ? null
-                : Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(value.Trim()), null, DataProtectionScope.CurrentUser));
-            Save();
-        }
+        get => _secrets.Read();
+        set => _secrets.Write(value);
     }
 
-    public string DownloadsPath => string.IsNullOrWhiteSpace(Data.DownloadsPath) ? AppEnvironment.DownloadsFolder() : Data.DownloadsPath!;
+    public string DownloadsPath => string.IsNullOrWhiteSpace(Data.DownloadsPath) ? Platform.DownloadsFolder() : Data.DownloadsPath!;
 
     public void Save()
     {

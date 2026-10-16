@@ -1,3 +1,5 @@
+using System.Runtime.Versioning;
+using System.Text;
 using Microsoft.Win32;
 
 namespace StardewModUpdater.Core;
@@ -34,15 +36,22 @@ internal sealed record NxmLink(string Game, string ModId, string FileId, string?
     }
 }
 
-/// <summary>Makes this app the handler for nxm:// links for the current Windows user only, and can hand the link back.</summary>
+/// <summary>
+/// Makes this app the handler for nxm:// links for the current user only, and can hand the link back.
+/// Windows uses the registry. Linux uses a .desktop file and xdg-mime. macOS cannot do this without an app bundle.
+/// </summary>
 internal static class NxmRegistration
 {
-    private const string KeyPath = @"Software\Classes\nxm";
+    private const string RegistryKeyPath = @"Software\Classes\nxm";
+    internal const string DesktopFileName = "stardew-mod-updater-nxm.desktop";
 
     private static (bool Ours, bool Other, DateTime At) _status;
     private static readonly object StatusGate = new();
 
-    /// <summary>Registry state for the UI, cached for a few seconds because the UI asks on every refresh.</summary>
+    /// <summary>False where the system gives the app no way to take over nxm links (macOS).</summary>
+    public static bool Supported => Platform.IsWindows || Platform.IsLinux;
+
+    /// <summary>State for the UI, cached for a few seconds because the UI asks on every refresh.</summary>
     public static (bool Ours, bool Other) Status()
     {
         lock (StatusGate)
@@ -64,9 +73,65 @@ internal static class NxmRegistration
 
     public static bool IsRegisteredToThisApp()
     {
+        if (OperatingSystem.IsWindows())
+            return WindowsIsOurs();
+        if (Platform.IsLinux)
+            return string.Equals(LinuxDefaultHandler(), DesktopFileName, StringComparison.Ordinal);
+        return false;
+    }
+
+    /// <summary>The program that handles nxm links now, if it is not this app (for example Vortex).</summary>
+    public static string? CurrentHandler()
+    {
+        if (OperatingSystem.IsWindows())
+            return WindowsHandler();
+        if (Platform.IsLinux)
+        {
+            var current = LinuxDefaultHandler();
+            return string.IsNullOrEmpty(current) || current == DesktopFileName ? null : current;
+        }
+        return null;
+    }
+
+    /// <summary>Registers this app. Returns the handler that was replaced so it can be restored later.</summary>
+    public static string? Register()
+    {
+        var exe = Environment.ProcessPath ?? throw new InvalidOperationException("The app path is unknown.");
+        string? previous;
+        if (OperatingSystem.IsWindows())
+            previous = WindowsRegister(exe);
+        else if (Platform.IsLinux)
+            previous = LinuxRegister(exe);
+        else
+            throw new InvalidOperationException("This system does not let an app take over Nexus links. Use the Manual download button on Nexus instead.");
+        ForgetStatus();
+        return previous;
+    }
+
+    /// <summary>Removes this app as the handler, putting back the previous one when there was one.</summary>
+    public static void Unregister(string? previousHandler)
+    {
         try
         {
-            using var cmd = Registry.CurrentUser.OpenSubKey(KeyPath + @"\shell\open\command");
+            if (OperatingSystem.IsWindows())
+                WindowsUnregister(previousHandler);
+            else if (Platform.IsLinux)
+                LinuxUnregister(previousHandler);
+        }
+        finally
+        {
+            ForgetStatus();
+        }
+    }
+
+    // ------------------------------------------------------------ Windows
+
+    [SupportedOSPlatform("windows")]
+    private static bool WindowsIsOurs()
+    {
+        try
+        {
+            using var cmd = Registry.CurrentUser.OpenSubKey(RegistryKeyPath + @"\shell\open\command");
             var value = cmd?.GetValue("") as string;
             return value is not null && value.Contains(Environment.ProcessPath ?? "?", StringComparison.OrdinalIgnoreCase);
         }
@@ -76,12 +141,12 @@ internal static class NxmRegistration
         }
     }
 
-    /// <summary>The current handler's command line, if some other program (for example Vortex) owns the link.</summary>
-    public static string? CurrentHandler()
+    [SupportedOSPlatform("windows")]
+    private static string? WindowsHandler()
     {
         try
         {
-            using var cmd = Registry.CurrentUser.OpenSubKey(KeyPath + @"\shell\open\command")
+            using var cmd = Registry.CurrentUser.OpenSubKey(RegistryKeyPath + @"\shell\open\command")
                 ?? Registry.ClassesRoot.OpenSubKey(@"nxm\shell\open\command");
             return cmd?.GetValue("") as string;
         }
@@ -91,41 +156,89 @@ internal static class NxmRegistration
         }
     }
 
-    /// <summary>Registers this app. Returns the command that was replaced so it can be restored later.</summary>
-    public static string? Register()
+    [SupportedOSPlatform("windows")]
+    private static string? WindowsRegister(string exe)
     {
-        var exe = Environment.ProcessPath ?? throw new InvalidOperationException("The app path is unknown.");
-        var previous = IsRegisteredToThisApp() ? null : CurrentHandler();
-
-        using var root = Registry.CurrentUser.CreateSubKey(KeyPath);
+        var previous = WindowsIsOurs() ? null : WindowsHandler();
+        using var root = Registry.CurrentUser.CreateSubKey(RegistryKeyPath);
         root.SetValue("", "URL:NXM Protocol");
         root.SetValue("URL Protocol", "");
         using var cmd = root.CreateSubKey(@"shell\open\command");
         cmd.SetValue("", $"\"{exe}\" \"%1\"");
-        ForgetStatus();
         return previous;
     }
 
-    /// <summary>Removes this app as the handler, putting back the previous command when there was one.</summary>
-    public static void Unregister(string? previousCommand)
+    [SupportedOSPlatform("windows")]
+    private static void WindowsUnregister(string? previousCommand)
     {
+        if (!WindowsIsOurs())
+            return;
+
+        if (string.IsNullOrWhiteSpace(previousCommand))
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(RegistryKeyPath, throwOnMissingSubKey: false);
+            return;
+        }
+
+        using var cmd = Registry.CurrentUser.CreateSubKey(RegistryKeyPath + @"\shell\open\command");
+        cmd.SetValue("", previousCommand);
+    }
+
+    // ------------------------------------------------------------ Linux (freedesktop.org: .desktop files and xdg-mime)
+
+    private static string DesktopFilePath =>
+        Path.Combine(Environment.GetEnvironmentVariable("XDG_DATA_HOME") is { Length: > 0 } d ? d : Path.Combine(Platform.HomeDir, ".local", "share"), "applications", DesktopFileName);
+
+    /// <summary>The text of the .desktop file that makes nxm links start this app.</summary>
+    internal static string DesktopFileText(string exe)
+    {
+        // Exec values are quoted, and a literal percent sign is written twice
+        var quoted = "\"" + exe.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("`", "\\`").Replace("$", "\\$").Replace("%", "%%") + "\"";
+        var sb = new StringBuilder();
+        sb.AppendLine("[Desktop Entry]");
+        sb.AppendLine("Type=Application");
+        sb.AppendLine("Name=Stardew Mod Updater (Nexus links)");
+        sb.AppendLine("Comment=Installs mods from the Mod Manager Download button on Nexus Mods");
+        sb.AppendLine($"Exec={quoted} %u");
+        sb.AppendLine("Terminal=false");
+        sb.AppendLine("NoDisplay=true");
+        sb.AppendLine("MimeType=x-scheme-handler/nxm;");
+        return sb.ToString();
+    }
+
+    private static string? LinuxDefaultHandler() =>
+        Platform.Capture("xdg-mime", new[] { "query", "default", "x-scheme-handler/nxm" })?.Trim() is { Length: > 0 } s ? s : null;
+
+    private static string? LinuxRegister(string exe)
+    {
+        if (Platform.Which("xdg-mime") is null)
+            throw new InvalidOperationException("The xdg-mime tool is missing, so Linux cannot hand Nexus links to this app. Install xdg-utils, or use the Manual download button on Nexus.");
+
+        var previous = LinuxDefaultHandler();
+        if (previous == DesktopFileName)
+            previous = null;
+
+        var file = DesktopFilePath;
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, DesktopFileText(exe));
+        Platform.Capture("update-desktop-database", new[] { Path.GetDirectoryName(file)! });
+        if (Platform.Capture("xdg-mime", new[] { "default", DesktopFileName, "x-scheme-handler/nxm" }) is null)
+            throw new InvalidOperationException("xdg-mime could not register the handler.");
+        return previous;
+    }
+
+    private static void LinuxUnregister(string? previous)
+    {
+        if (LinuxDefaultHandler() == DesktopFileName && !string.IsNullOrWhiteSpace(previous))
+            Platform.Capture("xdg-mime", new[] { "default", previous, "x-scheme-handler/nxm" });
         try
         {
-            if (!IsRegisteredToThisApp())
-                return;
-
-            if (string.IsNullOrWhiteSpace(previousCommand))
-            {
-                Registry.CurrentUser.DeleteSubKeyTree(KeyPath, throwOnMissingSubKey: false);
-                return;
-            }
-
-            using var cmd = Registry.CurrentUser.CreateSubKey(KeyPath + @"\shell\open\command");
-            cmd.SetValue("", previousCommand);
+            if (File.Exists(DesktopFilePath))
+                File.Delete(DesktopFilePath);
         }
-        finally
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ForgetStatus();
         }
+        Platform.Capture("update-desktop-database", new[] { Path.GetDirectoryName(DesktopFilePath)! });
     }
 }

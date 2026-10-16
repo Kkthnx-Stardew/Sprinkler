@@ -45,7 +45,7 @@ internal sealed class SmapiClient
                 }),
                 apiVersion = smapiVersion ?? "4.0.0",
                 gameVersion = gameVersion ?? "1.6.0",
-                platform = "Windows",
+                platform = Platform.SmapiName,
                 includeExtendedMetadata = true,
             };
 

@@ -41,6 +41,16 @@ internal sealed class TempDir : IDisposable
     }
 }
 
+/// <summary>For a test that needs Windows file locking, which Linux and macOS do not enforce.</summary>
+public sealed class WindowsFactAttribute : FactAttribute
+{
+    public WindowsFactAttribute()
+    {
+        if (!OperatingSystem.IsWindows())
+            Skip = "Needs Windows file locking.";
+    }
+}
+
 internal static class Zips
 {
     public static string Manifest(string id, string version, string name = "Test Mod", string extra = "") =>

@@ -70,7 +70,7 @@ internal sealed class UpdateItem
 
 internal sealed record WaitResult(bool Installed, int? SwitchTo);
 
-internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false);
+internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null);
 
 internal sealed record Problem(string Level, string Title, string Detail, string? Url = null, string? UrlLabel = null);
 
@@ -364,7 +364,12 @@ internal sealed class UpdateService : IDisposable
             if (compat is not null)
                 problems.Add(compat);
 
-            if (r?.SuggestedVersion is { } target)
+            if (r?.SuggestedVersion is { } skippedTarget && settings.SkippedVersions.TryGetValue(m.UniqueId, out var skippedValue)
+                && ModVersion.Parse(skippedTarget) is { } sv && ModVersion.Parse(skippedValue) is { } kv && sv == kv)
+            {
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.UpToDate, $"You chose to skip version {skippedTarget}.", m.FolderName, SkippedVersion: skippedTarget));
+            }
+            else if (r?.SuggestedVersion is { } target)
             {
                 var key = ident.Key ?? "id:" + m.UniqueId;
                 if (!groups.TryGetValue(key, out var item))
@@ -432,7 +437,17 @@ internal sealed class UpdateService : IDisposable
                 : id.CurseForge is not null ? CurseForgeClient.PageUrl(id.CurseForge.Value)
                 : id.GitHub is not null ? $"https://github.com/{id.GitHub}"
                 : null;
-            return r with { Url = url, Author = mod?.Author, IsContentPack = mod?.ContentPackFor is not null };
+            string[]? needs = null;
+            if (mod is not null && !mod.Disabled)
+            {
+                var wanted = mod.Dependencies.Where(d => d.Required).Select(d => d.UniqueId).Concat(mod.ContentPackFor is null ? Array.Empty<string>() : new[] { mod.ContentPackFor });
+                var lacking = wanted.Where(d => !installedIds.Contains(d) && !d.StartsWith("SMAPI.", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(d => results.TryGetValue(d, out var dr) && !string.IsNullOrWhiteSpace(dr.Name) ? dr.Name! : d).ToArray();
+                if (lacking.Length > 0)
+                    needs = lacking;
+            }
+            var unofficial = res?.UnofficialVersion is not null && res.UnofficialUrl is not null ? res.UnofficialVersion : null;
+            return r with { Url = url, Author = mod?.Author, IsContentPack = mod?.ContentPackFor is not null, Needs = needs, Unofficial = unofficial, UnofficialUrl = unofficial is null ? null : res!.UnofficialUrl };
         }).ToList();
 
         // missing required mods become "install" items
@@ -827,7 +842,15 @@ internal sealed class UpdateService : IDisposable
 
     public string RegisterNxm()
     {
-        var previous = NxmRegistration.Register();
+        string? previous;
+        try
+        {
+            previous = NxmRegistration.Register();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ex.Message;
+        }
         Settings.Data.NxmRegistered = true;
         if (previous is not null)
             Settings.Data.NxmPreviousHandler = previous;
@@ -1493,7 +1516,7 @@ internal sealed class UpdateService : IDisposable
         var game = _game;
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"{AppEnvironment.AppName} {AppEnvironment.Version}");
-        sb.AppendLine("Windows: " + Environment.OSVersion.VersionString);
+        sb.AppendLine("System: " + Platform.Description);
         sb.AppendLine($"Game: {game?.GameVersion ?? "?"} ({game?.Store ?? "not set"}), SMAPI {game?.SmapiVersion ?? "not found"}");
         lock (_gate)
         {
@@ -1558,7 +1581,7 @@ internal sealed class UpdateService : IDisposable
         }
         else if (!name.StartsWith('.'))
         {
-            return ("This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in File Explorer.", null);
+            return ("This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in your file manager.", null);
         }
 
         var target = Path.Combine(parent, enable ? name.TrimStart('.') : "." + name);
@@ -1593,6 +1616,36 @@ internal sealed class UpdateService : IDisposable
         }
     }
 
+    /// <summary>Hides one specific version of a mod's update. A later version shows up again.</summary>
+    public void SkipVersion(string itemId)
+    {
+        lock (_gate)
+        {
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item is null || item.IsNew || item.Status is ItemStatus.Working or ItemStatus.WaitingForYou or ItemStatus.Queued)
+                return;
+            foreach (var uid in item.UniqueIds)
+                Settings.Data.SkippedVersions[uid] = item.Target;
+            Settings.Save();
+            _items = _items.Where(i => i.Id != itemId).ToList();
+            var ids = new HashSet<string>(item.UniqueIds, StringComparer.OrdinalIgnoreCase);
+            _rows = _rows.Select(r => ids.Contains(r.UniqueId) && r.State == RowState.Update
+                ? r with { State = RowState.UpToDate, Note = $"You chose to skip version {item.Target}.", SkippedVersion = item.Target }
+                : r).ToList();
+            Update(() => { });
+        }
+    }
+
+    public void UnskipVersion(string uniqueId)
+    {
+        lock (_gate)
+        {
+            if (Settings.Data.SkippedVersions.Remove(uniqueId))
+                Settings.Save();
+        }
+        _ = CheckAsync();
+    }
+
     public void DismissLog()
     {
         lock (_gate)
@@ -1609,15 +1662,7 @@ internal sealed class UpdateService : IDisposable
     public string? LaunchGame()
     {
         var game = _game;
-        if (game is null)
-            return "No game folder is set.";
-        if (GameLocator.IsGameRunning(fresh: true))
-            return "The game is already running.";
-        var exe = Path.Combine(game.GamePath, "StardewModdingAPI.exe");
-        if (!File.Exists(exe))
-            return "SMAPI is not installed in this game folder. Get it from smapi.io first.";
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { WorkingDirectory = game.GamePath, UseShellExecute = true })?.Dispose();
-        return null;
+        return game is null ? "No game folder is set." : GameProcess.Launch(game);
     }
 
     public string? ModFolder(string uniqueId)
@@ -1679,6 +1724,7 @@ internal sealed class UpdateService : IDisposable
                     name = AppEnvironment.AppName,
                     version = AppEnvironment.Version,
                     repo = AppEnvironment.RepoUrl,
+                    os = Platform.SmapiName,
                     update = _appUpdate is null ? null : new { version = _appUpdate.Value.Version, url = _appUpdate.Value.Url },
                 },
                 game = game is null ? null : new
@@ -1689,7 +1735,8 @@ internal sealed class UpdateService : IDisposable
                     gameVersion = game.GameVersion,
                     smapi = game.SmapiVersion,
                     running,
-                    canLaunch = game.HasSmapi,
+                    canLaunch = GameProcess.CanLaunch(game),
+                    os = Platform.SmapiName,
                 },
                 candidates = _candidates.Select(c => new { path = c.GamePath, store = c.Store, smapi = c.SmapiVersion }),
                 welcomed = Settings.Data.Welcomed,
@@ -1703,6 +1750,8 @@ internal sealed class UpdateService : IDisposable
                     message = _nexusMessage,
                     nxm = Settings.Data.NxmRegistered && nxmStatus.Ours,
                     otherHandler = nxmStatus.Other,
+                    nxmSupported = NxmRegistration.Supported,
+                    keyStorage = Settings.KeyStorage,
                 },
                 settings = new
                 {

@@ -65,9 +65,7 @@ internal static class AppEnvironment
     private static string ResolveDataDir()
     {
         var overridePath = Environment.GetEnvironmentVariable("SMU_DATA");
-        var dir = !string.IsNullOrWhiteSpace(overridePath)
-            ? overridePath
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StardewModUpdater");
+        var dir = !string.IsNullOrWhiteSpace(overridePath) ? overridePath : Platform.DefaultDataDir();
         Directory.CreateDirectory(dir);
         return dir;
     }
@@ -78,24 +76,6 @@ internal static class AppEnvironment
         return string.IsNullOrWhiteSpace(v) ? fallback : v;
     }
 
-    public static string DownloadsFolder()
-    {
-        try
-        {
-            var guid = new Guid("374DE290-123F-4565-9164-39C4925E467B");
-            var hr = SHGetKnownFolderPath(ref guid, 0, IntPtr.Zero, out var path);
-            if (hr == 0 && !string.IsNullOrEmpty(path))
-                return path;
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
-        {
-        }
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-    }
-
-    [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
-    private static extern int SHGetKnownFolderPath(ref Guid rfid, uint dwFlags, IntPtr hToken,
-        [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] out string path);
 }
 
 internal static class Log

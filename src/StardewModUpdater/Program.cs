@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using StardewModUpdater.Core;
 using StardewModUpdater.Web;
@@ -9,14 +10,22 @@ namespace StardewModUpdater;
 internal static class Program
 {
     [DllImport("kernel32.dll")]
+    [SupportedOSPlatform("windows")]
     private static extern bool AttachConsole(int processId);
+
+    /// <summary>A windowed Windows program has no console, so borrow the one it was started from. Elsewhere the terminal is already attached.</summary>
+    private static void AttachParentConsole()
+    {
+        if (OperatingSystem.IsWindows())
+            AttachConsole(-1);
+    }
 
     private static async Task<int> Main(string[] args)
     {
         var options = Options.Parse(args);
 
         if (options.Help || options.Check || options.Version)
-            AttachConsole(-1);
+            AttachParentConsole();
 
         if (options.Version)
         {
@@ -33,8 +42,8 @@ internal static class Program
         if (options.Check)
             return await CheckOnlyAsync(options);
 
-        using var mutex = new Mutex(true, "Local\\StardewModUpdater.Single", out var first);
-        if (!first && await ForwardToRunningInstanceAsync(options))
+        using var instance = new SingleInstance();
+        if (!instance.IsFirst && await ForwardToRunningInstanceAsync(options))
             return 0;
 
         var settings = new SettingsStore();

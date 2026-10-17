@@ -47,6 +47,10 @@ internal static class Program
         if (options.Check)
             return CheckOnlyAsync(options).GetAwaiter().GetResult();
 
+        if (options.WaitFor is { } previous)
+            SelfUpdate.WaitForExit(previous);
+        _ = Task.Run(() => SelfUpdate.RemoveLeftovers());
+
         Instance = new SingleInstance();
         if (!Instance.IsFirst)
         {
@@ -148,7 +152,7 @@ internal static class Program
 }
 
 /// <summary>Command line choices.</summary>
-internal sealed record Options(string? ModsPath, string? GamePath, bool Check, bool Help, string? NxmUrl, bool Version = false, bool InstallShortcut = false, bool RemoveShortcut = false, string? Tab = null, string? Theme = null, bool NoTour = false, string? Filter = null, string? Search = null, string? Language = null)
+internal sealed record Options(string? ModsPath, string? GamePath, bool Check, bool Help, string? NxmUrl, bool Version = false, bool InstallShortcut = false, bool RemoveShortcut = false, string? Tab = null, string? Theme = null, bool NoTour = false, string? Filter = null, string? Search = null, string? Language = null, int? WaitFor = null)
 {
     public const string HelpText =
         "Sprinkler, a Stardew Valley mod updater\n" +
@@ -164,6 +168,7 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
     public static Options Parse(string[] args)
     {
         string? mods = null, game = null, nxm = null, tab = null, theme = null, filter = null, search = null, language = null;
+        int? waitFor = null;
         bool check = false, help = false, version = false, installShortcut = false, removeShortcut = false, noTour = false;
         for (var i = 0; i < args.Length; i++)
         {
@@ -177,6 +182,7 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
                 case "--theme" when i + 1 < args.Length: theme = args[++i]; break;
                 case "--no-tour": noTour = true; break;
                 case "--lang" when i + 1 < args.Length: language = args[++i]; break;
+                case "--wait-for" when i + 1 < args.Length && int.TryParse(args[i + 1], out var pid): waitFor = pid; i++; break;
                 case "--filter" when i + 1 < args.Length: filter = args[++i]; break;
                 case "--search" when i + 1 < args.Length: search = args[++i]; break;
                 case "--install-shortcut": installShortcut = true; break;
@@ -189,6 +195,6 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
                     break;
             }
         }
-        return new Options(mods, game, check, help, nxm, version, installShortcut, removeShortcut, tab, theme, noTour, filter, search, language);
+        return new Options(mods, game, check, help, nxm, version, installShortcut, removeShortcut, tab, theme, noTour, filter, search, language, waitFor);
     }
 }

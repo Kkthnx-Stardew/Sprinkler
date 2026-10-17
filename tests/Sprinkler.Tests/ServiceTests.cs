@@ -472,8 +472,8 @@ public class AppInfoTests
     {
         using var dir = new TempDir();
         using var web = new FakeWeb();
-        web.Handler = (path, ctx) => path == $"/gh/repos/{AppEnvironment.RepoSlug}/releases/latest"
-            ? FakeWeb.Json("""{"tag_name":"v99.0.0","html_url":"https://github.com/Kkthnx-Stardew/StardewModUpdater/releases/tag/v99.0.0"}""")
+        web.Handler = (path, ctx) => path == $"/gh/repos/{AppEnvironment.RepoSlug}/releases"
+            ? FakeWeb.Json("""[{"tag_name":"v99.0.0","html_url":"https://github.com/Kkthnx-Stardew/StardewModUpdater/releases/tag/v99.0.0","prerelease":false,"draft":false,"assets":[]}]""")
             : null;
         using var service = MakeService(dir);
         await service.CheckAppUpdateAsync();
@@ -487,7 +487,7 @@ public class AppInfoTests
     {
         using var dir = new TempDir();
         using var web = new FakeWeb();
-        web.Handler = (path, ctx) => path.EndsWith("/releases/latest") ? FakeWeb.Json("""{"tag_name":"v0.0.1","html_url":"https://github.com/x/y"}""") : null;
+        web.Handler = (path, ctx) => path.EndsWith("/releases") ? FakeWeb.Json("""[{"tag_name":"v0.0.1","html_url":"https://github.com/x/y","prerelease":false,"draft":false,"assets":[]}]""") : null;
         using var service = MakeService(dir);
         await service.CheckAppUpdateAsync();
         var app = JsonSerializer.SerializeToElement(service.Snapshot(), AppEnvironment.Json).GetProperty("app");

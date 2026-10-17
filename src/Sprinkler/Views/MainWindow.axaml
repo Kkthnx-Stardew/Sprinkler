@@ -41,7 +41,7 @@
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{loc:T ui.your_active_profile}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Text="{Binding ProfileChipText}" /></StackPanel>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" Command="{Binding OpenAppUpdateCommand}">
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" IsEnabled="{Binding !AppUpdateBusy}" Command="{Binding OpenAppUpdateCommand}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Text="{Binding AppUpdateText}" /></StackPanel>
                 </Button>
               </WrapPanel>

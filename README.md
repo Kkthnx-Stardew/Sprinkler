@@ -61,6 +61,7 @@ It also finds required mods that are missing (the ones SMAPI skips without a cle
 - **Remove with undo.** Removing a mod backs up its folder first and shows it in History with an Undo button that brings it back with its settings.
 - **Notes and endorsing.** Keep a private note on any mod, open its settings file, and endorse mods on Nexus from the app (through your own key).
 - **A tidier list.** Content packs sit under the mod they belong to, and a filter finds the mods that have settings.
+- **Updates itself, if you let it.** When a newer release exists, a pill in the header offers it. Pressing it asks first, then downloads the release, checks its signature and fingerprint against a key built into the app, starts the new version once to make sure it works, replaces the old one and restarts. Your mods, settings and profiles are not touched. Builds you run from source, or from a folder you cannot write to, only link to the release page. Looking for updates can be switched off under Nexus and settings.
 - **Your language.** The app speaks 17 languages (English, Spanish, French, German, Brazilian Portuguese, Italian, Dutch, Russian, Ukrainian, Polish, Turkish, Hungarian, Bulgarian, Simplified Chinese, Japanese, Korean and Thai). It follows your system and you can change it under Nexus and settings. The 16 translations were written with machine help and need native readers, so corrections are welcome: see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 ![Profiles](docs/screenshots/profiles-light.png)

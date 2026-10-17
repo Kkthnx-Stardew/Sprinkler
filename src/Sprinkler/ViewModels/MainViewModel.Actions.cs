@@ -50,7 +50,50 @@ internal sealed partial class MainViewModel
     private void OpenSmapiUpdate() => OpenUrl(SmapiUpdateUrl);
 
     [RelayCommand]
-    private void OpenAppUpdate() => OpenUrl(Snap?.App.Update?.Url);
+    private async Task OpenAppUpdate()
+    {
+        var update = Snap?.App.Update;
+        if (update is null || update.Busy)
+            return;
+        if (!update.CanInstall)
+        {
+            OpenUrl(update.Url);
+            return;
+        }
+
+        var dialog = new ConfirmDialogViewModel(Loc.T("upd.confirm_title", update.Version), "gift", Loc.T("upd.yes"), Loc.T("ui.cancel"),
+            new[] { new DialogLine("", Loc.T("upd.confirm_text")) },
+            new[] { Loc.T("upd.b1"), Loc.T("upd.b2"), Loc.T("upd.b3") });
+        ShowDialog(dialog);
+        if (!await dialog.Result)
+            return;
+
+        var error = await _svc.InstallAppUpdateAsync();
+        if (error is not null)
+        {
+            Toast(error, true);
+            return;
+        }
+        if (!_svc.RestartIntoUpdate())
+        {
+            Toast(Loc.T("upd.restart_failed"), true);
+            return;
+        }
+        Ui?.Exit();
+    }
+
+    /// <summary>Whether the program looks for a newer version of itself when it starts.</summary>
+    public bool CheckAppUpdates
+    {
+        get => Snap?.Settings.CheckAppUpdates ?? true;
+        set
+        {
+            if (value == CheckAppUpdates)
+                return;
+            _svc.SetCheckAppUpdates(value);
+            Refresh();
+        }
+    }
 
     [RelayCommand]
     private void OpenRepo() => OpenUrl(RepoUrl);

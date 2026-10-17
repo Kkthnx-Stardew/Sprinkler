@@ -111,6 +111,15 @@
         </StackPanel>
       </Border>
 
+      <!-- updates of this program -->
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="h2" Text="{loc:T upd.title}" />
+          <CheckBox IsChecked="{Binding CheckAppUpdates}" Content="{loc:T upd.check}" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T upd.check_note}" />
+        </StackPanel>
+      </Border>
+
       <!-- language -->
       <Border Classes="panel">
         <StackPanel Spacing="10">

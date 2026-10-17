@@ -92,6 +92,30 @@ jobs:
           $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "See CHANGELOG.md." }
           $notes | Out-File release-notes.md -Encoding utf8
 
+      - name: Sign the checksum files
+        shell: bash
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          if [ -z "$UPDATE_SIGNING_KEY" ]; then
+            echo "::warning::UPDATE_SIGNING_KEY is not set. This release is not signed, so the app will only link to it and will not install it by itself."
+            exit 0
+          fi
+          key="$RUNNER_TEMP/update-key.pem"
+          printf '%s\n' "$UPDATE_SIGNING_KEY" > "$key"
+          embedded=$(grep -oP 'PublicKey = "\K[^"]+' src/Sprinkler.Core/SelfUpdate.cs)
+          actual=$(openssl pkey -in "$key" -pubout -outform DER | base64 -w0)
+          if [ "$embedded" != "$actual" ]; then
+            rm -f "$key"
+            echo "::error::The signing key does not match the public key built into the app (SelfUpdate.cs)."
+            exit 1
+          fi
+          for f in packages/*.sha256; do
+            openssl dgst -sha256 -sign "$key" -out "$f.sig" "$f"
+          done
+          rm -f "$key"
+          ls packages
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

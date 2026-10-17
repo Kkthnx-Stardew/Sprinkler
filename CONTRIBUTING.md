@@ -64,3 +64,14 @@ Keep each pull request to one change, explain what and why in the description, a
 ## Releases
 
 The version lives only in `Directory.Build.props`. To release, update `CHANGELOG.md`, bump the version, and push a tag named `v<version>`. The release workflow checks the tag matches the project version, builds the Windows zip and the Linux tar.gz and publishes them with checksums. Released versions are never changed.
+
+### Signing releases
+
+The app installs its own updates only from releases signed with a key whose public half is built into `src/Sprinkler.Core/SelfUpdate.cs` (`PublicKey`). The private key (an ECDSA P-256 key in PEM form) belongs in the repository secret `UPDATE_SIGNING_KEY`, nowhere else, and the release workflow signs every `.sha256` file with it. Without the secret, the workflow still publishes the release but warns, and the app then only links to it. To make a new key pair:
+
+```
+openssl ecparam -name prime256v1 -genkey -noout -out private.pem
+openssl pkey -in private.pem -pubout -outform DER | openssl base64 -A
+```
+
+Put the second command's output in `PublicKey`, store `private.pem` as the secret, and keep a safe offline copy. Changing the key means older apps cannot verify newer releases, so they will need one manual update. The workflow refuses to sign if the secret does not match the built-in public key.

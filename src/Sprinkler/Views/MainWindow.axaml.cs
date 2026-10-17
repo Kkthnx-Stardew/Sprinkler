@@ -29,6 +29,8 @@ public partial class MainWindow : Window, IUiServices
     }
 
     // ---- IUiServices
+    public void Exit() => Close();
+
     public async Task CopyTextAsync(string text)
     {
         if (Clipboard is { } clipboard)

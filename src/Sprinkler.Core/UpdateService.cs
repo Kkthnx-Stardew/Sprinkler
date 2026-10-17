@@ -123,7 +123,6 @@ internal sealed partial class UpdateService : IDisposable
     private string? _fatal;
     private string? _lastSummary;
     private volatile bool _disposed;
-    private (string Version, string Url)? _appUpdate;
     private GameLog? _gameLog;
 
     public SettingsStore Settings { get; }
@@ -1539,32 +1538,6 @@ internal sealed partial class UpdateService : IDisposable
         return null;
     }
 
-    /// <summary>Looks for a newer release of this app on GitHub. Silent when offline or when no release exists yet.</summary>
-    public async Task CheckAppUpdateAsync()
-    {
-        try
-        {
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{AppEnvironment.GitHubApiUrl}/repos/{AppEnvironment.RepoSlug}/releases/latest");
-            request.Headers.Accept.ParseAdd("application/vnd.github+json");
-            using var response = await AppEnvironment.Http.SendAsync(request, timeout.Token);
-            if (!response.IsSuccessStatusCode)
-                return;
-            using var doc = await System.Text.Json.JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(timeout.Token), cancellationToken: timeout.Token);
-            var tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() : null;
-            var url = doc.RootElement.TryGetProperty("html_url", out var u) ? u.GetString() : null;
-            var latest = ModVersion.Parse(tag);
-            var current = ModVersion.Parse(AppEnvironment.Version);
-            if (latest is not null && current is not null && latest > current && url is not null && WebHostUrlOk(url))
-                Update(() => _appUpdate = (latest.ToString().TrimStart((char)118, (char)86), url));
-        }
-        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
-        {
-        }
-    }
-
-    private static bool WebHostUrlOk(string url) => url.StartsWith("https://github.com/", StringComparison.OrdinalIgnoreCase);
-
     /// <summary>Plain-text details for a bug report. Contains no keys, and user folders are masked.</summary>
     public string Diagnostics()
     {
@@ -1791,7 +1764,7 @@ internal sealed partial class UpdateService : IDisposable
                 App: new AppInfo(
                     AppEnvironment.AppName, AppEnvironment.Version, AppEnvironment.RepoUrl, Platform.SmapiName, AppEnvironment.DataDir,
                     Platform.IsLinux ? new ShortcutInfo(LinuxShortcut.IsInstalled()) : null,
-                    _appUpdate is null ? null : new UpdateNotice(_appUpdate.Value.Version, _appUpdate.Value.Url)),
+                    AppUpdateNotice()),
                 Game: game is null ? null : new GameInfo(
                     game.GamePath, game.ModsPath, game.Store, game.GameVersion, game.SmapiVersion, running, GameProcess.CanLaunch(game), Platform.SmapiName),
                 Candidates: _candidates.Select(c => new CandidateInfo(c.GamePath, c.Store, c.SmapiVersion)).ToList(),
@@ -1803,7 +1776,7 @@ internal sealed partial class UpdateService : IDisposable
                     Settings.Data.NxmRegistered && nxmStatus.Ours, nxmStatus.Other, NxmRegistration.Supported, Settings.KeyStorage),
                 Settings: new SettingsInfo(
                     Settings.Data.Policy, Settings.Data.AppWindow, Settings.Data.Theme, Settings.Data.TourSeen, Settings.DownloadsPath,
-                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks, Settings.Data.Language),
+                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks, Settings.Data.Language, Settings.Data.CheckAppUpdates),
                 Items: _items.Select(i => new ItemInfo(
                     i.Id, i.Name, i.Installed, i.Target, i.PartCount, i.IsNew, i.Why, i.Status, i.Message, i.Progress, i.Selected, i.Chosen,
                     i.AlternativesLoaded, i.Changelog.ToList(), i.ModPageUrl, i.Details.ToList(), i.HistoryId,

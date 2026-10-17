@@ -26,6 +26,9 @@ internal interface IUiServices
     Task<string?> PickOpenFileAsync(string title, string typeName, IReadOnlyList<string> patterns);
 
     Task<string?> PickSaveFileAsync(string title, string suggestedName, string typeName, IReadOnlyList<string> patterns);
+
+    /// <summary>Closes the window and with it the program.</summary>
+    void Exit();
 }
 
 /// <summary>

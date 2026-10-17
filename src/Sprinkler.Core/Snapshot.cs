@@ -3,7 +3,7 @@ namespace Sprinkler.Core;
 // The state the window shows. UpdateService builds one of these under its lock, so the UI never reads half-changed data.
 // The property names double as the JSON names (camel case) used by the --check command and the tests.
 
-internal sealed record UpdateNotice(string Version, string Url);
+internal sealed record UpdateNotice(string Version, string Url, bool CanInstall = false, bool Busy = false, int Progress = 0);
 
 internal sealed record ShortcutInfo(bool Installed);
 
@@ -15,7 +15,7 @@ internal sealed record CandidateInfo(string Path, string Store, string? Smapi);
 
 internal sealed record NexusInfo(bool Connected, string? User, bool Premium, string? Message, bool Nxm, bool OtherHandler, bool NxmSupported, string KeyStorage);
 
-internal sealed record SettingsInfo(SourcePolicy Policy, bool AppWindow, string Theme, bool TourSeen, string Downloads, bool Watching, int BackupsPerMod, List<string> Ignored, bool GroupContentPacks, string Language = "auto");
+internal sealed record SettingsInfo(SourcePolicy Policy, bool AppWindow, string Theme, bool TourSeen, string Downloads, bool Watching, int BackupsPerMod, List<string> Ignored, bool GroupContentPacks, string Language = "auto", bool CheckAppUpdates = true);
 
 internal sealed record OfferInfo(SourceKind Source, string Label, DeliveryMode Mode, string? Version, bool Usable, string Note);
 

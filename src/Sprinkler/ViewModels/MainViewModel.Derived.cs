@@ -29,7 +29,8 @@ internal sealed partial class MainViewModel
     public bool NexusNotConnected => Snap is not null && !Snap.Nexus.Connected;
     public string NexusChip => Snap?.Nexus is { Connected: true } n ? (n.Premium ? Loc.T("vm.nexus_chip_premium", n.User ?? "") : n.User ?? "") : "";
     public bool HasAppUpdate => Snap?.App.Update is not null;
-    public string AppUpdateText => Snap?.App.Update is { } u ? Loc.T("vm.app_update", u.Version) : "";
+    public bool AppUpdateBusy => Snap?.App.Update?.Busy == true;
+    public string AppUpdateText => Snap?.App.Update is { } u ? (u.Busy ? Loc.T("upd.chip_busy", u.Progress) : Loc.T("vm.app_update", u.Version)) : "";
     public bool IsBusy => CurrentPhase is Phase.Scanning or Phase.Checking or Phase.Applying or Phase.Starting;
     public bool CanCheck => HasGame && !IsBusy;
 

@@ -73,9 +73,9 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 var newV = ModVersion.Parse(mod.Manifest.Version);
                 var oldV = ModVersion.Parse(existing.Version);
                 if (newV is not null && oldV is not null && newV < oldV)
-                    planned.Warnings.Add($"{existing.Name}: the archive has {mod.Manifest.Version}, which is older than the installed {existing.Version}.");
+                    planned.Warnings.Add(Loc.T("core.install_older", existing.Name, mod.Manifest.Version, existing.Version));
                 if (existing.Disabled)
-                    planned.Warnings.Add($"{existing.Name} is switched off (its folder starts with a dot). It is updated but stays off.");
+                    planned.Warnings.Add(Loc.T("core.install_off", existing.Name));
             }
             plan.Folders.Add(planned);
         }

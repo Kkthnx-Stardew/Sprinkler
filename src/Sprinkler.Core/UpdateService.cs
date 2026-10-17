@@ -538,8 +538,8 @@ internal sealed partial class UpdateService : IDisposable
                 var need = ModVersion.Parse(dep.MinimumVersion);
                 var haveV = ModVersion.Parse(have.Version);
                 if (need is not null && haveV is not null && haveV < need)
-                    problems.Add(new Problem("warn", $"{have.Name} is too old for {m.Name}",
-                        $"{m.Name} needs {have.Name} {dep.MinimumVersion} or newer, and {have.Version} is installed. Updating {have.Name} fixes this."));
+                    problems.Add(new Problem("warn", Loc.T("core.dep_old_title", have.Name, m.Name),
+                        Loc.T("core.dep_old_body", m.Name, have.Name, dep.MinimumVersion!, have.Version)));
             }
         }
 
@@ -1051,14 +1051,14 @@ internal sealed partial class UpdateService : IDisposable
             }
             catch (OperationCanceledException)
             {
-                Update(() => { item.Status = ItemStatus.Skipped; item.Message = "Cancelled."; });
+                Update(() => { item.Status = ItemStatus.Skipped; item.Message = Loc.T("core.cancelled"); });
                 return;
             }
             catch (Exception ex) when (ex is DownloadException or InstallException or ArchiveException or NexusException)
             {
                 failures.Add($"{offer.Label}: {ex.Message}");
                 Log.Write($"{item.Name} via {offer.Label} failed: {ex.Message}");
-                Update(() => item.Details.Add($"{offer.Label} did not work: {ex.Message}"));
+                Update(() => item.Details.Add(Loc.T("core.offer_failed", offer.Label, ex.Message)));
                 if (ex is InstallException and not WrongFileException)
                 {
                     // the folder was rolled back; a different source will not fix a locked file
@@ -1291,8 +1291,8 @@ internal sealed partial class UpdateService : IDisposable
             {
                 var have = _mods.FirstOrDefault(x => x.UniqueId.Equals(m.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase));
                 f.Lines.Add(have is null
-                    ? $"{m.Manifest.Name} {m.Manifest.Version} (new install)"
-                    : $"{m.Manifest.Name}: {have.Version} to {m.Manifest.Version}");
+                    ? Loc.T("core.found_new", m.Manifest.Name, m.Manifest.Version)
+                    : Loc.T("core.found_update", m.Manifest.Name, have.Version, m.Manifest.Version));
             }
         }
         Update(() =>
@@ -1463,7 +1463,7 @@ internal sealed partial class UpdateService : IDisposable
         }
         if (string.IsNullOrEmpty(Settings.NexusKey))
         {
-            Update(() => _fatal = "A Nexus link arrived, but no Nexus key is saved yet. Add your key under Nexus account, then click the download button again.");
+            Update(() => _fatal = Loc.T("core.nxm_no_key"));
             return;
         }
 

@@ -122,7 +122,7 @@ internal sealed class ProfileStore
         if (clean.Any(char.IsControl))
             throw new ProfileException(Loc.T("core.prof_name_bad"));
         if (Find(clean) is not null && !clean.Equals(allowSameAs, StringComparison.OrdinalIgnoreCase))
-            throw new ProfileException($"A profile called \"{clean}\" already exists.");
+            throw new ProfileException(Loc.T("core.prof_exists", clean));
         return clean;
     }
 

@@ -297,52 +297,31 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             .First();
     }
 
-    private async Task<T> GetAsync<T>(string path, string key, CancellationToken ct)
+    private static async Task<T> GetAsync<T>(string path, string key, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, AppEnvironment.NexusApiUrl + path);
-        request.Headers.TryAddWithoutValidation("apikey", key);
-        request.Headers.TryAddWithoutValidation("Application-Name", AppEnvironment.AppName);
-        request.Headers.TryAddWithoutValidation("Application-Version", AppEnvironment.Version);
+        var (status, body) = await SendRawAsync(HttpMethod.Get, path, key, null, ct);
+        switch (status)
+        {
+            case HttpStatusCode.Unauthorized:
+                throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_bad_key"));
+            case HttpStatusCode.Forbidden:
+                throw new NexusException(NexusError.PremiumRequired, Loc.T("core.nx_premium_only"));
+            case HttpStatusCode.NotFound:
+                throw new NexusException(NexusError.NotFound, Loc.T("core.nx_not_found"));
+            case HttpStatusCode.TooManyRequests:
+                throw new NexusException(NexusError.RateLimited, Loc.T("core.nx_rate"));
+        }
+        if ((int)status is < 200 or > 299)
+            throw new NexusException(NexusError.Other, Loc.T("core.nx_status", (int)status));
 
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeout.CancelAfter(TimeSpan.FromSeconds(25));
-        HttpResponseMessage response;
         try
         {
-            response = await AppEnvironment.Http.SendAsync(request, timeout.Token);
+            return JsonSerializer.Deserialize<T>(body, AppEnvironment.Json)
+                ?? throw new NexusException(NexusError.Other, Loc.T("core.nx_empty"));
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (JsonException)
         {
-            if (ct.IsCancellationRequested)
-                throw;
-            throw new NexusException(NexusError.Network, Loc.T("core.nx_unreachable"));
-        }
-
-        using (response)
-        {
-            switch (response.StatusCode)
-            {
-                case HttpStatusCode.Unauthorized:
-                    throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_bad_key"));
-                case HttpStatusCode.Forbidden:
-                    throw new NexusException(NexusError.PremiumRequired, Loc.T("core.nx_premium_only"));
-                case HttpStatusCode.NotFound:
-                    throw new NexusException(NexusError.NotFound, Loc.T("core.nx_not_found"));
-                case HttpStatusCode.TooManyRequests:
-                    throw new NexusException(NexusError.RateLimited, Loc.T("core.nx_rate"));
-            }
-            if (!response.IsSuccessStatusCode)
-                throw new NexusException(NexusError.Other, Loc.T("core.nx_status", (int)response.StatusCode));
-
-            try
-            {
-                return await response.Content.ReadFromJsonAsync<T>(AppEnvironment.Json, timeout.Token)
-                    ?? throw new NexusException(NexusError.Other, Loc.T("core.nx_empty"));
-            }
-            catch (JsonException)
-            {
-                throw new NexusException(NexusError.Other, Loc.T("core.nx_unreadable"));
-            }
+            throw new NexusException(NexusError.Other, Loc.T("core.nx_unreadable"));
         }
     }
 

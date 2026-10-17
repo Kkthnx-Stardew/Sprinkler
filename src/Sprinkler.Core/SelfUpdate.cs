@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace Sprinkler.Core;
 
+using static Sprinkler.Core.Cleanup;
+
 internal sealed class AppUpdateException(string message) : Exception(message);
 
 /// <summary>A newer release of this program, with the files the updater needs. Anything missing means "open the page instead".</summary>
@@ -470,27 +472,4 @@ internal static class SelfUpdate
 
     /// <summary>Removes a file the updater staged and will not use.</summary>
     public static void Discard(string path) => TryDeleteFile(path);
-
-    private static void TryDeleteFile(string path)
-    {
-        try
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-        }
-    }
-
-    private static void TryDeleteDirectory(string path)
-    {
-        try
-        {
-            Directory.Delete(path, recursive: true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-        }
-    }
 }

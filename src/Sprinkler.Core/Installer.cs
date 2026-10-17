@@ -2,6 +2,8 @@ using System.IO.Compression;
 
 namespace Sprinkler.Core;
 
+using static Sprinkler.Core.Cleanup;
+
 internal class InstallException(string message) : Exception(message);
 
 /// <summary>The file is fine but is not the one wanted (wrong mod, or not newer). Another source may still work.</summary>
@@ -215,12 +217,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             try
             {
                 using var zip = ZipFile.OpenRead(backupPath);
-                foreach (var e in zip.Entries.Where(e => !e.FullName.EndsWith('/')))
-                {
-                    var dest = SafeJoin(root, e.FullName);
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                    e.ExtractToFile(dest, overwrite: true);
-                }
+                ExtractEntries(zip.Entries, root);
             }
             catch (Exception restore) when (restore is IOException or UnauthorizedAccessException or InvalidDataException)
             {
@@ -268,14 +265,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             {
                 Directory.CreateDirectory(temp);
                 using var zip = ZipFile.OpenRead(backupPath!);
-                foreach (var e in zip.Entries)
-                {
-                    if (e.FullName.EndsWith('/'))
-                        continue;
-                    var dest = SafeJoin(temp, e.FullName);
-                    Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                    e.ExtractToFile(dest, overwrite: true);
-                }
+                ExtractEntries(zip.Entries, temp);
             }
 
             foreach (var f in entry.Folders.Where(f => !f.WasNew))
@@ -445,6 +435,17 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         }
     }
 
+    /// <summary>Writes the files of a backup under <paramref name="root"/>, refusing any entry that would land outside it.</summary>
+    private static void ExtractEntries(IEnumerable<ZipArchiveEntry> entries, string root)
+    {
+        foreach (var e in entries.Where(e => !e.FullName.EndsWith('/')))
+        {
+            var dest = SafeJoin(root, e.FullName);
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            e.ExtractToFile(dest, overwrite: true);
+        }
+    }
+
     private static void AddFolderToZip(ZipArchive zip, string folder, string relativeRoot)
     {
         foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
@@ -473,12 +474,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                     var rel = RelativeTo(modsPath, f.TargetPath) + "/";
                     if (Directory.Exists(f.TargetPath))
                         Directory.Delete(f.TargetPath, recursive: true);
-                    foreach (var e in zip.Entries.Where(e => e.FullName.StartsWith(rel, StringComparison.OrdinalIgnoreCase) && !e.FullName.EndsWith('/')))
-                    {
-                        var dest = SafeJoin(modsPath, e.FullName);
-                        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                        e.ExtractToFile(dest, overwrite: true);
-                    }
+                    ExtractEntries(zip.Entries.Where(e => e.FullName.StartsWith(rel, StringComparison.OrdinalIgnoreCase)), modsPath);
                 }
             }
         }
@@ -504,15 +500,5 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
     {
         var clean = new string(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray()).Trim();
         return clean.Length == 0 ? "NewMod" : clean;
-    }
-
-    private static void TryDeleteFile(string path)
-    {
-        try { if (File.Exists(path)) File.Delete(path); } catch (IOException) { }
-    }
-
-    private static void TryDeleteDirectory(string path)
-    {
-        try { if (Directory.Exists(path)) Directory.Delete(path, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
 }

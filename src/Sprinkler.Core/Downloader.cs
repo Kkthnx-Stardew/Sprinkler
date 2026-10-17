@@ -1,5 +1,7 @@
 namespace Sprinkler.Core;
 
+using static Sprinkler.Core.Cleanup;
+
 internal sealed class DownloadException(string message) : Exception(message);
 
 internal static class Downloader
@@ -63,12 +65,12 @@ internal static class Downloader
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException)
         {
-            TryDelete(dir);
+            TryDeleteDirectory(dir);
             throw new DownloadException(Loc.T("core.dl_failed", ex.Message));
         }
         catch
         {
-            TryDelete(dir);
+            TryDeleteDirectory(dir);
             throw;
         }
     }
@@ -77,7 +79,7 @@ internal static class Downloader
     {
         var dir = Path.GetDirectoryName(archivePath);
         if (dir is not null && Path.GetFileName(dir).StartsWith("dl-"))
-            TryDelete(dir);
+            TryDeleteDirectory(dir);
     }
 
     public static bool IsArchiveName(string path) =>
@@ -89,11 +91,6 @@ internal static class Downloader
         foreach (var c in Path.GetInvalidFileNameChars())
             n = n.Replace(c, '_');
         return n.Length == 0 ? "download" : n;
-    }
-
-    private static void TryDelete(string dir)
-    {
-        try { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
     }
 }
 

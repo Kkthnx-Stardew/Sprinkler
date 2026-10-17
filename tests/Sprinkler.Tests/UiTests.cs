@@ -104,6 +104,29 @@ public class UiTests
     }
 
     [AvaloniaFact]
+    public async Task TheTabStripScrollsToTheChosenTabInANarrowWindow()
+    {
+        var (rig, vm, _) = await StartAsync();
+        using var _r = rig;
+        var window = new MainWindow { MinWidth = 300, Width = 500, Height = 700 };
+        window.Attach(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        var scroller = window.GetVisualDescendants().OfType<Avalonia.Controls.ScrollViewer>().First(s => s.Name == "TabScroller");
+        Assert.True(scroller.Extent.Width > scroller.Viewport.Width, "The test window must be too narrow for all tabs.");
+        Assert.Equal(0, scroller.Offset.X);
+
+        vm.Tab = AppTab.Help;
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(scroller.Offset.X > 0, "The Help tab is the last one and should have been scrolled into view.");
+
+        vm.Tab = AppTab.Updates;
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(0, scroller.Offset.X);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task EveryTabOfTheRealWindowOpensWithoutAnError()
     {
         var (rig, vm, _) = await StartAsync();

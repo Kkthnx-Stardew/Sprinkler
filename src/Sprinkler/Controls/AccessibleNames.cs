@@ -28,8 +28,22 @@ internal static class AccessibleNames
     {
         if (item.Content is string || !string.IsNullOrEmpty(AutomationProperties.GetName(item)))
             return;
-        var label = item.GetLogicalDescendants().OfType<TextBlock>().FirstOrDefault();
-        if (label is not null)
-            item.Bind(AutomationProperties.NameProperty, label.GetObservable(TextBlock.TextProperty));
+        var labels = item.GetLogicalDescendants().OfType<TextBlock>().ToList();
+        if (labels.Count == 0)
+            return;
+        if (item.Classes.Contains("tile"))
+        {
+            // a statistic tile is a number and what it counts; read both
+            void Join() => AutomationProperties.SetName(item, string.Join(' ', labels.Select(l => l.Text)));
+            foreach (var l in labels)
+                l.PropertyChanged += (_, args) =>
+                {
+                    if (args.Property == TextBlock.TextProperty)
+                        Join();
+                };
+            Join();
+            return;
+        }
+        item.Bind(AutomationProperties.NameProperty, labels[0].GetObservable(TextBlock.TextProperty));
     }
 }

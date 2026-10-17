@@ -340,14 +340,17 @@
 
   <!-- ===== expander used as a quiet "show more" ===== -->
   <Style Selector="Expander.flat">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
   <Style Selector="Expander.flat /template/ ToggleButton#ExpanderHeader">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="Padding" Value="0,4" />
     <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
     <Setter Property="FontWeight" Value="SemiBold" />

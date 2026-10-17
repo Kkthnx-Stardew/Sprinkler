@@ -220,7 +220,17 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public string UniqueId => Row.UniqueId;
     public string Version => Row.Version;
     public bool IsContentPack => Row.IsContentPack;
-    public string Meta => (string.IsNullOrEmpty(Row.Author) ? "" : Row.Author + " · ") + Row.Note;
+    // The status chip already says "update available" and "up to date"; the line under the name keeps only what the chip cannot.
+    public string Meta
+    {
+        get
+        {
+            var note = Row.State == RowState.Update || Row.Note == Loc.T("core.row_ok") ? "" : Row.Note;
+            if (string.IsNullOrEmpty(Row.Author))
+                return note;
+            return note.Length == 0 ? Row.Author : Row.Author + " · " + note;
+        }
+    }
     public bool HasNeeds => Row.Needs is { Length: > 0 };
     public string NeedsText => Row.Needs is { Length: > 0 } n ? Loc.T("row.needs", string.Join(", ", n)) : "";
     public bool IsOff => Row.State == RowState.Disabled;

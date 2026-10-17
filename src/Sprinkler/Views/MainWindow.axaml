@@ -20,13 +20,13 @@
   <Grid>
     <Grid RowDefinitions="Auto,Auto,Auto,*">
       <!-- ===== header ===== -->
-      <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-            <Border Classes="logo">
+      <Border Grid.Row="0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
+        <Grid MaxWidth="980" Margin="20,12" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+          <Grid Grid.Column="0" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Border Grid.Column="0" Classes="logo">
               <Image Source="avares://Sprinkler/Assets/logo.png" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
-            <StackPanel VerticalAlignment="Center" Spacing="4">
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
               <TextBlock Classes="h1" Text="Sprinkler" />
               <WrapPanel Orientation="Horizontal">
                 <Border Classes="chip" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
@@ -46,9 +46,9 @@
                 </Button>
               </WrapPanel>
             </StackPanel>
-          </StackPanel>
+          </Grid>
 
-          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
             <Border Classes="chip warn" IsVisible="{Binding GameRunning}"><TextBlock Text="{loc:T ui.game_is_running}" /></Border>
             <Button Command="{Binding CheckCommand}" IsEnabled="{Binding CanCheck}" IsVisible="{Binding HasGame}">
               <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="{loc:T ui.check_again}" /></StackPanel>
@@ -67,8 +67,9 @@
       </Border>
 
       <!-- ===== tabs ===== -->
-      <Border Grid.Row="1" Padding="20,6,20,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
-        <ListBox Classes="tabs" SelectedIndex="{Binding TabIndex}" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T ui.sections}">
+      <Border Grid.Row="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
+        <ScrollViewer x:Name="TabScroller" MaxWidth="1020" Padding="20,6,20,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <ListBox x:Name="TabStrip" Classes="tabs" SelectedIndex="{Binding TabIndex}" SelectionChanged="OnTabChanged" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T ui.sections}">
           <ListBoxItem>
             <StackPanel Orientation="Horizontal" Spacing="8">
               <ctl:IconView Kind="arrowup" Size="17" /><TextBlock Text="{loc:T ui.updates}" />
@@ -83,6 +84,7 @@
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="{loc:T ui.nexus_and_settings}" /></StackPanel></ListBoxItem>
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="{loc:T ui.help}" /></StackPanel></ListBoxItem>
         </ListBox>
+        </ScrollViewer>
       </Border>
 
       <!-- ===== notices that apply to every tab ===== -->

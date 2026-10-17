@@ -17,7 +17,11 @@ internal sealed partial class MainViewModel
 
     // ---- header
     public bool HasGame => Game is not null;
-    public string GameChip => Game is { } g ? Loc.T("vm.game_chip", g.Store, g.GameVersion ?? "?") : "";
+    public string GameChip => Game is { } g
+        ? g.Store is "Manual" or "Custom" or ""
+            ? Loc.T("vm.game_chip_plain", g.GameVersion ?? "?")
+            : Loc.T("vm.game_chip", g.Store, g.GameVersion ?? "?")
+        : "";
     public string GamePath => Game?.Path ?? Loc.T("vm.not_set");
     public string ModsPath => Game?.Mods ?? Loc.T("vm.not_set");
     public bool HasSmapi => Game?.Smapi is not null;

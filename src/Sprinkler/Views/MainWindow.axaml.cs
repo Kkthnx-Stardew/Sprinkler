@@ -18,9 +18,31 @@ public partial class MainWindow : Window, IUiServices
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
         KeyDown += OnKeyDown;
+        Opened += (_, _) => ScrollSelectedTabIntoView();
     }
 
     internal MainViewModel? ViewModel => DataContext as MainViewModel;
+
+    // The tab strip scrolls when the window is narrow; keep the chosen tab in view.
+    private void OnTabChanged(object? sender, SelectionChangedEventArgs e) => ScrollSelectedTabIntoView();
+
+    private void ScrollSelectedTabIntoView()
+    {
+        if (TabStrip.SelectedItem is not Control tab)
+            return;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            // the list box swallows BringIntoView, so move the outer scroller by hand
+            var at = new Avalonia.Point(tab.Bounds.X + TabStrip.Padding.Left, 0);
+            var left = TabScroller.Offset.X;
+            var view = TabScroller.Viewport.Width;
+            if (at.X < left)
+                left = at.X;
+            else if (at.X + tab.Bounds.Width > left + view)
+                left = at.X + tab.Bounds.Width - view;
+            TabScroller.Offset = new Avalonia.Vector(Math.Max(0, left), 0);
+        }, Avalonia.Threading.DispatcherPriority.Background);
+    }
 
     internal void Attach(MainViewModel vm)
     {

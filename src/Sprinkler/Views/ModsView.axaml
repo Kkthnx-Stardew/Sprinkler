@@ -18,16 +18,18 @@
     <Border Classes="panel" IsVisible="{Binding HasMods}" Margin="0">
       <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
         <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{Binding ModsTitle}" /></StackPanel>
-        <TextBlock Grid.Row="1" Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" />
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
-          <TextBox Text="{Binding ModSearch}" PlaceholderText="{loc:T ui.search_mods_or_authors}" AutomationProperties.Name="{loc:T ui.search_mods}" />
-          <CheckBox Grid.Column="1" IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="2" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="{loc:T ui.sort_mods}">
-            <ComboBoxItem Content="{loc:T ui.needs_attention_first}" />
-            <ComboBoxItem Content="{loc:T ui.name}" />
-            <ComboBoxItem Content="{loc:T ui.author}" />
-          </ComboBox>
-        </Grid>
+        <Expander Grid.Row="1" Classes="flat" Header="{loc:T ui.about_this_list}"><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" /></Expander>
+        <StackPanel Grid.Row="2" Spacing="8">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+            <TextBox Text="{Binding ModSearch}" PlaceholderText="{loc:T ui.search_mods_or_authors}" AutomationProperties.Name="{loc:T ui.search_mods}" />
+            <ComboBox Grid.Column="1" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="{loc:T ui.sort_mods}">
+              <ComboBoxItem Content="{loc:T ui.needs_attention_first}" />
+              <ComboBoxItem Content="{loc:T ui.name}" />
+              <ComboBoxItem Content="{loc:T ui.author}" />
+            </ComboBox>
+          </Grid>
+          <CheckBox IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Center" />
+        </StackPanel>
         <ItemsControl Grid.Row="3" ItemsSource="{Binding ModChips}">
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>

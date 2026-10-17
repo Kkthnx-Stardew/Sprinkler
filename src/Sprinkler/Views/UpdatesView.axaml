@@ -121,16 +121,16 @@
           </Border>
           <UniformGrid Columns="4" Margin="0,7">
             <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,0">
-              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="package" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountAll}" /><TextBlock Classes="muted small" Text="{loc:T ui.mods_in_your_folder}" /></StackPanel></StackPanel>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="package" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountAll}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.mods_in_your_folder}" /></StackPanel></Grid>
             </Button>
             <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="3,0">
-              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="arrowup" Size="22" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUpdates}" /><TextBlock Classes="muted small" Text="{loc:T ui.updates_or_installs}" /></StackPanel></StackPanel>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="arrowup" Size="22" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUpdates}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.updates_or_installs}" /></StackPanel></Grid>
             </Button>
             <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="3,0">
-              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="check" Size="22" Foreground="{DynamicResource GoodBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUpToDate}" /><TextBlock Classes="muted small" Text="{loc:T ui.up_to_date}" /></StackPanel></StackPanel>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="check" Size="22" Foreground="{DynamicResource GoodBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUpToDate}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.up_to_date}" /></StackPanel></Grid>
             </Button>
             <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="6,0,0,0">
-              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="help" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUnchecked}" /><TextBlock Classes="muted small" Text="{loc:T ui.cannot_be_checked}" /></StackPanel></StackPanel>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="help" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUnchecked}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.cannot_be_checked}" /></StackPanel></Grid>
             </Button>
           </UniformGrid>
         </StackPanel>

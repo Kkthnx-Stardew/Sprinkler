@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Sprinkler.Core;
 using Sprinkler.ViewModels;
 using Sprinkler.Views;
@@ -25,6 +26,9 @@ internal sealed class FakeUi : IUiServices
     public string? OpenPath { get; set; }
     public string? SavePath { get; set; }
     public string? Copied { get; private set; }
+    public bool Exited { get; private set; }
+
+    public void Exit() => Exited = true;
 
     public Task CopyTextAsync(string text)
     {
@@ -70,6 +74,33 @@ public class UiTests
         }
         while (DateTime.UtcNow < end);
         Assert.True(until!(), "The screen never reached the expected state.");
+    }
+
+    [AvaloniaFact]
+    public async Task EveryButtonHasANameAScreenReaderCanSpeak()
+    {
+        var (rig, vm, _) = await StartAsync();
+        using var _r = rig;
+        var window = new MainWindow();
+        window.Attach(vm);
+        window.Show();
+        var bad = new List<string>();
+        foreach (var tab in Enum.GetValues<AppTab>())
+        {
+            vm.Tab = tab;
+            Dispatcher.UIThread.RunJobs();
+            foreach (var button in window.GetVisualDescendants().OfType<Avalonia.Controls.ContentControl>().Where(b => b is Avalonia.Controls.Button or Avalonia.Controls.ListBoxItem && b.IsEffectivelyVisible))
+            {
+                var name = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement(button).GetName();
+                var hasText = button.GetVisualDescendants().OfType<Avalonia.Controls.TextBlock>().Any(t => !string.IsNullOrWhiteSpace(t.Text))
+                    || !string.IsNullOrEmpty(Avalonia.Automation.AutomationProperties.GetName(button))
+                    || !string.IsNullOrEmpty(Avalonia.Controls.ToolTip.GetTip(button) as string);
+                if (hasText && (string.IsNullOrWhiteSpace(name) || name.StartsWith("Avalonia.", StringComparison.Ordinal)))
+                    bad.Add($"{tab}: {button.GetType().Name} named '{name}'");
+            }
+        }
+        window.Close();
+        Assert.True(bad.Count == 0, string.Join("; ", bad.Distinct().Take(8)));
     }
 
     [AvaloniaFact]

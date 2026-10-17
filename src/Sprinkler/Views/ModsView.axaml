@@ -40,7 +40,7 @@
         </ItemsControl>
 
         <Grid Grid.Row="4" RowDefinitions="Auto,*">
-          <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
+          <Grid ColumnDefinitions="52,2.2*,90,*,36" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
             <TextBlock Classes="muted small strong" Text="{loc:T ui.on}" />
             <TextBlock Grid.Column="1" Classes="muted small strong" Text="{loc:T ui.mod}" />
             <TextBlock Grid.Column="2" Classes="muted small strong" Text="{loc:T ui.version}" />
@@ -53,7 +53,7 @@
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:ModRowViewModel">
                     <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="4,10" Opacity="{Binding RowOpacity}">
-                      <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12">
+                      <Grid ColumnDefinitions="52,2.2*,90,*,36" ColumnSpacing="12">
                         <ToggleSwitch IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" ToolTip.Tip="{Binding SwitchTip}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                         <Grid Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center" Margin="{Binding Indent}" ToolTip.Tip="{Binding Summary}">
                         <v:ModIconView DataContext="{Binding}" Width="38" Height="38" />

@@ -240,6 +240,14 @@
     <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
     <Setter Property="BorderThickness" Value="2" />
   </Style>
+  <!-- A mode tag inside a source button sits on a tinted background of its own, so it gets an outline in its text colour to stay readable in both themes. -->
+  <Style Selector="Button.src Border.tag">
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.src Border.tag.auto"><Setter Property="BorderBrush" Value="{DynamicResource GoodBrush}" /></Style>
+  <Style Selector="Button.src Border.tag.click"><Setter Property="BorderBrush" Value="{DynamicResource WarnBrush}" /></Style>
   <Style Selector="Button.src.chosen:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
@@ -342,7 +350,7 @@
   <!-- ===== expander used as a quiet "show more" ===== -->
   <Style Selector="Expander.flat">
     <Setter Property="MinHeight" Value="0" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />

@@ -13,6 +13,7 @@
     <DataTemplate DataType="vm:ConfirmDialogViewModel"><v:ConfirmDialogView /></DataTemplate>
     <DataTemplate DataType="vm:TourDialogViewModel"><v:TourDialogView /></DataTemplate>
     <DataTemplate DataType="vm:TextPromptDialogViewModel"><v:TextPromptDialogView /></DataTemplate>
+    <DataTemplate DataType="vm:CollectionPreviewDialogViewModel"><v:CollectionPreviewDialogView /></DataTemplate>
   </Window.DataTemplates>
 
   <Grid>

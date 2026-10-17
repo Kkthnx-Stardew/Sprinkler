@@ -63,6 +63,22 @@
         </StackPanel>
       </Border>
 
+      <!-- a Nexus collection -->
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="h3" Margin="0" Text="Add a Nexus collection" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Collections are lists of mods that other players put together on Nexus Mods. Paste a collection's address; it becomes a profile, and the mods you do not have appear under Updates as installs." />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding CollectionAddress}" PlaceholderText="https://www.nexusmods.com/games/stardewvalley/collections/..." AutomationProperties.Name="Collection address">
+              <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding LookUpCollectionCommand}" /></TextBox.KeyBindings>
+            </TextBox>
+            <Button Grid.Column="1" Command="{Binding LookUpCollectionCommand}" IsEnabled="{Binding CanLookUp}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="search" Size="16" /><TextBlock Text="{Binding LookUpText}" /></StackPanel>
+            </Button>
+          </Grid>
+        </StackPanel>
+      </Border>
+
       <!-- the list -->
       <Border Classes="panel center" IsVisible="{Binding NoProfiles}">
         <StackPanel Spacing="10" HorizontalAlignment="Center">
@@ -83,6 +99,10 @@
                     <Border Classes="chip ok" IsVisible="{Binding IsActive}"><TextBlock Text="Active" /></Border>
                   </StackPanel>
                   <TextBlock Classes="muted small" Text="{Binding Detail}" TextWrapping="Wrap" />
+                  <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsCollection}">
+                    <ctl:IconView Kind="gift" Size="13" Foreground="{DynamicResource InfoBrush}" VerticalAlignment="Center" />
+                    <TextBlock Classes="small info" Text="{Binding CollectionText}" />
+                  </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                   <Button Classes="primary" Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="Switch to it" /></Button>
@@ -90,6 +110,7 @@
                     <ctl:IconView Kind="more" Size="20" />
                     <Button.Flyout>
                       <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuItem Header="Stop installing the rest of this collection" Command="{Binding StopInstallingCommand}" IsVisible="{Binding Pending}" />
                         <MenuItem Header="Rename" Command="{Binding RenameCommand}" />
                         <MenuItem Header="Make a copy" Command="{Binding CopyCommand}" />
                         <MenuItem Header="Save to share..." Command="{Binding ExportCommand}" />

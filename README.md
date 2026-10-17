@@ -56,6 +56,7 @@ It also finds required mods that are missing (the ones SMAPI skips without a cle
 ## Profiles, notes and more
 
 - **Profiles.** Save which mods are switched on as a named profile (solo, co-op, testing) and switch between them in a click. Switching only adds or removes the leading dot on a mod's folder, the rule SMAPI itself uses, so nothing is moved or deleted and switching back is exact. It also turns on whatever the chosen mods need. An optional setting keeps each profile's own `config.json` files, with a copy of your current settings saved before the first switch.
+- **Nexus collections.** Paste the address of a collection from Nexus Mods and it becomes a profile. Sprinkler reads the curator's mod list (no account needed to look it up), shows how much of it you already have, and offers the missing mods under Updates as installs, so a Premium account is automatic and a free account clicks once per mod. Adding a collection never switches your mods by itself.
 - **Share a profile.** Save a profile as a small file that lists mods, versions and where to get them (never your settings or folders). When a friend opens it, the mods they do not have show up under Updates as installs.
 - **Remove with undo.** Removing a mod backs up its folder first and shows it in History with an Undo button that brings it back with its settings.
 - **Notes and endorsing.** Keep a private note on any mod, open its settings file, and endorse mods on Nexus from the app (through your own key).

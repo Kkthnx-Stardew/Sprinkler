@@ -403,3 +403,120 @@ public class UiTests
         Assert.Equal("Remove my endorsement", row.EndorseText);
     }
 }
+
+public class CollectionUiTests
+{
+    private const string Reply = """
+        {"data":{"collectionRevision":{"revisionNumber":3,"collection":{"name":"Cozy Valley","summary":"A gentle set of mods.","user":{"name":"curator1"}},"modFiles":[
+          {"fileId":10,"optional":false,"file":{"fileId":10,"name":"a","version":"1.0.0","mod":{"modId":100,"name":"Alpha","author":"A"}}},
+          {"fileId":20,"optional":false,"file":{"fileId":20,"name":"b","version":"2.0.0","mod":{"modId":200,"name":"Beta","author":"B"}}},
+          {"fileId":30,"optional":true,"file":{"fileId":30,"name":"c","version":"3.0.0","mod":{"modId":300,"name":"Gamma","author":"C"}}}]}}}
+        """;
+
+    private static async Task<(ProfileServiceTests.Rig Rig, MainViewModel Vm)> StartAsync()
+    {
+        var rig = new ProfileServiceTests.Rig();
+        rig.Web.Handler = (path, _) => path switch
+        {
+            "/smapi" => FakeWeb.Json("[]"),
+            "/graphql" => FakeWeb.Json(Reply),
+            _ => null,
+        };
+        await rig.StartAsync();
+        var vm = new MainViewModel(rig.Service) { Ui = new FakeUi(), SuppressTour = true };
+        vm.Refresh();
+        return (rig, vm);
+    }
+
+    private static async Task SettleAsync(MainViewModel vm, Func<bool> until)
+    {
+        var end = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < end)
+        {
+            Dispatcher.UIThread.RunJobs();
+            vm.Refresh();
+            if (until())
+                return;
+            await Task.Delay(50);
+        }
+        Assert.True(until(), "The screen never reached the expected state.");
+    }
+
+    [AvaloniaFact]
+    public async Task APastedAddressShowsAPreviewAndAddingMakesAProfile()
+    {
+        var (rig, vm) = await StartAsync();
+        using var _r = rig;
+        Assert.False(vm.CanLookUp);
+        vm.CollectionAddress = "https://www.nexusmods.com/games/stardewvalley/collections/abc123";
+        Assert.True(vm.CanLookUp);
+
+        var lookup = vm.LookUpCollectionCommand.ExecuteAsync(null);
+        await SettleAsync(vm, () => vm.Dialog is CollectionPreviewDialogViewModel);
+        var preview = (CollectionPreviewDialogViewModel)vm.Dialog!;
+        Assert.Equal("Cozy Valley", preview.Title);
+        Assert.Equal("by curator1", preview.Curator);
+        Assert.Contains("2 mods", preview.Counts);
+        Assert.Contains("1 optional mod", preview.Counts);
+        Assert.Contains("2 mods will appear", preview.ToInstallText);
+
+        preview.IncludeOptional = true;
+        Assert.Contains("3 mods will appear", preview.ToInstallText);
+        preview.AddCommand.Execute(null);
+        await lookup;
+        await SettleAsync(vm, () => vm.ProfileList.Count == 1);
+
+        var profile = vm.ProfileList[0];
+        Assert.True(profile.IsCollection);
+        Assert.Equal("Nexus collection by curator1", profile.CollectionText);
+        Assert.Contains("3 to install under Updates", profile.Detail);
+        Assert.Equal("", vm.CollectionAddress);
+        Assert.False(profile.IsActive); // adding never switches mods
+        Assert.Contains(vm.Toasts, t => t.Text.Contains("Cozy Valley"));
+    }
+
+    [AvaloniaFact]
+    public async Task CancellingThePreviewAddsNothing()
+    {
+        var (rig, vm) = await StartAsync();
+        using var _r = rig;
+        vm.CollectionAddress = "abc123";
+        var lookup = vm.LookUpCollectionCommand.ExecuteAsync(null);
+        await SettleAsync(vm, () => vm.Dialog is CollectionPreviewDialogViewModel);
+        ((CollectionPreviewDialogViewModel)vm.Dialog!).CancelCommand.Execute(null);
+        await lookup;
+
+        Assert.Empty(vm.ProfileList);
+        Assert.Equal("abc123", vm.CollectionAddress); // still there to edit
+    }
+
+    [AvaloniaFact]
+    public async Task ABadAddressGivesAMessageNotADialog()
+    {
+        var (rig, vm) = await StartAsync();
+        using var _r = rig;
+        vm.CollectionAddress = "this is not a collection";
+        await vm.LookUpCollectionCommand.ExecuteAsync(null);
+        Assert.Null(vm.Dialog);
+        Assert.Contains(vm.Toasts, t => t.IsBad && t.Text.Contains("Paste the collection"));
+        Assert.False(vm.LookingUp);
+    }
+
+    [AvaloniaFact]
+    public async Task StoppingTheInstallsFromTheMenuClearsThePendingNote()
+    {
+        var (rig, vm) = await StartAsync();
+        using var _r = rig;
+        vm.CollectionAddress = "abc123";
+        var lookup = vm.LookUpCollectionCommand.ExecuteAsync(null);
+        await SettleAsync(vm, () => vm.Dialog is CollectionPreviewDialogViewModel);
+        ((CollectionPreviewDialogViewModel)vm.Dialog!).AddCommand.Execute(null);
+        await lookup;
+        await SettleAsync(vm, () => vm.ProfileList.Count == 1);
+        Assert.True(vm.ProfileList[0].Pending);
+
+        vm.ProfileList[0].StopInstallingCommand.Execute(null);
+        await SettleAsync(vm, () => !vm.ProfileList[0].Pending);
+        Assert.DoesNotContain("to install", vm.ProfileList[0].Detail);
+    }
+}

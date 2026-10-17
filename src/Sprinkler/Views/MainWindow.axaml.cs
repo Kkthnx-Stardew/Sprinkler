@@ -79,6 +79,10 @@ public partial class MainWindow : Window, IUiServices
                 tour.Finish();
                 e.Handled = true;
                 break;
+            case CollectionPreviewDialogViewModel preview:
+                preview.Cancel();
+                e.Handled = true;
+                break;
             case TextPromptDialogViewModel prompt:
                 prompt.Cancel();
                 e.Handled = true;

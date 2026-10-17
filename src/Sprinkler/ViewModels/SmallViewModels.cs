@@ -214,3 +214,68 @@ internal sealed partial class TextPromptDialogViewModel : DialogViewModel
         Close();
     }
 }
+
+/// <summary>Shows what a Nexus collection holds before it is added, and asks whether to include its optional mods.</summary>
+internal sealed partial class CollectionPreviewDialogViewModel : DialogViewModel
+{
+    private readonly TaskCompletionSource<bool?> _result = new();
+
+    public CollectionPreviewDialogViewModel(CollectionPreview preview)
+    {
+        Preview = preview;
+    }
+
+    public CollectionPreview Preview { get; }
+
+    public string Title => Preview.Name;
+    public string Curator => Preview.Curator is null ? "" : "by " + Preview.Curator;
+    public bool HasCurator => Preview.Curator is not null;
+    public string? Summary => Preview.Summary;
+    public bool HasSummary => !string.IsNullOrEmpty(Preview.Summary);
+    public bool HasOptional => Preview.Optional > 0;
+
+    public string Counts
+    {
+        get
+        {
+            var line = $"{Fmt.Plural(Preview.Required, "mod", "mods")}, {Preview.RequiredInstalled} already installed.";
+            if (Preview.Optional > 0)
+                line += $" Plus {Fmt.Plural(Preview.Optional, "optional mod", "optional mods")}.";
+            return line;
+        }
+    }
+
+    public string ToInstallText
+    {
+        get
+        {
+            var missing = Preview.Required - Preview.RequiredInstalled + (IncludeOptional ? Preview.Optional - Preview.OptionalInstalled : 0);
+            return missing == 0
+                ? "Everything in it is already installed. The profile only remembers the list."
+                : $"{Fmt.Plural(missing, "mod", "mods")} will appear under Updates as installs. Nothing is changed until you press Update there.";
+        }
+    }
+
+    public string OptionalText => $"Also add the {Fmt.Plural(Preview.Optional, "optional mod", "optional mods")}";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToInstallText))]
+    private bool _includeOptional;
+
+    /// <summary>Null when cancelled, otherwise whether to include the optional mods.</summary>
+    public Task<bool?> Result => _result.Task;
+
+    [RelayCommand]
+    private void Add()
+    {
+        _result.TrySetResult(IncludeOptional);
+        Close();
+    }
+
+    [RelayCommand]
+    public void Cancel()
+    {
+        _result.TrySetResult(null);
+        Close();
+    }
+}

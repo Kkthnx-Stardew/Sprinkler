@@ -392,6 +392,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void ShowDialog(DialogViewModel dialog)
     {
+        if (Dialog is CollectionPreviewDialogViewModel looking)
+            looking.Cancel();
         if (Dialog is TextPromptDialogViewModel askingText)
             askingText.Cancel();
         if (Dialog is ConfirmDialogViewModel previous)

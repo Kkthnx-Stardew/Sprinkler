@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.CollectionPreviewDialogView"
+             x:DataType="vm:CollectionPreviewDialogViewModel">
+  <Border Classes="dialog" Width="540">
+    <StackPanel Spacing="10">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <ctl:IconView Kind="gift" Size="24" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Top" />
+        <StackPanel>
+          <TextBlock Classes="h2" Text="{Binding Title}" TextWrapping="Wrap" />
+          <TextBlock Classes="muted small" Text="{Binding Curator}" IsVisible="{Binding HasCurator}" />
+        </StackPanel>
+      </StackPanel>
+      <TextBlock Classes="muted small" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" MaxHeight="110" />
+      <TextBlock FontWeight="SemiBold" Text="{Binding Counts}" TextWrapping="Wrap" />
+      <CheckBox IsChecked="{Binding IncludeOptional}" IsVisible="{Binding HasOptional}" Content="{Binding OptionalText}" />
+      <Border Classes="banner info">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <ctl:IconView Kind="help" Size="18" VerticalAlignment="Top" />
+          <TextBlock Classes="body small" Text="{Binding ToInstallText}" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Adding saves the collection as a profile. It does not switch to the profile or change any of your mods." />
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,8,0,0">
+        <Button Command="{Binding CancelCommand}"><TextBlock Text="Cancel" /></Button>
+        <Button Classes="primary" Command="{Binding AddCommand}"><TextBlock Text="Add this collection" /></Button>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

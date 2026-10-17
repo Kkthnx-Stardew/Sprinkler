@@ -2,26 +2,31 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 1.0.1 (2026-10-17)
 
-- Fixed: a mod whose Nexus page was handed to a new owner, who gave it a new mod ID, could never be updated. The download was silently ignored. Sprinkler now recognises the same Nexus page under a new ID and updates the old folder in place, with a backup and an Undo as usual.
-- Fixed: a file downloaded twice (named like "Mod-123-1-0-0-1752000000 (1).zip") was not matched to its Nexus mod.
-- Failed Nexus link downloads are now written to the log.
-- Fixed: a file for a mod whose Nexus page moved to a new ID was also ignored when it simply turned up in Downloads without an update waiting for it (for example after pressing the Nexus button and downloading by hand). It now appears under Updates as a found file that replaces the old mod in place, and every file the app skips is written to the log with the reason.
-- Fixed: the "One click" and "Automatic" tags on a chosen source button blended into the button in the dark theme. They now have an outline and sit centred in both themes.
-- The question rows in Help and the other fold-out sections now keep their arrows in one column at the right edge, and the Mod column of All mods gets more of the width so names and notes are cut off less.
-- Fixed: hovering a fold-out row (such as the questions in Help) turned it black with a boxed arrow. It now gets a soft tint and keeps its link colour.
-- Fixed: dropping a damaged file, or a text file named like an archive (`.7z` or `.rar`), onto the window could close the program. It now says the file cannot be read. Unexpected errors are also written to the log, and one that slips through is shown as a message instead of ending the program.
-- Fixed: on Linux, an editor or file manager that was open on the Stardew Valley folder made Sprinkler think the game was running and refuse to update.
-- Fixed: an older GitHub or CurseForge release could be offered as a newer one when its title mentioned a higher number, such as "for SMAPI 4.1.0". A release is now judged by its own version.
+### Fixed
+
+- A mod whose Nexus page was handed to a new owner, who gave it a new mod ID, could never be updated. The download was silently ignored. Sprinkler now recognises the same Nexus page under a new ID and updates the old folder in place, with a backup and an Undo as usual. This works both for an update you started and for a file that simply turns up in Downloads, and every file the app skips is written to the log with the reason.
+- Dropping a damaged file, or a text file named like an archive (`.7z` or `.rar`), onto the window could close the program. It now says the file cannot be read. Unexpected errors are written to the log, and one that slips through is shown as a message instead of ending the program.
+- Pressing the source button that is already chosen on an update card (for example "Nexus Mods") did nothing. It now opens that site's page for the file.
+- On Linux, an editor or file manager that was open on the Stardew Valley folder made Sprinkler think the game was running and refuse to update.
+- An older GitHub or CurseForge release could be offered as a newer one when its title mentioned a higher number, such as "for SMAPI 4.1.0". A release is now judged by its own version.
+- A file downloaded twice (named like "Mod-123-1-0-0-1752000000 (1).zip") was not matched to its Nexus mod.
+- The "One click" and "Automatic" tags on a chosen source button blended into the button in the dark theme. They now have an outline and sit centred in both themes.
+- Hovering a fold-out row, such as a question in Help, turned it black with a boxed arrow. It now gets a soft tint and keeps its link colour.
+- Turning on Nexus links on a PC that refuses the registry change now says so instead of failing.
+
+### Improved
+
+- All mods: a mod with content packs shows a "4 content packs" button that folds and unfolds them. The packs have a thin rail beside them, a smaller icon and tighter rows. A mod with more than ten packs starts folded, and what you fold or unfold is remembered. Searching always shows every match.
+- The long "update key points nowhere" note is no longer repeated on every grouped pack, and the full note under any mod's name appears in a tooltip when it is cut off.
+- The arrows of fold-out sections now sit in one column at the right edge, and the Mod column of All mods gets more of the width.
+- Copies of dropped files and downloads that were never installed are removed: when their card is dismissed, and at the next start for anything older than six hours. They used to stay in the data folder for good.
+- Every Nexus link the app receives is written to the log, which makes a click that seems to do nothing easy to trace.
 - A manifest larger than 1 MB inside an archive is ignored instead of being read into memory.
 - A settings or history file that cannot be read is kept as `.unreadable` beside the new one, so the saved Nexus key and notes are not lost to the next save.
 - The Xbox app folder is only looked for on drives that are connected, so a disconnected network drive can no longer slow the search for the game.
 - On Linux the Nexus key is read from the keyring once, not for every request, and the window no longer waits on a scan of running programs while other work is going on.
-- All mods: a mod with content packs now shows a "4 content packs" button that folds and unfolds them, the packs have a thin rail beside them, a smaller icon and less padding, and the repeated "content pack" tag is dropped for packs already shown under their mod. A mod with more than ten packs starts folded, and what you fold or unfold is remembered. Searching always shows every match. The long "update key points nowhere" note is no longer repeated on every grouped pack, and the full note under any mod's name appears in a tooltip.
-- Fixed: pressing the source button that is already chosen on an update card (for example "Nexus Mods") did nothing. It now opens that site's page for the file.
-- Copies of dropped files and downloads that were never installed are now removed: when their card is dismissed, and at the next start for anything older than six hours. They used to stay in the data folder for good.
-- Turning on Nexus links on a PC that refuses the registry change now says so instead of failing. Every Nexus link the app receives is written to the log, which makes a click that seems to do nothing easy to trace.
 - Mod pictures that a newer picture replaces are deleted from the cache, and two pictures finishing at the same moment can no longer collide while saving the index.
 
 ## 1.0.0 (2026-10-17)

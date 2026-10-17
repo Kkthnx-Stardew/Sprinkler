@@ -28,7 +28,7 @@ internal sealed record FoundInfo(string Id, string File, string Origin, List<str
 
 internal sealed record HistoryInfo(string Id, DateTime When, string Name, string? From, string To, string Source, bool Undone, bool CanUndo, bool Removed);
 
-internal sealed record ProfileSummary(string Name, int ModCount, int MissingCount, DateTime Updated, int ConfigCount, bool IsActive);
+internal sealed record ProfileSummary(string Name, int ModCount, int MissingCount, DateTime Updated, int ConfigCount, bool IsActive, string? CollectionName = null, string? Curator = null, bool Pending = false, int ToInstall = 0);
 
 internal sealed record ProfilesInfo(string? Active, bool Modified, bool KeepConfigs, List<ProfileSummary> Profiles);
 

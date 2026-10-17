@@ -27,6 +27,7 @@ internal static class AppEnvironment
     public static string SmapiApiUrl => Env("SPRINKLER_SMAPI_URL", "https://smapi.io/api/v3.0/mods");
     public static string NexusApiUrl => Env("SPRINKLER_NEXUS_URL", "https://api.nexusmods.com/v1").TrimEnd('/');
     public static string NexusSiteUrl => Env("SPRINKLER_NEXUS_SITE", "https://www.nexusmods.com").TrimEnd('/');
+    public static string NexusGraphQlUrl => Env("SPRINKLER_NEXUS_GRAPHQL", "https://api.nexusmods.com/v2/graphql");
     public static string CurseForgeUrl => Env("SPRINKLER_CF_URL", "https://www.curseforge.com").TrimEnd('/');
     public static string GitHubApiUrl => Env("SPRINKLER_GH_URL", "https://api.github.com").TrimEnd('/');
     public static string GitHubSiteUrl => Env("SPRINKLER_GH_SITE", "https://github.com").TrimEnd('/');

@@ -42,9 +42,12 @@ internal sealed partial class UpdateService
     private ProfilesInfo BuildProfilesInfoLocked()
     {
         var installed = InstalledIds(_mods);
+        var installedNexus = InstalledNexusIds(_mods);
         var summaries = Profiles.All().Select(p => new ProfileSummary(
             p.Name, p.Enabled.Count, p.Enabled.Count(id => !installed.Contains(id) && !IsSmapiId(id)), p.Updated, p.Configs.Count,
-            p.Name.Equals(Profiles.ActiveName, StringComparison.OrdinalIgnoreCase))).ToList();
+            p.Name.Equals(Profiles.ActiveName, StringComparison.OrdinalIgnoreCase),
+            p.Collection?.Name, p.Collection?.Curator, p.PendingInstall,
+            p.Collection is null ? 0 : p.Collection.Mods.Count(m => !installedNexus.Contains(m.ModId)))).ToList();
         return new ProfilesInfo(Profiles.ActiveName, ProfileModifiedLocked(), Profiles.KeepConfigs, summaries);
     }
 

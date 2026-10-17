@@ -19,6 +19,12 @@ internal sealed class Profile
 
     private Dictionary<string, string> _configs = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Set when the profile was made from a Nexus collection. It remembers the list so missing mods can be offered as installs.</summary>
+    public ProfileCollection? Collection { get; set; }
+
+    /// <summary>True while mods of the collection are still being installed. The check offers them under Updates until none are missing.</summary>
+    public bool PendingInstall { get; set; }
+
     public DateTime Created { get; set; } = DateTime.Now;
     public DateTime Updated { get; set; } = DateTime.Now;
 
@@ -28,6 +34,15 @@ internal sealed class Profile
         Enabled = Enabled.ToList(),
         Configs = new Dictionary<string, string>(Configs, StringComparer.OrdinalIgnoreCase),
     };
+}
+
+internal sealed class ProfileCollection
+{
+    public string Slug { get; set; } = "";
+    public int Revision { get; set; }
+    public string Name { get; set; } = "";
+    public string? Curator { get; set; }
+    public List<CollectionMod> Mods { get; set; } = new();
 }
 
 internal sealed class ProfilesData

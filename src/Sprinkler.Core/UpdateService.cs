@@ -44,6 +44,9 @@ internal sealed class UpdateItem
     public List<string> UniqueIds { get; } = new();
     public int PartCount { get; set; } = 1;
     public bool IsNew { get; init; }
+
+    /// <summary>For installs whose SMAPI mod ID is not known until the file is opened, such as the mods of a Nexus collection.</summary>
+    public bool AcceptAnyMod { get; init; }
     public string? Why { get; set; }
     public List<SourceOffer> Offers { get; } = new();
     public int Chosen { get; set; }
@@ -304,6 +307,7 @@ internal sealed partial class UpdateService : IDisposable
                 _status = $"Found {mods.Count} mods. Asking SMAPI which ones have updates";
             });
 
+            SyncCollectionProfiles(mods);
             RequestAllArt();
             await RunCheckAsync(game, mods, ct);
         }
@@ -514,6 +518,11 @@ internal sealed partial class UpdateService : IDisposable
             item.UniqueIds.Add(depId);
             groups[item.Id] = item;
         }
+
+        // mods of a Nexus collection that is still being installed (skipping any already offered for another reason)
+        var offeredNexus = groups.Values.Where(g => g.NexusId is not null).Select(g => g.NexusId!.Value).ToHashSet();
+        foreach (var it in CollectionItems(InstalledNexusIds(mods), offeredNexus))
+            groups[it.Id] = it;
 
         // an installed mod that is too old for something else that depends on it
         foreach (var m in active)
@@ -1229,7 +1238,8 @@ internal sealed partial class UpdateService : IDisposable
         var ids = mods.Select(m => m.Manifest.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
         List<UpdateItem> waiting;
         lock (_gate)
-            waiting = _items.Where(i => i.Status == ItemStatus.WaitingForYou && i.Waiter is not null && i.UniqueIds.Any(ids.Contains)).ToList();
+            waiting = _items.Where(i => i.Status == ItemStatus.WaitingForYou && i.Waiter is not null
+                && (i.UniqueIds.Any(ids.Contains) || (i.AcceptAnyMod && i.NexusId is { } nid && NexusFileModId(path) == nid))).ToList();
 
         if (waiting.Count > 0)
         {
@@ -1346,7 +1356,9 @@ internal sealed partial class UpdateService : IDisposable
             using var archive = ArchiveFile.Open(archivePath);
             var plan = Installer.Plan(archivePath, archive, game.ModsPath, _mods);
 
-            var wanted = items.SelectMany(i => i.UniqueIds).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var wanted = items.Any(i => i.AcceptAnyMod)
+                ? plan.Folders.Select(f => f.Source.Manifest.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase)
+                : items.SelectMany(i => i.UniqueIds).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var matching = plan.Folders.Where(f => wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
             if (matching.Count == 0)
                 throw new WrongFileException("The file is for a different mod than expected, so it was not installed.");
@@ -1371,6 +1383,9 @@ internal sealed partial class UpdateService : IDisposable
                     i.Status = ItemStatus.Done;
                     i.HistoryId = result.HistoryId;
                     i.Message = $"Installed from {origin}.";
+                    if (i.AcceptAnyMod)
+                        foreach (var id in wanted.Where(id => !i.UniqueIds.Contains(id, StringComparer.OrdinalIgnoreCase)))
+                            i.UniqueIds.Add(id);
                     i.Details.AddRange(result.Messages);
                     i.Details.AddRange(plan.Folders.SelectMany(f => f.Warnings));
                     var extras = plan.Folders.Where(f => !wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
@@ -1419,6 +1434,7 @@ internal sealed partial class UpdateService : IDisposable
         if (game is null)
             return;
         var mods = await Task.Run(() => ModScanner.Scan(game.ModsPath));
+        SyncCollectionProfiles(mods);
         Update(() => _mods = mods);
     }
 

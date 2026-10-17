@@ -6,6 +6,7 @@ internal static class UrlPolicy
     private static readonly string[] OpenableHosts =
     {
         "nexusmods.com", "curseforge.com", "github.com", "moddrop.com", "smapi.io", "stardewvalleywiki.com", "wiki.stardewvalley.net",
+        "ko-fi.com", "buymeacoffee.com", "paypal.com", "paypal.me",
     };
 
     internal static bool TryOpenable(string? raw, out Uri uri)

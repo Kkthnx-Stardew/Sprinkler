@@ -591,6 +591,8 @@
   "ui.status": "状態",
   "ui.stop_handling_them": "処理をやめる",
   "ui.stop_installing_the_rest_of_this_collection": "このコレクションの残りのインストールをやめる",
+  "ui.support_text": "Sprinklerは無料で、広告もなく、アカウントも不要です。時間の節約になったなら、続けていくための支援ができます。完全に任意で、何も制限されません。",
+  "ui.support_title": "Sprinklerを応援する",
   "ui.switch_light_or_dark": "ライトとダークを切り替え",
   "ui.switch_theme": "テーマを切り替え",
   "ui.switch_to_it": "これに切り替える",

@@ -600,6 +600,8 @@
   "ui.status": "СТАТУС",
   "ui.stop_handling_them": "Больше не обрабатывать",
   "ui.stop_installing_the_rest_of_this_collection": "Не устанавливать остальное из этой коллекции",
+  "ui.support_text": "Sprinkler бесплатный, без рекламы и без аккаунта. Если он экономит вам время, можно помочь проекту жить дальше. Это полностью по желанию, и ничего не блокируется.",
+  "ui.support_title": "Поддержать Sprinkler",
   "ui.switch_light_or_dark": "Переключить светлую или тёмную тему",
   "ui.switch_theme": "Сменить тему",
   "ui.switch_to_it": "Переключиться на него",

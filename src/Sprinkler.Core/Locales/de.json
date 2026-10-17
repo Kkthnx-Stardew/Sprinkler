@@ -591,6 +591,8 @@
   "ui.status": "STATUS",
   "ui.stop_handling_them": "Nicht mehr behandeln",
   "ui.stop_installing_the_rest_of_this_collection": "Den Rest dieser Kollektion nicht mehr installieren",
+  "ui.support_text": "Sprinkler ist kostenlos, hat keine Werbung und braucht kein Konto. Wenn es dir Zeit spart, kannst du helfen, es am Laufen zu halten. Das ist völlig freiwillig und nichts ist dafür gesperrt.",
+  "ui.support_title": "Sprinkler unterstützen",
   "ui.switch_light_or_dark": "Zwischen hell und dunkel wechseln",
   "ui.switch_theme": "Design wechseln",
   "ui.switch_to_it": "Dazu wechseln",

@@ -591,6 +591,8 @@
   "ui.status": "상태",
   "ui.stop_handling_them": "처리 중단",
   "ui.stop_installing_the_rest_of_this_collection": "이 컬렉션의 나머지 설치 중단",
+  "ui.support_text": "Sprinkler는 무료이고 광고가 없으며 계정도 필요 없습니다. 시간을 아껴 주었다면 계속 이어갈 수 있도록 도와주실 수 있습니다. 전적으로 선택 사항이며 막히는 기능은 없습니다.",
+  "ui.support_title": "Sprinkler 후원하기",
   "ui.switch_light_or_dark": "밝게/어둡게 전환",
   "ui.switch_theme": "테마 전환",
   "ui.switch_to_it": "이것으로 전환",

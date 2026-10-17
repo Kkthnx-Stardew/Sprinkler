@@ -109,6 +109,16 @@ Use the publish line for the system you are building for. See [CONTRIBUTING.md](
 - On Linux the Nexus "Mod Manager Download" button works through a desktop entry and needs `xdg-utils`. Without it, use the Manual download button and Sprinkler installs the file from your Downloads folder.
 - macOS builds compile but are not released or tested yet, and the Nexus link handler is not available there.
 
+## Support the work
+
+Sprinkler is free, has no ads and needs no account. If it saved you time, you can chip in:
+
+- [Ko-fi](https://ko-fi.com/kkthnx)
+- [Buy Me a Coffee](https://buymeacoffee.com/kkthnx)
+- [PayPal](https://www.paypal.com/paypalme/kkthnxtv)
+
+It is optional and nothing in the app is locked behind it.
+
 ## License
 
 MIT, see [LICENSE](LICENSE). Third-party components and the artwork's origin are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). This is a fan-made tool and is not affiliated with ConcernedApe, SMAPI or Nexus Mods.

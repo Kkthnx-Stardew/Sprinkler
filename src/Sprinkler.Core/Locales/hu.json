@@ -591,6 +591,8 @@
   "ui.status": "ÁLLAPOT",
   "ui.stop_handling_them": "Ne kezelje őket tovább",
   "ui.stop_installing_the_rest_of_this_collection": "A gyűjtemény többi részének telepítésének leállítása",
+  "ui.support_text": "A Sprinkler ingyenes, nincsenek benne hirdetések, és nem kell hozzá fiók. Ha időt spórol neked, segíthetsz életben tartani. Teljesen önkéntes, és semmi nincs emiatt zárolva.",
+  "ui.support_title": "Sprinkler támogatása",
   "ui.switch_light_or_dark": "Váltás világos és sötét között",
   "ui.switch_theme": "Téma váltása",
   "ui.switch_to_it": "Átváltás rá",

@@ -591,6 +591,8 @@
   "ui.status": "STATUS",
   "ui.stop_handling_them": "Parar de tratá-los",
   "ui.stop_installing_the_rest_of_this_collection": "Parar de instalar o resto desta coleção",
+  "ui.support_text": "O Sprinkler é gratuito, não tem anúncios e não precisa de conta. Se ele economiza seu tempo, você pode ajudar a mantê-lo vivo. É totalmente opcional e nada fica bloqueado por isso.",
+  "ui.support_title": "Apoie o Sprinkler",
   "ui.switch_light_or_dark": "Alternar entre claro e escuro",
   "ui.switch_theme": "Trocar tema",
   "ui.switch_to_it": "Trocar para ele",

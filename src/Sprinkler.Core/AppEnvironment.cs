@@ -36,6 +36,11 @@ internal static class AppEnvironment
     public const string RepoSlug = "Kkthnx-Stardew/Sprinkler";
     public static string RepoUrl => "https://github.com/" + RepoSlug;
 
+    // where people can support the project; opened only through UrlPolicy
+    public const string KofiUrl = "https://ko-fi.com/kkthnx";
+    public const string BuyMeACoffeeUrl = "https://buymeacoffee.com/kkthnx";
+    public const string PayPalUrl = "https://www.paypal.com/paypalme/kkthnxtv";
+
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = false,

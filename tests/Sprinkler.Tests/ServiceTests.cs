@@ -516,6 +516,15 @@ public class AppInfoTests
         Assert.False(UrlPolicy.TryOpenable("https://evilnexusmods.com/", out _));
         Assert.False(UrlPolicy.TryOpenable("file:///C:/Windows/System32/calc.exe", out _));
     }
+
+    [Fact]
+    public void TheSupportLinksCanBeOpened()
+    {
+        Assert.True(UrlPolicy.TryOpenable(AppEnvironment.KofiUrl, out _));
+        Assert.True(UrlPolicy.TryOpenable(AppEnvironment.BuyMeACoffeeUrl, out _));
+        Assert.True(UrlPolicy.TryOpenable(AppEnvironment.PayPalUrl, out _));
+        Assert.False(UrlPolicy.TryOpenable("https://paypal.com.evil.example/", out _));
+    }
 }
 
 public class SmapiLogTests

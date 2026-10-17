@@ -591,6 +591,8 @@
   "ui.status": "DURUM",
   "ui.stop_handling_them": "İşlemeyi bırak",
   "ui.stop_installing_the_rest_of_this_collection": "Bu koleksiyonun kalanını yüklemeyi bırak",
+  "ui.support_text": "Sprinkler ücretsizdir, reklam içermez ve hesap gerektirmez. Sana zaman kazandırıyorsa devam etmesine yardım edebilirsin. Tamamen isteğe bağlıdır ve hiçbir şey kilitlenmez.",
+  "ui.support_title": "Sprinkler'ı destekle",
   "ui.switch_light_or_dark": "Açık veya koyu arasında geçiş yap",
   "ui.switch_theme": "Temayı değiştir",
   "ui.switch_to_it": "Ona geç",

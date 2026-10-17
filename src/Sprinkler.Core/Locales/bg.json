@@ -591,6 +591,8 @@
   "ui.status": "СЪСТОЯНИЕ",
   "ui.stop_handling_them": "Спри да ги обработваш",
   "ui.stop_installing_the_rest_of_this_collection": "Спри да инсталираш останалото от тази колекция",
+  "ui.support_text": "Sprinkler е безплатен, без реклами и без акаунт. Ако ти спестява време, можеш да помогнеш проектът да продължи. Това е напълно по желание и нищо не се заключва.",
+  "ui.support_title": "Подкрепи Sprinkler",
   "ui.switch_light_or_dark": "Превключи светъл или тъмен",
   "ui.switch_theme": "Смени темата",
   "ui.switch_to_it": "Превключи към него",

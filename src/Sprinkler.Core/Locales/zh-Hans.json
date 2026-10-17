@@ -591,6 +591,8 @@
   "ui.status": "状态",
   "ui.stop_handling_them": "不再处理",
   "ui.stop_installing_the_rest_of_this_collection": "停止安装此合集的其余部分",
+  "ui.support_text": "Sprinkler 免费、没有广告，也不需要账号。如果它帮你节省了时间，欢迎帮助它继续下去。这完全出于自愿，任何功能都不会因此受限。",
+  "ui.support_title": "支持 Sprinkler",
   "ui.switch_light_or_dark": "切换浅色或深色",
   "ui.switch_theme": "切换主题",
   "ui.switch_to_it": "切换到它",

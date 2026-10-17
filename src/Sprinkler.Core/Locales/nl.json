@@ -591,6 +591,8 @@
   "ui.status": "STATUS",
   "ui.stop_handling_them": "Niet meer afhandelen",
   "ui.stop_installing_the_rest_of_this_collection": "Stoppen met de rest van deze collectie installeren",
+  "ui.support_text": "Sprinkler is gratis, heeft geen advertenties en vraagt geen account. Als het je tijd bespaart, kun je helpen het draaiende te houden. Het is helemaal vrijwillig en er is niets door vergrendeld.",
+  "ui.support_title": "Sprinkler steunen",
   "ui.switch_light_or_dark": "Wisselen tussen licht en donker",
   "ui.switch_theme": "Thema wisselen",
   "ui.switch_to_it": "Ernaar overschakelen",

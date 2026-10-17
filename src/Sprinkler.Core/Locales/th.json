@@ -591,6 +591,8 @@
   "ui.status": "สถานะ",
   "ui.stop_handling_them": "เลิกจัดการ",
   "ui.stop_installing_the_rest_of_this_collection": "เลิกติดตั้งส่วนที่เหลือของคอลเลกชันนี้",
+  "ui.support_text": "Sprinkler ใช้ฟรี ไม่มีโฆษณา และไม่ต้องมีบัญชี ถ้ามันช่วยประหยัดเวลาให้คุณ คุณช่วยให้โปรเจกต์นี้ไปต่อได้ ทั้งหมดเป็นทางเลือกและไม่มีอะไรถูกล็อก",
+  "ui.support_title": "สนับสนุน Sprinkler",
   "ui.switch_light_or_dark": "สลับสว่างหรือมืด",
   "ui.switch_theme": "สลับธีม",
   "ui.switch_to_it": "สลับไปใช้",

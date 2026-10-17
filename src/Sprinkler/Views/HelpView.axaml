@@ -89,6 +89,18 @@
 
       <Border Classes="panel">
         <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="heart" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.support_title}" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.support_text}" />
+          <WrapPanel Orientation="Horizontal">
+            <Button Margin="0,0,10,8" Command="{Binding OpenKofiCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="heart" Size="16" /><TextBlock Text="Ko-fi" /></StackPanel></Button>
+            <Button Margin="0,0,10,8" Command="{Binding OpenBuyMeACoffeeCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="heart" Size="16" /><TextBlock Text="Buy Me a Coffee" /></StackPanel></Button>
+            <Button Margin="0,0,10,8" Command="{Binding OpenPayPalCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="heart" Size="16" /><TextBlock Text="PayPal" /></StackPanel></Button>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
           <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="shield" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.about}" /></StackPanel>
           <TextBlock Classes="small" Text="{Binding AboutText}" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" Spacing="10">

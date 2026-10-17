@@ -99,6 +99,15 @@ internal sealed partial class MainViewModel
     private void OpenRepo() => OpenUrl(RepoUrl);
 
     [RelayCommand]
+    private void OpenKofi() => OpenUrl(AppEnvironment.KofiUrl);
+
+    [RelayCommand]
+    private void OpenBuyMeACoffee() => OpenUrl(AppEnvironment.BuyMeACoffeeUrl);
+
+    [RelayCommand]
+    private void OpenPayPal() => OpenUrl(AppEnvironment.PayPalUrl);
+
+    [RelayCommand]
     private void OpenNexusKeyPage() => OpenUrl("https://www.nexusmods.com/settings/api-keys");
 
     public void OpenUrl(string? url)

@@ -65,10 +65,20 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         ModChips[0].IsOn = true;
 
         _svc.Changed += OnServiceChanged;
+        _svc.Art.Changed += () =>
+        {
+            _artDirty = true;
+            OnServiceChanged();
+        };
         _poll.Start();
     }
 
     public IUiServices? Ui { get; set; }
+
+    internal Core.ModArtStore Art => _svc.Art;
+
+    internal string? ArtKeyOf(string uniqueId) => _svc.ArtKeyOf(uniqueId);
+    private bool _artDirty;
 
     /// <summary>For screenshots and tests: show this theme and skip the first-run tour without saving anything.</summary>
     public string? ThemeOverride { get; init; }
@@ -168,6 +178,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         SyncItems(s);
         SyncMods(s);
+        if (_artDirty)
+        {
+            _artDirty = false;
+            foreach (var row in _rowMap.Values)
+                row.NotifyArt();
+            foreach (var item in _itemMap.Values)
+                item.NotifyArt();
+        }
         SyncHistory(s);
         SyncFound(s);
         SyncProblems(s);

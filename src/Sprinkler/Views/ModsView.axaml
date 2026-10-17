@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
+             xmlns:v="using:Sprinkler.Views"
              x:Class="Sprinkler.Views.ModsView"
              x:DataType="vm:MainViewModel">
   <Grid MaxWidth="980" Margin="20,8,20,20">
@@ -50,6 +51,8 @@
                     <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="4,10" Opacity="{Binding RowOpacity}">
                       <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12">
                         <ToggleSwitch IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" ToolTip.Tip="{Binding SwitchTip}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                        <Grid Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center" ToolTip.Tip="{Binding Summary}">
+                        <v:ModIconView DataContext="{Binding}" Width="38" Height="38" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                           <DockPanel LastChildFill="True">
                             <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="content pack" /></Border>
@@ -61,6 +64,7 @@
                             <TextBlock Classes="warn small strong" Text="{Binding NeedsText}" TextTrimming="CharacterEllipsis" />
                           </StackPanel>
                         </StackPanel>
+                        </Grid>
                         <TextBlock Grid.Column="2" Text="{Binding Version}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <WrapPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                           <Border Classes="chip" Classes.ok="{Binding ChipOk}" Classes.warn="{Binding ChipWarn}" Classes.bad="{Binding ChipBad}" Margin="0,0,6,0"><TextBlock Text="{Binding StatusText}" /></Border>

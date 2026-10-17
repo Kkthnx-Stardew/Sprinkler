@@ -29,6 +29,7 @@ internal static class AppEnvironment
     public static string NexusSiteUrl => Env("SPRINKLER_NEXUS_SITE", "https://www.nexusmods.com").TrimEnd('/');
     public static string CurseForgeUrl => Env("SPRINKLER_CF_URL", "https://www.curseforge.com").TrimEnd('/');
     public static string GitHubApiUrl => Env("SPRINKLER_GH_URL", "https://api.github.com").TrimEnd('/');
+    public static string GitHubSiteUrl => Env("SPRINKLER_GH_SITE", "https://github.com").TrimEnd('/');
 
     public const string NexusGame = "stardewvalley";
     public const string RepoSlug = "Kkthnx-Stardew/Sprinkler";

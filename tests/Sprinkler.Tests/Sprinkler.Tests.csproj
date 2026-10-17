@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Sprinkler.Core\Sprinkler.Core.csproj" />
+    <ProjectReference Include="..\..\src\Sprinkler\Sprinkler.csproj" />
   </ItemGroup>
 
 </Project>

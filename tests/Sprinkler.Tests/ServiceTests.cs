@@ -32,6 +32,8 @@ internal sealed class FakeWeb : IDisposable
         Environment.SetEnvironmentVariable("SPRINKLER_GH_URL", Base + "/gh");
         Environment.SetEnvironmentVariable("SPRINKLER_NEXUS_URL", Base + "/nexus");
         Environment.SetEnvironmentVariable("SPRINKLER_NEXUS_SITE", Base + "/nexussite");
+        Environment.SetEnvironmentVariable("SPRINKLER_GH_SITE", Base + "/ghsite");
+        Environment.SetEnvironmentVariable("SPRINKLER_ALLOW_LOCAL", "1");
     }
 
     private async Task Loop()
@@ -63,7 +65,7 @@ internal sealed class FakeWeb : IDisposable
     {
         _stop.Cancel();
         _listener.Close();
-        foreach (var v in new[] { "SPRINKLER_SMAPI_URL", "SPRINKLER_CF_URL", "SPRINKLER_GH_URL", "SPRINKLER_NEXUS_URL", "SPRINKLER_NEXUS_SITE" })
+        foreach (var v in new[] { "SPRINKLER_SMAPI_URL", "SPRINKLER_CF_URL", "SPRINKLER_GH_URL", "SPRINKLER_NEXUS_URL", "SPRINKLER_NEXUS_SITE", "SPRINKLER_GH_SITE", "SPRINKLER_ALLOW_LOCAL" })
             Environment.SetEnvironmentVariable(v, null);
     }
 }

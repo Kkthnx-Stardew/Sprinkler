@@ -126,6 +126,26 @@ internal sealed class UpdateService : IDisposable
     public SettingsStore Settings { get; }
     public HistoryStore History { get; }
 
+    /// <summary>Mod pictures and short summaries, fetched in the background and kept on disk.</summary>
+    public ModArtStore Art { get; }
+
+    /// <summary>The picture lookup key of an installed mod, or null when its manifest gives none.</summary>
+    public string? ArtKeyOf(string uniqueId)
+    {
+        lock (_gate)
+            return _mods.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase)) is { } mod ? ModArtStore.KeyFor(mod) : null;
+    }
+
+    /// <summary>Asks for the pictures of every installed mod. Cheap when they are already cached.</summary>
+    public void RequestAllArt()
+    {
+        List<ModInfo> mods;
+        lock (_gate)
+            mods = _mods.ToList();
+        foreach (var key in mods.Select(ModArtStore.KeyFor).Where(k => k is not null).Distinct())
+            Art.Request(key);
+    }
+
     public UpdateService(SettingsStore settings, HistoryStore history, Action<string> openUrl)
     {
         Settings = settings;
@@ -133,6 +153,8 @@ internal sealed class UpdateService : IDisposable
         _openUrl = openUrl;
         _installer = new Installer(history, settings);
         _nexus = new NexusClient(() => settings.NexusKey);
+        Art = new ModArtStore(_nexus);
+        Art.Changed += () => Changed?.Invoke();
         _watcher = new DownloadWatcher(path => HandleArchiveAsync(path, "your browser download", CancellationToken.None));
     }
 
@@ -280,6 +302,7 @@ internal sealed class UpdateService : IDisposable
                 _status = $"Found {mods.Count} mods. Asking SMAPI which ones have updates";
             });
 
+            RequestAllArt();
             await RunCheckAsync(game, mods, ct);
         }
         catch (OperationCanceledException) when (_disposed)
@@ -808,6 +831,7 @@ internal sealed class UpdateService : IDisposable
                 _nexusMessage = null;
             });
             await RefreshOffersAsync();
+            RequestAllArt();
             return null;
         }
         catch (NexusException ex)
@@ -1741,7 +1765,7 @@ internal sealed class UpdateService : IDisposable
                 Items: _items.Select(i => new ItemInfo(
                     i.Id, i.Name, i.Installed, i.Target, i.PartCount, i.IsNew, i.Why, i.Status, i.Message, i.Progress, i.Selected, i.Chosen,
                     i.AlternativesLoaded, i.Changelog.ToList(), i.ModPageUrl, i.Details.ToList(), i.HistoryId,
-                    i.Offers.Select(o => new OfferInfo(o.Kind, o.Label, o.Mode, o.Version, o.Usable, o.Note)).ToList())).ToList(),
+                    i.Offers.Select(o => new OfferInfo(o.Kind, o.Label, o.Mode, o.Version, o.Usable, o.Note)).ToList(), ModArtStore.KeyFor(i.NexusId, i.GitHubRepo))).ToList(),
                 Rows: _rows.ToList(),
                 Problems: _problems.ToList(),
                 Found: _found.Select(f => new FoundInfo(f.Id, f.FileName, f.Origin, f.Lines.ToList(), f.Busy, f.Error)).ToList(),

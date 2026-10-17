@@ -46,6 +46,8 @@ internal static class IconData
 
     public static bool IsFilled(string kind) => Filled.Contains(kind);
 
+    public static bool Has(string kind) => Paths.ContainsKey(kind);
+
     public static Geometry? Get(string? kind)
     {
         if (string.IsNullOrEmpty(kind))

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
+             xmlns:v="using:Sprinkler.Views"
              x:Class="Sprinkler.Views.UpdateCardView"
              x:DataType="vm:ItemViewModel">
   <Border Classes="card" Classes.done="{Binding CardDone}" Classes.failed="{Binding CardFailed}">
@@ -9,7 +10,13 @@
       <!-- header -->
       <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="16,14,16,6" ColumnSpacing="12">
         <CheckBox IsChecked="{Binding Selected}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSelect}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
-        <Border Grid.Column="1" Classes="art"><ctl:IconView Kind="{Binding ArtKind}" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+        <Panel Grid.Column="1" Width="46" Height="46" VerticalAlignment="Center" ToolTip.Tip="{Binding Summary}">
+          <v:ModIconView DataContext="{Binding}" Width="42" Height="42" HorizontalAlignment="Left" VerticalAlignment="Top" />
+          <Border Width="22" Height="22" CornerRadius="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                  Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" IsVisible="{Binding ShowStatusBadge}">
+            <ctl:IconView Kind="{Binding ArtKind}" Size="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </Panel>
         <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
           <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" Spacing="6">

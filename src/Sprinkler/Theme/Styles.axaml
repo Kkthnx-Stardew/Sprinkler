@@ -156,7 +156,7 @@
     <Setter Property="TextElement.Foreground" Value="#FFFFFF" />
   </Style>
   <Style Selector="Border.badge TextBlock"><Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="ExtraBold" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
-  <Style Selector="Border.badge.Nexus"><Setter Property="Background" Value="#C25E10" /></Style>
+  <Style Selector="Border.badge.Nexus"><Setter Property="Background" Value="#B0520D" /></Style>
   <Style Selector="Border.badge.CurseForge"><Setter Property="Background" Value="#C24A22" /></Style>
   <Style Selector="Border.badge.GitHub"><Setter Property="Background" Value="#3A3F4B" /></Style>
   <Style Selector="Border.badge.ModDrop"><Setter Property="Background" Value="#2E6BA8" /></Style>

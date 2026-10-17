@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sprinkler.Core;
@@ -22,7 +23,7 @@ internal sealed partial class OfferViewModel(ItemViewModel owner, int index, Off
 
     public IBrush BadgeBrush => Info.Source switch
     {
-        SourceKind.Nexus => new SolidColorBrush(Color.Parse("#C25E10")),
+        SourceKind.Nexus => new SolidColorBrush(Color.Parse("#B0520D")),
         SourceKind.CurseForge => new SolidColorBrush(Color.Parse("#C24A22")),
         SourceKind.GitHub => new SolidColorBrush(Color.Parse("#3A3F4B")),
         _ => new SolidColorBrush(Color.Parse("#2E6BA8")),
@@ -44,7 +45,7 @@ internal sealed partial class OfferViewModel(ItemViewModel owner, int index, Off
 }
 
 /// <summary>An update or install card with its source choices, progress and result.</summary>
-internal sealed partial class ItemViewModel : ObservableObject
+internal sealed partial class ItemViewModel : ObservableObject, IModArt
 {
     private readonly MainViewModel _main;
 
@@ -105,6 +106,15 @@ internal sealed partial class ItemViewModel : ObservableObject
     public bool CardDone => IsDone;
     public bool CardFailed => IsFailed;
 
+    // the mod picture
+    public Bitmap? Icon => ArtImages.Get(_main.Art.PathFor(Info.ArtKey));
+    public bool HasIcon => Icon is not null;
+    public bool NoIcon => Icon is null;
+    public string Initial => Avatar.Initial(Info.Name);
+    public IBrush AvatarBrush => Avatar.Brush(Info.Name);
+    public bool ShowStatusBadge => !IsReady;
+    public string? Summary => _main.Art.Peek(Info.ArtKey)?.Summary;
+
     public string ArtKind => Info.Status switch
     {
         ItemStatus.Done => "check",
@@ -162,6 +172,8 @@ internal sealed partial class ItemViewModel : ObservableObject
 
     public void Choose(int index) => _main.ChooseSource(Id, index);
 
+    public void NotifyArt() => OnPropertyChanged(string.Empty);
+
     [RelayCommand]
     private void SkipVersion() => _main.SkipVersion(Id);
 
@@ -191,7 +203,7 @@ internal enum ModChip
 }
 
 /// <summary>One line of the All mods list.</summary>
-internal sealed partial class ModRowViewModel : ObservableObject
+internal sealed partial class ModRowViewModel : ObservableObject, IModArt
 {
     private readonly MainViewModel _main;
 
@@ -216,6 +228,15 @@ internal sealed partial class ModRowViewModel : ObservableObject
     public bool IsOn => !IsOff;
     public bool CanToggle => !IsLocked;
     public double RowOpacity => IsOff ? 0.6 : 1;
+
+    // the mod picture
+    private string? ArtKey => _main.ArtKeyOf(Row.UniqueId);
+    public Bitmap? Icon => ArtImages.Get(_main.Art.PathFor(ArtKey));
+    public bool HasIcon => Icon is not null;
+    public bool NoIcon => Icon is null;
+    public string Initial => Avatar.Initial(Row.Name);
+    public IBrush AvatarBrush => Avatar.Brush(Row.UniqueId);
+    public string? Summary => _main.Art.Peek(ArtKey)?.Summary;
     public string SwitchTip => IsLocked ? "Part of SMAPI, always on" : IsOff ? "Turn this mod on" : "Turn this mod off";
 
     public string StatusText
@@ -256,6 +277,8 @@ internal sealed partial class ModRowViewModel : ObservableObject
     public bool CanIgnore => Row.State is not (RowState.Bundled or RowState.Disabled);
     public bool IsIgnored => Row.State == RowState.Ignored;
     public string IgnoreText => IsIgnored ? "Check this mod again" : "Never check this mod";
+
+    public void NotifyArt() => OnPropertyChanged(string.Empty);
 
     public void Update(ModRow row)
     {

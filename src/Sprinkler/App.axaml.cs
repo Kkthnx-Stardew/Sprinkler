@@ -39,6 +39,10 @@ public partial class App : Application
                 ThemeOverride = options.Theme,
                 SuppressTour = options.NoTour,
             };
+            if (options.Filter is { } filter)
+                _viewModel.SetModFilter(filter);
+            if (options.Search is { } search)
+                _viewModel.ModSearch = search;
             if (options.Tab is { } tab && Enum.TryParse<AppTab>(tab, ignoreCase: true, out var startTab))
                 _viewModel.Tab = startTab;
 

@@ -148,7 +148,7 @@ internal static class Program
 }
 
 /// <summary>Command line choices.</summary>
-internal sealed record Options(string? ModsPath, string? GamePath, bool Check, bool Help, string? NxmUrl, bool Version = false, bool InstallShortcut = false, bool RemoveShortcut = false, string? Tab = null, string? Theme = null, bool NoTour = false)
+internal sealed record Options(string? ModsPath, string? GamePath, bool Check, bool Help, string? NxmUrl, bool Version = false, bool InstallShortcut = false, bool RemoveShortcut = false, string? Tab = null, string? Theme = null, bool NoTour = false, string? Filter = null, string? Search = null)
 {
     public const string HelpText =
         "Sprinkler, a Stardew Valley mod updater\n" +
@@ -162,7 +162,7 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
 
     public static Options Parse(string[] args)
     {
-        string? mods = null, game = null, nxm = null, tab = null, theme = null;
+        string? mods = null, game = null, nxm = null, tab = null, theme = null, filter = null, search = null;
         bool check = false, help = false, version = false, installShortcut = false, removeShortcut = false, noTour = false;
         for (var i = 0; i < args.Length; i++)
         {
@@ -175,6 +175,8 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
                 case "--tab" when i + 1 < args.Length: tab = args[++i]; break;
                 case "--theme" when i + 1 < args.Length: theme = args[++i]; break;
                 case "--no-tour": noTour = true; break;
+                case "--filter" when i + 1 < args.Length: filter = args[++i]; break;
+                case "--search" when i + 1 < args.Length: search = args[++i]; break;
                 case "--install-shortcut": installShortcut = true; break;
                 case "--remove-shortcut": removeShortcut = true; break;
                 case "--version" or "-v": version = true; break;
@@ -185,6 +187,6 @@ internal sealed record Options(string? ModsPath, string? GamePath, bool Check, b
                     break;
             }
         }
-        return new Options(mods, game, check, help, nxm, version, installShortcut, removeShortcut, tab, theme, noTour);
+        return new Options(mods, game, check, help, nxm, version, installShortcut, removeShortcut, tab, theme, noTour, filter, search);
     }
 }

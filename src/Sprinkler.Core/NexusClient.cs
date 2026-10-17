@@ -157,6 +157,16 @@ internal sealed class NexusClient(Func<string?> keyProvider)
         return new();
     }
 
+    /// <summary>The public details of a mod page: its picture, a short summary, who made it, and how popular it is.</summary>
+    public async Task<NexusModInfo?> GetModInfoAsync(string modId, CancellationToken ct)
+    {
+        var key = keyProvider();
+        if (string.IsNullOrEmpty(key))
+            return null;
+        var mod = await GetAsync<ModResponse>($"/games/{AppEnvironment.NexusGame}/mods/{modId}.json", key, ct);
+        return new NexusModInfo(mod.PictureUrl, mod.Summary, mod.Author, mod.Downloads, mod.Endorsements);
+    }
+
     internal static FileEntry? Pick(List<FileEntry> files, string targetVersion, string? subkey)
     {
         var target = ModVersion.Parse(targetVersion);
@@ -245,6 +255,15 @@ internal sealed class NexusClient(Func<string?> keyProvider)
     {
         public string? Name { get; set; }
         [JsonPropertyName("is_premium")] public bool IsPremium { get; set; }
+    }
+
+    private sealed class ModResponse
+    {
+        [JsonPropertyName("picture_url")] public string? PictureUrl { get; set; }
+        public string? Summary { get; set; }
+        public string? Author { get; set; }
+        [JsonPropertyName("mod_downloads")] public long Downloads { get; set; }
+        [JsonPropertyName("endorsement_count")] public long Endorsements { get; set; }
     }
 
     private sealed class FilesResponse

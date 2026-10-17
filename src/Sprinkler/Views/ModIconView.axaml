@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             x:Class="Sprinkler.Views.ModIconView"
+             x:DataType="vm:IModArt">
+  <Border CornerRadius="9" ClipToBounds="True" Background="{Binding AvatarBrush}">
+    <Panel>
+      <TextBlock Text="{Binding Initial}" IsVisible="{Binding NoIcon}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="17"
+                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+      <Image Source="{Binding Icon}" IsVisible="{Binding HasIcon}" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality" />
+    </Panel>
+  </Border>
+</UserControl>

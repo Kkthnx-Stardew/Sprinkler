@@ -22,7 +22,7 @@ internal sealed record OfferInfo(SourceKind Source, string Label, DeliveryMode M
 internal sealed record ItemInfo(
     string Id, string Name, string? Installed, string Target, int Parts, bool IsNew, string? Why, ItemStatus Status, string Message,
     int Progress, bool Selected, int Chosen, bool AlternativesLoaded, List<string> Changelog, string? PageUrl, List<string> Details,
-    string? HistoryId, List<OfferInfo> Offers);
+    string? HistoryId, List<OfferInfo> Offers, string? ArtKey);
 
 internal sealed record FoundInfo(string Id, string File, string Origin, List<string> Lines, bool Busy, string? Error);
 

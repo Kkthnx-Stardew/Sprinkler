@@ -121,6 +121,36 @@ public class HardeningTests
         Assert.False(await Sprinkler.InstanceChannel.SendAsync("activate", 200, name + "-nobody-listens"));
     }
 
+    private static Sprinkler.ViewModels.ModRowViewModel Row(string id, string name, string? parent = null) =>
+        new(null!, new ModRow(name, id, "1.0.0", RowState.UpToDate, "", name, ParentId: parent, IsContentPack: parent is not null));
+
+    [Fact]
+    public void ContentPacksSitUnderTheirModAndCanBeFolded()
+    {
+        var cp = Row("Pathoschild.ContentPatcher", "Content Patcher");
+        var a = Row("pack.a", "A pack", "Pathoschild.ContentPatcher");
+        var b = Row("pack.b", "B pack", "Pathoschild.ContentPatcher");
+        var other = Row("me.Other", "Other");
+        var orphan = Row("pack.c", "C pack", "not.installed");
+        var sorted = new List<Sprinkler.ViewModels.ModRowViewModel> { a, cp, other, b, orphan };
+
+        var open = Sprinkler.ViewModels.MainViewModel.GroupUnderParents(sorted);
+        Assert.Equal(new[] { "me.Other", "Pathoschild.ContentPatcher", "pack.a", "pack.b", "pack.c" }.OrderBy(x => x),
+            open.Select(v => v.UniqueId).OrderBy(x => x));
+        Assert.Equal(new[] { cp, a, b }, open.Where(v => v == cp || v == a || v == b).ToArray());
+        Assert.Equal(2, cp.PackCount);
+        Assert.True(a.Indented && b.Indented);
+        Assert.False(orphan.Indented);
+        Assert.False(cp.Collapsed);
+
+        var folded = Sprinkler.ViewModels.MainViewModel.GroupUnderParents(sorted, new HashSet<string> { "Pathoschild.ContentPatcher" });
+        Assert.DoesNotContain(a, folded);
+        Assert.DoesNotContain(b, folded);
+        Assert.Contains(orphan, folded);
+        Assert.True(cp.Collapsed);
+        Assert.Equal(2, cp.PackCount);
+    }
+
     [Fact]
     public void ModsThatNeedAnotherModAreListedByName()
     {

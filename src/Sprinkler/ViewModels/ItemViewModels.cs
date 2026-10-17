@@ -226,6 +226,9 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public string UniqueId => Row.UniqueId;
     public string Version => Row.Version;
     public bool IsContentPack => Row.IsContentPack;
+
+    /// <summary>The "content pack" tag is only needed on a pack that is not already shown under its mod.</summary>
+    public bool ShowPackTag => Row.IsContentPack && !_indented;
     // The status chip already says "update available" and "up to date"; the line under the name keeps only what the chip cannot.
     public string Meta
     {
@@ -296,6 +299,8 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
 
     // grouping under a parent mod
     private bool _indented;
+    private int _packCount;
+    private bool _collapsed;
 
     public bool Indented
     {
@@ -303,11 +308,52 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
         set
         {
             if (SetProperty(ref _indented, value))
+            {
                 OnPropertyChanged(nameof(Indent));
+                OnPropertyChanged(nameof(IconSize));
+                OnPropertyChanged(nameof(RowPadding));
+                OnPropertyChanged(nameof(ShowPackTag));
+            }
         }
     }
 
     public Avalonia.Thickness Indent => new(_indented ? 30 : 0, 0, 0, 0);
+
+    /// <summary>A content pack is drawn smaller and closer to the rows around it, so it reads as part of its mod.</summary>
+    public double IconSize => _indented ? 30 : 38;
+
+    public Avalonia.Thickness RowPadding => new(4, _indented ? 7 : 10);
+
+    /// <summary>How many content packs sit under this mod in the list right now. Zero for a mod without any.</summary>
+    public int PackCount
+    {
+        get => _packCount;
+        set
+        {
+            if (SetProperty(ref _packCount, value))
+            {
+                OnPropertyChanged(nameof(IsParent));
+                OnPropertyChanged(nameof(PacksText));
+            }
+        }
+    }
+
+    public bool Collapsed
+    {
+        get => _collapsed;
+        set
+        {
+            if (SetProperty(ref _collapsed, value))
+                OnPropertyChanged(nameof(ChevronTurn));
+        }
+    }
+
+    public bool IsParent => _packCount > 0;
+    public string PacksText => Loc.Count("n.pack", _packCount);
+    public Avalonia.Media.ITransform ChevronTurn => new Avalonia.Media.RotateTransform(_collapsed ? -90 : 0);
+
+    [RelayCommand]
+    private void TogglePacks() => _main.ToggleGroup(UniqueId);
 
     // private note
     public string NoteText => _main.NoteFor(Row.UniqueId);

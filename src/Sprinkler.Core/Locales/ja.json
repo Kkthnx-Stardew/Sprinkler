@@ -321,6 +321,8 @@
   "n.optional_mod_other": "任意のMOD {0} 件",
   "n.part_one": "{0} 個のパーツ",
   "n.part_other": "{0} 個のパーツ",
+  "n.pack_one": "コンテンツパック {0} 件",
+  "n.pack_other": "コンテンツパック {0} 件",
   "n.update_one": "更新 {0} 件",
   "n.update_other": "更新 {0} 件",
   "prob.open": "開く",

@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} opcionális mod",
   "n.part_one": "{0} rész",
   "n.part_other": "{0} rész",
+  "n.pack_one": "{0} tartalomcsomag",
+  "n.pack_other": "{0} tartalomcsomag",
   "n.update_one": "{0} frissítés",
   "n.update_other": "{0} frissítés",
   "prob.open": "Megnyitás",

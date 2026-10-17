@@ -367,10 +367,15 @@ internal sealed partial class MainViewModel
         };
         var list = ordered.ToList();
         if (GroupPacks)
-            list = GroupUnderParents(list);
+            // while searching, every match stays visible even inside a folded group
+            list = GroupUnderParents(list, term.Length > 0 ? null : _foldedGroups);
         else
             foreach (var v in list)
+            {
                 v.Indented = false;
+                v.PackCount = 0;
+                v.Collapsed = false;
+            }
         SyncList(Mods, list);
         OnPropertyChanged(nameof(NoModMatches));
     }
@@ -379,7 +384,17 @@ internal sealed partial class MainViewModel
     /// Puts each content pack right under the mod it belongs to, indented, when that mod is also in the list.
     /// A pack whose mod is missing, filtered out or itself a pack stays where the sort put it.
     /// </summary>
-    internal static List<ModRowViewModel> GroupUnderParents(List<ModRowViewModel> sorted)
+    private readonly HashSet<string> _foldedGroups = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Folds or unfolds the content packs under one mod, for this run of the app.</summary>
+    public void ToggleGroup(string uniqueId)
+    {
+        if (!_foldedGroups.Remove(uniqueId))
+            _foldedGroups.Add(uniqueId);
+        RebuildMods();
+    }
+
+    internal static List<ModRowViewModel> GroupUnderParents(List<ModRowViewModel> sorted, ISet<string>? folded = null)
     {
         var shownIds = sorted.Select(v => v.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
         bool UnderParent(ModRowViewModel v) =>
@@ -393,10 +408,17 @@ internal sealed partial class MainViewModel
             if (UnderParent(v))
                 continue;
             v.Indented = false;
+            var packs = packsByParent[v.UniqueId].ToList();
+            v.PackCount = packs.Count;
+            v.Collapsed = packs.Count > 0 && folded?.Contains(v.UniqueId) == true;
             result.Add(v);
-            foreach (var pack in packsByParent[v.UniqueId])
+            if (v.Collapsed)
+                continue;
+            foreach (var pack in packs)
             {
                 pack.Indented = true;
+                pack.PackCount = 0;
+                pack.Collapsed = false;
                 result.Add(pack);
             }
         }

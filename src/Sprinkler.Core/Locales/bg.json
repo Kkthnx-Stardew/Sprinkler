@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} допълнителни мода",
   "n.part_one": "{0} част",
   "n.part_other": "{0} части",
+  "n.pack_one": "{0} пакет със съдържание",
+  "n.pack_other": "{0} пакета със съдържание",
   "n.update_one": "{0} обновление",
   "n.update_other": "{0} обновления",
   "prob.open": "Отвори",

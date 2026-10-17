@@ -18,6 +18,7 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 - A settings or history file that cannot be read is kept as `.unreadable` beside the new one, so the saved Nexus key and notes are not lost to the next save.
 - The Xbox app folder is only looked for on drives that are connected, so a disconnected network drive can no longer slow the search for the game.
 - On Linux the Nexus key is read from the keyring once, not for every request, and the window no longer waits on a scan of running programs while other work is going on.
+- All mods: a mod with content packs now shows a "4 content packs" button that folds and unfolds them, the packs have a thin rail beside them, a smaller icon and less padding, and the repeated "content pack" tag is dropped for packs already shown under their mod. Searching always shows every match. The full note under a mod's name appears in a tooltip when it is cut off.
 - Fixed: pressing the source button that is already chosen on an update card (for example "Nexus Mods") did nothing. It now opens that site's page for the file.
 - Copies of dropped files and downloads that were never installed are now removed: when their card is dismissed, and at the next start for anything older than six hours. They used to stay in the data folder for good.
 - Turning on Nexus links on a PC that refuses the registry change now says so instead of failing. Every Nexus link the app receives is written to the log, which makes a click that seems to do nothing easy to trace.

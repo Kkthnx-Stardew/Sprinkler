@@ -321,6 +321,8 @@
   "n.optional_mod_other": "선택 모드 {0}개",
   "n.part_one": "{0}개 부분",
   "n.part_other": "{0}개 부분",
+  "n.pack_one": "콘텐츠 팩 {0}개",
+  "n.pack_other": "콘텐츠 팩 {0}개",
   "n.update_one": "업데이트 {0}개",
   "n.update_other": "업데이트 {0}개",
   "prob.open": "열기",

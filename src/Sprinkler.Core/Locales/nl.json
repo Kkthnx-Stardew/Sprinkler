@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} optionele mods",
   "n.part_one": "{0} deel",
   "n.part_other": "{0} delen",
+  "n.pack_one": "{0} inhoudspakket",
+  "n.pack_other": "{0} inhoudspakketten",
   "n.update_one": "{0} update",
   "n.update_other": "{0} updates",
   "prob.open": "Openen",

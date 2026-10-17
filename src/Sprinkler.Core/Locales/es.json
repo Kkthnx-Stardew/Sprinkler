@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} mods opcionales",
   "n.part_one": "{0} parte",
   "n.part_other": "{0} partes",
+  "n.pack_one": "{0} paquete de contenido",
+  "n.pack_other": "{0} paquetes de contenido",
   "n.update_one": "{0} actualización",
   "n.update_other": "{0} actualizaciones",
   "prob.open": "Abrir",

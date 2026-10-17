@@ -52,18 +52,28 @@
               <ListBox Classes="plain" ItemsSource="{Binding Mods}">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:ModRowViewModel">
-                    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="4,10" Opacity="{Binding RowOpacity}">
+                    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="{Binding RowPadding}" Opacity="{Binding RowOpacity}">
                       <Grid ColumnDefinitions="52,2.2*,90,*,36" ColumnSpacing="12">
+                        <!-- a thin rail beside the content packs ties them to the mod above -->
+                        <Border Grid.ColumnSpan="5" IsVisible="{Binding Indented}" Width="2" HorizontalAlignment="Left" Margin="76,-12,0,-12" Opacity="0.55"
+                                Background="{DynamicResource AccentBrush}" IsHitTestVisible="False" />
                         <ToggleSwitch IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" ToolTip.Tip="{Binding SwitchTip}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
                         <Grid Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center" Margin="{Binding Indent}" ToolTip.Tip="{Binding Summary}">
-                        <v:ModIconView DataContext="{Binding}" Width="38" Height="38" />
+                        <v:ModIconView DataContext="{Binding}" Width="{Binding IconSize}" Height="{Binding IconSize}" VerticalAlignment="Center" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                           <DockPanel LastChildFill="True">
-                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="{loc:T ui.content_pack}" /></Border>
+                            <Button DockPanel.Dock="Right" Classes="chipbtn" Height="22" MinHeight="22" Margin="8,0,0,0" Command="{Binding TogglePacksCommand}" IsVisible="{Binding IsParent}"
+                                    AutomationProperties.Name="{Binding PacksText}">
+                              <StackPanel Orientation="Horizontal" Spacing="5">
+                                <ctl:IconView Kind="chevron" Size="12" VerticalAlignment="Center" RenderTransform="{Binding ChevronTurn}" />
+                                <TextBlock Text="{Binding PacksText}" FontSize="11.5" />
+                              </StackPanel>
+                            </Button>
+                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding ShowPackTag}"><TextBlock Text="{loc:T ui.content_pack}" /></Border>
                             <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsEndorsed}"><StackPanel Orientation="Horizontal" Spacing="4"><ctl:IconView Kind="heart" Size="11" /><TextBlock Text="{loc:T ui.endorsed}" /></StackPanel></Border>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                           </DockPanel>
-                          <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Meta}" />
                           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasNote}">
                             <ctl:IconView Kind="edit" Size="12" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" />
                             <TextBlock Classes="small accent" FontStyle="Italic" Text="{Binding NoteText}" TextTrimming="CharacterEllipsis" />

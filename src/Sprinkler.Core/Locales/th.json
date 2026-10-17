@@ -321,6 +321,8 @@
   "n.optional_mod_other": "ม็อดเสริม {0} ตัว",
   "n.part_one": "{0} ส่วน",
   "n.part_other": "{0} ส่วน",
+  "n.pack_one": "ชุดเนื้อหา {0} ชุด",
+  "n.pack_other": "ชุดเนื้อหา {0} ชุด",
   "n.update_one": "อัปเดต {0} รายการ",
   "n.update_other": "อัปเดต {0} รายการ",
   "prob.open": "เปิด",

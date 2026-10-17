@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} isteğe bağlı mod",
   "n.part_one": "{0} parça",
   "n.part_other": "{0} parça",
+  "n.pack_one": "{0} içerik paketi",
+  "n.pack_other": "{0} içerik paketi",
   "n.update_one": "{0} güncelleme",
   "n.update_other": "{0} güncelleme",
   "prob.open": "Aç",

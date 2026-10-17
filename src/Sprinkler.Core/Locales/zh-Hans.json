@@ -321,6 +321,8 @@
   "n.optional_mod_other": "{0} 个可选模组",
   "n.part_one": "{0} 个部分",
   "n.part_other": "{0} 个部分",
+  "n.pack_one": "{0} 个内容包",
+  "n.pack_other": "{0} 个内容包",
   "n.update_one": "{0} 个更新",
   "n.update_other": "{0} 个更新",
   "prob.open": "打开",

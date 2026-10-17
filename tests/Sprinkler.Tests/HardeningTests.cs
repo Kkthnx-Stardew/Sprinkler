@@ -125,6 +125,24 @@ public class HardeningTests
         new(null!, new ModRow(name, id, "1.0.0", RowState.UpToDate, "", name, ParentId: parent, IsContentPack: parent is not null));
 
     [Fact]
+    public void OnlyBigGroupsStartFoldedAndAChoiceIsRemembered()
+    {
+        Assert.False(Sprinkler.ViewModels.MainViewModel.FoldsByDefault(10));
+        Assert.True(Sprinkler.ViewModels.MainViewModel.FoldsByDefault(11));
+
+        using var d = new TempDir();
+        var file = d.Combine("settings.json");
+        var settings = new SettingsStore(file);
+        using var service = new UpdateService(settings, new HistoryStore(d.Combine("history.json"), d.Combine("backups")), _ => { });
+        service.SetPackGroupFolded("Pathoschild.ContentPatcher", false);
+        service.SetPackGroupFolded("me.Other", true);
+
+        var reloaded = new SettingsStore(file);
+        Assert.False(reloaded.Data.PackGroupFolds["Pathoschild.ContentPatcher"]);
+        Assert.True(reloaded.Data.PackGroupFolds["me.Other"]);
+    }
+
+    [Fact]
     public void AGroupedPackKeepsTheAuthorButNotTheLongUpdateKeyNote()
     {
         var pack = new Sprinkler.ViewModels.ModRowViewModel(null!, new ModRow("East Scarp", "pack.e", "1.0.0", RowState.NoInfo,
@@ -155,7 +173,7 @@ public class HardeningTests
         Assert.False(orphan.Indented);
         Assert.False(cp.Collapsed);
 
-        var folded = Sprinkler.ViewModels.MainViewModel.GroupUnderParents(sorted, new HashSet<string> { "Pathoschild.ContentPatcher" });
+        var folded = Sprinkler.ViewModels.MainViewModel.GroupUnderParents(sorted, (id, count) => id == "Pathoschild.ContentPatcher" && count == 2);
         Assert.DoesNotContain(a, folded);
         Assert.DoesNotContain(b, folded);
         Assert.Contains(orphan, folded);

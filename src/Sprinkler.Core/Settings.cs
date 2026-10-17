@@ -32,6 +32,9 @@ internal sealed class SettingsData
     public bool CheckAppUpdates { get; set; } = true;
     public bool TourSeen { get; set; }
     public bool GroupContentPacks { get; set; } = true;
+
+    /// <summary>Mods whose content packs the person folded (true) or unfolded (false) by hand. A mod not listed follows the default.</summary>
+    public Dictionary<string, bool> PackGroupFolds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
 /// <summary>Settings stored as JSON. The Nexus key goes to the safest place the system offers (see SecretStores).</summary>

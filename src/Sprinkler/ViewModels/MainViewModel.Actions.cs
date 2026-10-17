@@ -368,7 +368,7 @@ internal sealed partial class MainViewModel
         var list = ordered.ToList();
         if (GroupPacks)
             // while searching, every match stays visible even inside a folded group
-            list = GroupUnderParents(list, term.Length > 0 ? null : _foldedGroups);
+            list = GroupUnderParents(list, term.Length > 0 ? null : IsGroupFolded);
         else
             foreach (var v in list)
             {
@@ -384,17 +384,24 @@ internal sealed partial class MainViewModel
     /// Puts each content pack right under the mod it belongs to, indented, when that mod is also in the list.
     /// A pack whose mod is missing, filtered out or itself a pack stays where the sort put it.
     /// </summary>
-    private readonly HashSet<string> _foldedGroups = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>A mod with more content packs than this starts folded, so one big mod does not push everything else off the screen.</summary>
+    internal const int FoldAbove = 10;
 
-    /// <summary>Folds or unfolds the content packs under one mod, for this run of the app.</summary>
+    internal static bool FoldsByDefault(int packCount) => packCount > FoldAbove;
+
+    /// <summary>What the person chose for this mod before, or the default for a mod with this many packs.</summary>
+    private bool IsGroupFolded(string uniqueId, int packCount) =>
+        _svc.Settings.Data.PackGroupFolds.TryGetValue(uniqueId, out var folded) ? folded : FoldsByDefault(packCount);
+
+    /// <summary>Folds or unfolds the content packs under one mod, and remembers the choice.</summary>
     public void ToggleGroup(string uniqueId)
     {
-        if (!_foldedGroups.Remove(uniqueId))
-            _foldedGroups.Add(uniqueId);
+        var row = _rowMap.Values.FirstOrDefault(v => v.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
+        _svc.SetPackGroupFolded(uniqueId, !(row?.Collapsed ?? false));
         RebuildMods();
     }
 
-    internal static List<ModRowViewModel> GroupUnderParents(List<ModRowViewModel> sorted, ISet<string>? folded = null)
+    internal static List<ModRowViewModel> GroupUnderParents(List<ModRowViewModel> sorted, Func<string, int, bool>? isFolded = null)
     {
         var shownIds = sorted.Select(v => v.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
         bool UnderParent(ModRowViewModel v) =>
@@ -410,7 +417,7 @@ internal sealed partial class MainViewModel
             v.Indented = false;
             var packs = packsByParent[v.UniqueId].ToList();
             v.PackCount = packs.Count;
-            v.Collapsed = packs.Count > 0 && folded?.Contains(v.UniqueId) == true;
+            v.Collapsed = packs.Count > 0 && isFolded?.Invoke(v.UniqueId, packs.Count) == true;
             result.Add(v);
             if (v.Collapsed)
                 continue;

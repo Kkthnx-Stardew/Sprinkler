@@ -60,6 +60,14 @@ internal sealed partial class UpdateService
         return (null, null);
     }
 
+    /// <summary>Remembers that the person folded or unfolded the content packs under one mod.</summary>
+    public void SetPackGroupFolded(string uniqueId, bool folded)
+    {
+        lock (_gate)
+            Settings.Data.PackGroupFolds[uniqueId] = folded;
+        Settings.Save();
+    }
+
     /// <summary>Whether content packs are listed under the mod they belong to in the All mods list.</summary>
     public void SetGroupContentPacks(bool on)
     {

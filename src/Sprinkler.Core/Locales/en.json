@@ -61,6 +61,7 @@
   "colp.plus": "Plus {0}.",
   "colp.to_install": "Under Updates you will see {0} to install. Nothing is changed until you press Update there.",
   "core.also_installed": "The download also contained {0}, which are now installed too.",
+  "core.moved_id": "The mod page changed hands and the mod ID changed from {0} to {1}, so the old folder was updated in place.",
   "core.app_path_unknown": "The app path is unknown.",
   "core.archive_absolute": "The archive contains an absolute path ({0}), so it was rejected.",
   "core.archive_bad_name": "The archive contains an invalid file name ({0}), so it was rejected.",

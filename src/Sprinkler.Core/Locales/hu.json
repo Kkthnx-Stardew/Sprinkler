@@ -61,6 +61,7 @@
   "colp.plus": "Továbbá {0}.",
   "colp.to_install": "A Frissítések között {0} telepítendőt látsz majd. Semmi sem változik, amíg ott a Frissítésre nem nyomsz.",
   "core.also_installed": "A letöltés tartalmazott még {0} is, amelyek most szintén telepítve vannak.",
+  "core.moved_id": "A mod oldala új tulajdonoshoz került, és a mod azonosítója {0} helyett {1} lett, ezért a régi mappát a helyén frissítettük.",
   "core.app_path_unknown": "Az alkalmazás útvonala ismeretlen.",
   "core.archive_absolute": "Az archívum abszolút útvonalat tartalmaz ({0}), ezért elutasítottuk.",
   "core.archive_bad_name": "Az archívum érvénytelen fájlnevet tartalmaz ({0}), ezért elutasítottuk.",

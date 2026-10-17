@@ -61,6 +61,7 @@
   "colp.plus": "Mais {0}.",
   "colp.to_install": "Em Atualizações você verá {0} para instalar. Nada muda até você apertar Atualizar lá.",
   "core.also_installed": "O download também continha {0}, que agora estão instalados também.",
+  "core.moved_id": "A página do mod mudou de dono e o ID do mod passou de {0} para {1}, então a pasta antiga foi atualizada no lugar.",
   "core.app_path_unknown": "O caminho do aplicativo é desconhecido.",
   "core.archive_absolute": "O arquivo contém um caminho absoluto ({0}) e por isso foi rejeitado.",
   "core.archive_bad_name": "O arquivo contém um nome de arquivo inválido ({0}) e por isso foi rejeitado.",

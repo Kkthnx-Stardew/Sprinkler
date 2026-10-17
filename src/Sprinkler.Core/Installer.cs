@@ -36,7 +36,12 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
 {
     private static readonly string[] StaleCodeExtensions = { ".dll", ".pdb", ".exe", ".deps.json" };
 
-    public static InstallPlan Plan(string archivePath, ArchiveFile archive, string modsPath, IReadOnlyList<ModInfo> installed)
+    /// <param name="movedFrom">
+    /// For a mod in the archive that matches nothing installed by ID: the installed mod it replaces, when the mod's page
+    /// was handed to a new owner who gave it a new ID. The old folder is then updated in place.
+    /// </param>
+    public static InstallPlan Plan(string archivePath, ArchiveFile archive, string modsPath, IReadOnlyList<ModInfo> installed,
+        Func<ArchiveMod, ModInfo?>? movedFrom = null)
     {
         var mods = ArchiveInspector.FindMods(archive);
         if (mods.Count == 0)
@@ -50,7 +55,8 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             var existing = installed
                 .Where(m => m.UniqueId.Equals(mod.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(m => m.Disabled)
-                .FirstOrDefault();
+                .FirstOrDefault()
+                ?? movedFrom?.Invoke(mod);
 
             string target;
             if (existing is not null)

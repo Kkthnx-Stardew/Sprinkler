@@ -157,7 +157,8 @@ internal sealed partial class UpdateService
     /// </summary>
     internal static long? NexusFileModId(string path)
     {
-        var name = Path.GetFileNameWithoutExtension(path);
+        // the browser adds " (1)" when the same file is downloaded again
+        var name = Regex.Replace(Path.GetFileNameWithoutExtension(path), @"\s*\(\d+\)$", "");
         var m = Regex.Match(name, @"(?:-\d+){2,}$");
         if (!m.Success)
             return null;

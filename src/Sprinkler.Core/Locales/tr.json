@@ -61,6 +61,7 @@
   "colp.plus": "Ayrıca {0}.",
   "colp.to_install": "Güncellemeler'de yüklenecek {0} göreceksin. Orada Güncelle'ye basana kadar hiçbir şey değişmez.",
   "core.also_installed": "İndirmede ayrıca {0} da vardı; bunlar da artık yüklü.",
+  "core.moved_id": "Modun sayfasının sahibi değişti ve mod kimliği {0} iken {1} oldu, bu yüzden eski klasör yerinde güncellendi.",
   "core.app_path_unknown": "Uygulama yolu bilinmiyor.",
   "core.archive_absolute": "Arşiv mutlak bir yol içeriyor ({0}); bu yüzden reddedildi.",
   "core.archive_bad_name": "Arşiv geçersiz bir dosya adı içeriyor ({0}); bu yüzden reddedildi.",

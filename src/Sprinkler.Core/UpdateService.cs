@@ -1247,7 +1247,8 @@ internal sealed partial class UpdateService : IDisposable
         List<UpdateItem> waiting;
         lock (_gate)
             waiting = _items.Where(i => i.Status == ItemStatus.WaitingForYou && i.Waiter is not null
-                && (i.UniqueIds.Any(ids.Contains) || (i.AcceptAnyMod && i.NexusId is { } nid && NexusFileModId(path) == nid))).ToList();
+                && (i.UniqueIds.Any(ids.Contains) || (i.AcceptAnyMod && i.NexusId is { } nid && NexusFileModId(path) == nid)
+                    || mods.Any(m => MovedFrom(i, m, mods) is not null))).ToList();
 
         if (waiting.Count > 0)
         {
@@ -1362,14 +1363,19 @@ internal sealed partial class UpdateService : IDisposable
 
             var game = _game ?? throw new InstallException(Loc.T("core.no_game"));
             using var archive = ArchiveFile.Open(archivePath);
-            var plan = Installer.Plan(archivePath, archive, game.ModsPath, _mods);
+            var archiveMods = ArchiveInspector.FindMods(archive);
+            var plan = Installer.Plan(archivePath, archive, game.ModsPath, _mods,
+                movedFrom: m => items.Select(i => MovedFrom(i, m, archiveMods)).FirstOrDefault(x => x is not null));
 
             var wanted = items.Any(i => i.AcceptAnyMod)
                 ? plan.Folders.Select(f => f.Source.Manifest.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase)
                 : items.SelectMany(i => i.UniqueIds).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var matching = plan.Folders.Where(f => wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
+            var matching = plan.Folders.Where(f => wanted.Contains(f.Source.Manifest.UniqueId)
+                || (f.Replaces is not null && wanted.Contains(f.Replaces.UniqueId))).ToList();
             if (matching.Count == 0)
                 throw new WrongFileException(Loc.T("core.wrong_mod"));
+            var moved = matching.Where(f => f.Replaces is not null
+                && !f.Replaces.UniqueId.Equals(f.Source.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (requireNewer)
             {
@@ -1394,9 +1400,14 @@ internal sealed partial class UpdateService : IDisposable
                     if (i.AcceptAnyMod)
                         foreach (var id in wanted.Where(id => !i.UniqueIds.Contains(id, StringComparer.OrdinalIgnoreCase)))
                             i.UniqueIds.Add(id);
+                    foreach (var f in moved.Where(f => i.UniqueIds.Contains(f.Replaces!.UniqueId, StringComparer.OrdinalIgnoreCase)))
+                    {
+                        i.UniqueIds.Add(f.Source.Manifest.UniqueId);
+                        i.Details.Add(Loc.T("core.moved_id", f.Replaces!.UniqueId, f.Source.Manifest.UniqueId));
+                    }
                     i.Details.AddRange(result.Messages);
                     i.Details.AddRange(plan.Folders.SelectMany(f => f.Warnings));
-                    var extras = plan.Folders.Where(f => !wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
+                    var extras = plan.Folders.Where(f => !matching.Contains(f)).ToList();
                     if (extras.Count > 0)
                         i.Details.Add(Loc.T("core.also_installed", string.Join(", ", extras.Select(e => e.Source.Manifest.Name))));
                 }
@@ -1421,6 +1432,27 @@ internal sealed partial class UpdateService : IDisposable
         await RescanQuietlyAsync();
     }
 
+    /// <summary>
+    /// The installed mod that an archive mod replaces when its Nexus page changed hands and the new owner gave it a new
+    /// mod ID. Both must name the page the item is for, and exactly one installed mod of the item may be left over.
+    /// </summary>
+    private ModInfo? MovedFrom(UpdateItem item, ArchiveMod mod, IReadOnlyList<ArchiveMod> all)
+    {
+        if (item.NexusId is not { } page || item.UniqueIds.Count == 0)
+            return null;
+        var installed = _mods;
+        bool Unmatched(ArchiveMod a) => a.Manifest.HasNexusKey(page)
+            && !installed.Any(m => m.UniqueId.Equals(a.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase));
+        if (!Unmatched(mod) || all.Count(Unmatched) != 1)
+            return null;
+
+        var inArchive = all.Select(a => a.Manifest.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var left = installed
+            .Where(m => item.UniqueIds.Contains(m.UniqueId, StringComparer.OrdinalIgnoreCase) && !inArchive.Contains(m.UniqueId))
+            .ToList();
+        return left.Count == 1 ? left[0] : null;
+    }
+
     private void RefreshRowsAfterInstall(IEnumerable<UpdateItem> items)
     {
         var rows = _rows.ToList();
@@ -1428,7 +1460,11 @@ internal sealed partial class UpdateService : IDisposable
         {
             var mod = _mods.FirstOrDefault(m => m.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
             if (mod is null)
+            {
+                // an ID that no longer exists: the mod moved to a new one
+                rows.RemoveAll(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
                 continue;
+            }
             var old = rows.FirstOrDefault(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
             rows.RemoveAll(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
             rows.Add(new ModRow(mod.Name, mod.UniqueId, mod.Version, RowState.UpToDate, Loc.T("core.row_updated"), mod.FolderName, old?.Url, mod.Author, mod.ContentPackFor is not null, ParentId: mod.ContentPackFor, HasConfig: File.Exists(Path.Combine(mod.FolderPath, "config.json"))));
@@ -1498,6 +1534,7 @@ internal sealed partial class UpdateService : IDisposable
         }
         catch (Exception ex) when (ex is NexusException or DownloadException or InstallException or ArchiveException)
         {
+            Log.Write($"Nexus link for mod {link.ModId} failed: {ex.Message}");
             Update(() =>
             {
                 if (item is not null)

@@ -125,7 +125,7 @@ internal static class ManifestReader
     public static ManifestSummary? Summarize(byte[] bytes)
     {
         var info = Parse(bytes, "");
-        return info is null ? null : new ManifestSummary(info.UniqueId, info.Name, info.Version);
+        return info is null ? null : new ManifestSummary(info.UniqueId, info.Name, info.Version, info.UpdateKeys);
     }
 
     private static string DecodeText(byte[] bytes)

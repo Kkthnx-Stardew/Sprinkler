@@ -61,6 +61,7 @@
   "colp.plus": "另有 {0}。",
   "colp.to_install": "在“更新”中你会看到 {0} 待安装。在那里点“更新”之前不会有任何改动。",
   "core.also_installed": "下载内容中还包含 {0}，现已一并安装。",
+  "core.moved_id": "该模组页面已易主，模组 ID 由 {0} 变为 {1}，因此旧文件夹已就地更新。",
   "core.app_path_unknown": "无法确定应用路径。",
   "core.archive_absolute": "压缩包包含绝对路径（{0}），已被拒绝。",
   "core.archive_bad_name": "压缩包包含无效文件名（{0}），已被拒绝。",

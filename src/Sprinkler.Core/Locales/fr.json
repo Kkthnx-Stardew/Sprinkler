@@ -61,6 +61,7 @@
   "colp.plus": "Plus {0}.",
   "colp.to_install": "Dans Mises à jour, vous verrez {0} à installer. Rien ne change tant que vous n'y appuyez pas sur Mettre à jour.",
   "core.also_installed": "Le téléchargement contenait aussi {0}, qui sont maintenant installés également.",
+  "core.moved_id": "La page du mod a changé de propriétaire et l'ID du mod est passé de {0} à {1}, donc l'ancien dossier a été mis à jour sur place.",
   "core.app_path_unknown": "Le chemin de l'application est inconnu.",
   "core.archive_absolute": "L'archive contient un chemin absolu ({0}), elle a donc été rejetée.",
   "core.archive_bad_name": "L'archive contient un nom de fichier invalide ({0}), elle a donc été rejetée.",

@@ -61,6 +61,7 @@
   "colp.plus": "Plus {0}.",
   "colp.to_install": "Onder Updates zie je {0} om te installeren. Er verandert niets totdat je daar op Bijwerken drukt.",
   "core.also_installed": "De download bevatte ook {0}, die nu ook geïnstalleerd zijn.",
+  "core.moved_id": "De modpagina heeft een nieuwe eigenaar en de mod-ID is veranderd van {0} naar {1}, daarom is de oude map ter plekke bijgewerkt.",
   "core.app_path_unknown": "Het pad van de app is onbekend.",
   "core.archive_absolute": "Het archief bevat een absoluut pad ({0}) en is daarom geweigerd.",
   "core.archive_bad_name": "Het archief bevat een ongeldige bestandsnaam ({0}) en is daarom geweigerd.",

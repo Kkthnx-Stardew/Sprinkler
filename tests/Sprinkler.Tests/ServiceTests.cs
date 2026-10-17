@@ -263,6 +263,49 @@ public class ServiceTests
     }
 
     [Fact]
+    public async Task UpdatesInPlaceWhenTheModPageMovedToANewModId()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+
+        _ = rig.Service.ApplyAsync(new[] { "nexus:5" });
+        await rig.WaitForAsync(x => x.GetProperty("items").GetArrayLength() > 0 && Rig.ItemStatus(x) == "WaitingForYou");
+
+        // a new ID with no link to this Nexus page is a different mod and must not satisfy the wait
+        using (var other = new TempDir())
+        {
+            var stranger = Zips.Build(other, "Stranger-77-1-1-0-1752000000.zip", ("Thing/manifest.json", Zips.Manifest("new.Owner", "1.1.0", "Thing")));
+            await rig.Service.HandleArchiveAsync(stranger, "test", CancellationToken.None);
+            Assert.Equal("WaitingForYou", Rig.ItemStatus(rig.Snapshot()));
+        }
+
+        // the same page under a new ID is the same mod: the old folder is updated in place
+        using (var good = new TempDir())
+        {
+            var zip = Zips.Build(good, "Thing-5-1-1-0-1752000000 (2).zip",
+                ("Thing/manifest.json", Zips.Manifest("new.Owner", "1.1.0", "Thing", ", \"UpdateKeys\": [\"Nexus:5\"]")));
+            await rig.Service.HandleArchiveAsync(zip, "your browser download", CancellationToken.None);
+        }
+        var s = await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Finished");
+        Assert.Equal("Done", Rig.ItemStatus(s));
+        var written = ManifestReader.ReadFile(rig.Dir.Combine("game", "Mods", "Thing", "manifest.json"), "x")!;
+        Assert.Equal("new.Owner", written.UniqueId);
+        Assert.Equal("1.1.0", written.Version);
+        Assert.Single(Directory.GetDirectories(rig.Dir.Combine("game", "Mods")));
+        var rows = s.GetProperty("rows").EnumerateArray().Select(r => r.GetProperty("uniqueId").GetString()).ToList();
+        Assert.DoesNotContain("me.Thing", rows);
+        Assert.Contains("new.Owner", rows);
+    }
+
+    [Fact]
+    public void NexusFileModIdIgnoresTheBrowsersCopyNumber()
+    {
+        Assert.Equal(17272, UpdateService.NexusFileModId("C:/Downloads/(CP) Seasonal VPR UI-17272-3-0-1-1778419831 (2).zip"));
+        Assert.Equal(1915, UpdateService.NexusFileModId("Content Patcher-1915-2-9-1-1752000000.zip"));
+    }
+
+    [Fact]
     public async Task OffersToInstallAnUpdatedFileFoundInDownloads()
     {
         using var rig = new Rig(SourcePolicy.NexusFirst);

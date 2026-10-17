@@ -61,6 +61,7 @@
   "colp.plus": "Plus {0}.",
   "colp.to_install": "W Aktualizacjach zobaczysz do zainstalowania: {0}. Nic się nie zmieni, dopóki nie naciśniesz tam Aktualizuj.",
   "core.also_installed": "Pobrany plik zawierał też {0}, które również zostały teraz zainstalowane.",
+  "core.moved_id": "Strona moda zmieniła właściciela, a identyfikator moda zmienił się z {0} na {1}, więc stary folder zaktualizowano w miejscu.",
   "core.app_path_unknown": "Ścieżka aplikacji jest nieznana.",
   "core.archive_absolute": "Archiwum zawiera ścieżkę bezwzględną ({0}), więc je odrzucono.",
   "core.archive_bad_name": "Archiwum zawiera nieprawidłową nazwę pliku ({0}), więc je odrzucono.",

@@ -61,6 +61,7 @@
   "colp.plus": "Dazu {0}.",
   "colp.to_install": "Unter Updates siehst du {0} zum Installieren. Es ändert sich nichts, bis du dort auf Aktualisieren drückst.",
   "core.also_installed": "Der Download enthielt auch {0}, die jetzt ebenfalls installiert sind.",
+  "core.moved_id": "Die Mod-Seite hat den Besitzer gewechselt und die Mod-ID wurde von {0} zu {1} geändert, deshalb wurde der alte Ordner an Ort und Stelle aktualisiert.",
   "core.app_path_unknown": "Der Pfad der App ist unbekannt.",
   "core.archive_absolute": "Das Archiv enthält einen absoluten Pfad ({0}) und wurde deshalb abgelehnt.",
   "core.archive_bad_name": "Das Archiv enthält einen ungültigen Dateinamen ({0}) und wurde deshalb abgelehnt.",

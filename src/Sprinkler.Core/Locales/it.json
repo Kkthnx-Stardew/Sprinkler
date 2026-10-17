@@ -61,6 +61,7 @@
   "colp.plus": "Più {0}.",
   "colp.to_install": "In Aggiornamenti vedrai {0} da installare. Non cambia nulla finché non premi Aggiorna lì.",
   "core.also_installed": "Il download conteneva anche {0}, che ora sono installati a loro volta.",
+  "core.moved_id": "La pagina del mod ha cambiato proprietario e l'ID del mod è passato da {0} a {1}, quindi la vecchia cartella è stata aggiornata sul posto.",
   "core.app_path_unknown": "Il percorso dell'app è sconosciuto.",
   "core.archive_absolute": "L'archivio contiene un percorso assoluto ({0}), quindi è stato rifiutato.",
   "core.archive_bad_name": "L'archivio contiene un nome file non valido ({0}), quindi è stato rifiutato.",

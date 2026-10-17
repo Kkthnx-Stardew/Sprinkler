@@ -61,6 +61,7 @@
   "colp.plus": "Más {0}.",
   "colp.to_install": "En Actualizaciones verás {0} por instalar. No se cambia nada hasta que pulses Actualizar allí.",
   "core.also_installed": "La descarga también contenía {0}, que ahora también están instalados.",
+  "core.moved_id": "La página del mod cambió de dueño y el ID del mod pasó de {0} a {1}, así que la carpeta anterior se actualizó en su sitio.",
   "core.app_path_unknown": "No se conoce la ruta de la aplicación.",
   "core.archive_absolute": "El archivo contiene una ruta absoluta ({0}), así que se rechazó.",
   "core.archive_bad_name": "El archivo contiene un nombre de archivo no válido ({0}), así que se rechazó.",

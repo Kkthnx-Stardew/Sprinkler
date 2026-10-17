@@ -4,7 +4,7 @@
 
 A Stardew Valley mod updater. It checks every mod in your Mods folder, shows what is out of date, and installs updates with a backup. Free, open source, no ads, no tracking, no account of ours.
 
-![The All mods list with pictures](docs/screenshots/mods-light.png)
+![The All mods list with pictures](docs/screenshots/mods-dark.png)
 
 ## Get it
 
@@ -26,7 +26,7 @@ The first launch shows a short tour, and the Help tab has a full guide, an FAQ a
 
 | | |
 | --- | --- |
-| ![Updates, dark](docs/screenshots/updates-dark.png) | ![Help](docs/screenshots/help-light.png) |
+| ![Updates, dark](docs/screenshots/updates-dark.png) | ![Help](docs/screenshots/help-dark.png) |
 
 ## Where files come from
 
@@ -64,7 +64,7 @@ It also finds required mods that are missing (the ones SMAPI skips without a cle
 - **Updates itself, if you let it.** When a newer release exists, a pill in the header offers it. Pressing it asks first, then downloads the release, checks its signature and fingerprint against a key built into the app, starts the new version once to make sure it works, replaces the old one and restarts. Your mods, settings and profiles are not touched. Builds you run from source, or from a folder you cannot write to, only link to the release page. Looking for updates can be switched off under Nexus and settings.
 - **Your language.** The app speaks 17 languages (English, Spanish, French, German, Brazilian Portuguese, Italian, Dutch, Russian, Ukrainian, Polish, Turkish, Hungarian, Bulgarian, Simplified Chinese, Japanese, Korean and Thai). It follows your system and you can change it under Nexus and settings. The 16 translations were written with machine help and need native readers, so corrections are welcome: see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
-![Profiles](docs/screenshots/profiles-light.png)
+![Profiles](docs/screenshots/profiles-dark.png)
 
 ## Speed
 

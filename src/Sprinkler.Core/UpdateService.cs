@@ -757,15 +757,20 @@ internal sealed partial class UpdateService : IDisposable
 
     public void ChooseSource(string itemId, int index)
     {
+        var open = false;
         Update(() =>
         {
             var item = _items.FirstOrDefault(i => i.Id == itemId);
             if (item is null || index < 0 || index >= item.Offers.Count || !item.Offers[index].Usable)
                 return;
+            // pressing the source that is already chosen has nothing to switch, so it shows the page instead
+            open = item.Chosen == index && item.Status is ItemStatus.Ready or ItemStatus.Failed or ItemStatus.Skipped;
             item.Chosen = index;
             if (item.Status == ItemStatus.WaitingForYou)
                 item.Waiter?.TrySetResult(new WaitResult(false, index));
         });
+        if (open)
+            ReopenPage(itemId);
     }
 
     public async Task LoadAlternativesAsync(string itemId)

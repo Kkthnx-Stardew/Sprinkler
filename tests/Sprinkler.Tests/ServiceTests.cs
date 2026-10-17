@@ -306,6 +306,21 @@ public class ServiceTests
     }
 
     [Fact]
+    public async Task PressingTheSourceThatIsAlreadyChosenOpensItsPage()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+        var chosen = rig.Snapshot().GetProperty("items")[0].GetProperty("chosen").GetInt32();
+        rig.Opened.Clear();
+
+        rig.Service.ChooseSource("nexus:5", chosen);
+
+        Assert.Contains(rig.Opened, u => u.Contains("/mods/5"));
+        Assert.Equal("Ready", Rig.ItemStatus(rig.Snapshot()));
+    }
+
+    [Fact]
     public async Task AGitHubReleaseIsJudgedByItsOwnVersionNotByARequirementInItsTitle()
     {
         using var web = new FakeWeb();

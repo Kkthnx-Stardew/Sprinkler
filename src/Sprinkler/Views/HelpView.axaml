@@ -1,0 +1,102 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.HelpView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel MaxWidth="980" Margin="20,8,20,24">
+
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" /><TextBlock Classes="h2" Text="Getting started" /></StackPanel>
+          <TextBlock Classes="muted" Text="Three steps. You are always asked before anything changes." />
+          <UniformGrid Columns="3">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,12,0">
+              <Border Classes="qnum"><TextBlock Text="1" /></Border>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="It checks" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="The app reads your Mods folder and asks SMAPI's update list which mods are out of date." /></StackPanel>
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,12,0">
+              <Border Classes="qnum"><TextBlock Text="2" /></Border>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="You choose" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Tick the updates you want. Each card shows where the file comes from." /></StackPanel>
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+              <Border Classes="qnum"><TextBlock Text="3" /></Border>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="Press Update" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Files are backed up, installed and checked. Undo any change from History." /></StackPanel>
+            </Grid>
+          </UniformGrid>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Command="{Binding ShowTourFromStartCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="14" /><TextBlock Text="Show the quick tour" /></StackPanel></Button>
+            <Button Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="key" Size="16" /><TextBlock Text="Connect Nexus" /></StackPanel></Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="download" Size="22" /><TextBlock Classes="h2" Text="Where files come from" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="Nexus Mods first. Nexus only hands files to logged-in users, so what happens depends on your setup:" />
+          <TextBlock TextWrapping="Wrap"><Run Text="Premium and a saved key: " FontWeight="SemiBold" /><Run Text="fully automatic." /></TextBlock>
+          <TextBlock TextWrapping="Wrap"><Run Text="Free account, key, and Nexus links on: " FontWeight="SemiBold" /><Run Text="one click per mod on Nexus." /></TextBlock>
+          <TextBlock TextWrapping="Wrap"><Run Text="No key: " FontWeight="SemiBold" /><Run Text="you press download on Nexus and the app installs the file from your Downloads folder." /></TextBlock>
+          <TextBlock TextWrapping="Wrap" Text="If Nexus fails, or you pick another source, CurseForge or GitHub are used when they have the same version." />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="How an update is applied" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="1. The download is opened and its manifest read. The mod ID must match, or it is rejected." />
+          <TextBlock TextWrapping="Wrap" Text="2. The old folder is zipped into the backup folder." />
+          <TextBlock TextWrapping="Wrap" Text="3. New files are copied over. Your config.json stays, and old .dll files the new version dropped are removed." />
+          <TextBlock TextWrapping="Wrap" Text="4. The new manifest is read back. If anything fails, the old folder is restored." />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="upload" Size="22" /><TextBlock Classes="h2" Text="Drag and drop" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="Drag any mod .zip, .7z or .rar onto this window. The app reads what is inside, shows what it would change, and installs it after you confirm." />
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="4">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="help" Size="22" /><TextBlock Classes="h2" Text="Questions" /></StackPanel>
+          <ItemsControl ItemsSource="{Binding FaqList}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:QA">
+                <Expander Classes="flat" Header="{Binding Question}"><TextBlock Classes="small" Text="{Binding Answer}" TextWrapping="Wrap" /></Expander>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="4">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" /><TextBlock Classes="h2" Text="If something goes wrong" /></StackPanel>
+          <ItemsControl ItemsSource="{Binding FixList}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:QA">
+                <Expander Classes="flat" Header="{Binding Question}"><TextBlock Classes="small" Text="{Binding Answer}" TextWrapping="Wrap" /></Expander>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="shield" Size="22" /><TextBlock Classes="h2" Text="About" /></StackPanel>
+          <TextBlock Classes="small" Text="{Binding AboutText}" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Command="{Binding OpenRepoCommand}"><TextBlock Text="Source code on GitHub" /></Button>
+            <Button Command="{Binding ReportProblemCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="alert" Size="16" /><TextBlock Text="Report a problem" /></StackPanel></Button>
+          </StackPanel>
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="A fan-made tool, not affiliated with ConcernedApe, SMAPI or Nexus Mods." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

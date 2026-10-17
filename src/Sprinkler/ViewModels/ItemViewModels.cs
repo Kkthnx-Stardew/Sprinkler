@@ -1,0 +1,335 @@
+using System.Collections.ObjectModel;
+using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Sprinkler.Core;
+
+namespace Sprinkler.ViewModels;
+
+/// <summary>One way to get an update, shown as a button on the update card.</summary>
+internal sealed partial class OfferViewModel(ItemViewModel owner, int index, OfferInfo info) : ObservableObject
+{
+    public int Index { get; } = index;
+
+    [ObservableProperty]
+    private OfferInfo _info = info;
+
+    public string Label => Info.Label;
+    public string Note => Info.Note;
+    public bool Usable => Info.Usable;
+    public bool NotUsable => !Info.Usable;
+    public string Letter => Info.Source switch { SourceKind.Nexus => "N", SourceKind.CurseForge => "C", SourceKind.GitHub => "G", SourceKind.ModDrop => "M", _ => "?" };
+
+    public IBrush BadgeBrush => Info.Source switch
+    {
+        SourceKind.Nexus => new SolidColorBrush(Color.Parse("#C25E10")),
+        SourceKind.CurseForge => new SolidColorBrush(Color.Parse("#C24A22")),
+        SourceKind.GitHub => new SolidColorBrush(Color.Parse("#3A3F4B")),
+        _ => new SolidColorBrush(Color.Parse("#2E6BA8")),
+    };
+
+    public bool IsAuto => Info.Usable && Info.Mode == DeliveryMode.Auto;
+    public bool IsClick => Info.Usable && Info.Mode != DeliveryMode.Auto;
+    public string ModeText => Info.Mode switch { DeliveryMode.Auto => "Automatic", DeliveryMode.OneClick => "One click", _ => "You download" };
+    public bool IsChosen => owner.Info.Chosen == Index;
+
+    public void Update(OfferInfo info)
+    {
+        Info = info;
+        OnPropertyChanged(string.Empty);
+    }
+
+    [RelayCommand]
+    private void Choose() => owner.Choose(Index);
+}
+
+/// <summary>An update or install card with its source choices, progress and result.</summary>
+internal sealed partial class ItemViewModel : ObservableObject
+{
+    private readonly MainViewModel _main;
+
+    [ObservableProperty]
+    private ItemInfo _info;
+
+    public ItemViewModel(MainViewModel main, ItemInfo info)
+    {
+        _main = main;
+        _info = info;
+        Id = info.Id;
+        Refill(info);
+    }
+
+    public string Id { get; }
+
+    public ObservableCollection<OfferViewModel> Offers { get; } = new();
+    public ObservableCollection<OfferViewModel> OtherOffers { get; } = new();
+    public ObservableCollection<string> Details { get; } = new();
+    public ObservableCollection<string> Changelog { get; } = new();
+
+    public string Name => Info.Name;
+    public string Target => Info.Target;
+    public string? Installed => Info.Installed;
+    public bool HasInstalled => Info.Installed is not null;
+    public bool IsNew => Info.IsNew;
+    public bool HasParts => Info.Parts > 1;
+    public string PartsText => $"{Info.Parts} parts";
+    public string? Why => Info.Why;
+    public bool HasWhy => !string.IsNullOrEmpty(Info.Why);
+    public string Message => Info.Message;
+    public bool HasMessage => !string.IsNullOrEmpty(Info.Message);
+    public string? PageUrl => Info.PageUrl;
+    public bool HasChangelog => Info.Changelog.Count > 0;
+    public bool ShowPageLink => !HasChangelog && !string.IsNullOrEmpty(Info.PageUrl);
+    public string ChangelogTitle => "What changed in " + Info.Target;
+    public bool HasDetails => Info.Details.Count > 0;
+    public bool HasHistory => !string.IsNullOrEmpty(Info.HistoryId);
+
+    public bool IsReady => Info.Status == ItemStatus.Ready;
+    public bool IsQueued => Info.Status == ItemStatus.Queued;
+    public bool IsWorking => Info.Status == ItemStatus.Working;
+    public bool IsWaiting => Info.Status == ItemStatus.WaitingForYou;
+    public bool IsDone => Info.Status == ItemStatus.Done;
+    public bool IsFailed => Info.Status == ItemStatus.Failed;
+    public bool IsSkipped => Info.Status == ItemStatus.Skipped;
+    public bool CanEdit => Info.Status is ItemStatus.Ready or ItemStatus.Failed or ItemStatus.Skipped;
+    public bool ShowSources => CanEdit && Offers.Count > 0;
+    public bool ShowLookingUp => CanEdit && Offers.Count == 0 && !IsFailed;
+    public string LookingUpText => string.IsNullOrEmpty(Info.Message) ? "Looking up where to download this..." : Info.Message;
+    public bool CanSelect => Info.Offers.Any(o => o.Usable);
+    public bool ShowChosenNote => ShowSources && ChosenNote.Length > 0;
+    public string ChosenNote => Info.Chosen >= 0 && Info.Chosen < Info.Offers.Count ? Info.Offers[Info.Chosen].Note : "";
+    public bool ShowSkipVersion => !Info.IsNew && IsReady;
+    public bool ShowOtherSources => ShowSources && !Info.AlternativesLoaded;
+    public bool ProgressIndeterminate => Info.Progress <= 0 || Info.Progress >= 100;
+    public double ProgressValue => Math.Clamp(Info.Progress, 0, 100);
+    public bool CardDone => IsDone;
+    public bool CardFailed => IsFailed;
+
+    public string ArtKind => Info.Status switch
+    {
+        ItemStatus.Done => "check",
+        ItemStatus.Failed => "xcircle",
+        ItemStatus.Skipped => "skip",
+        ItemStatus.Working => "download",
+        ItemStatus.WaitingForYou => "pointer",
+        ItemStatus.Queued => "clock",
+        _ => Info.IsNew ? "gift" : "arrowup",
+    };
+
+    public bool Selected
+    {
+        get => Info.Selected;
+        set
+        {
+            if (value != Info.Selected)
+                _main.SetSelected(Id, value);
+        }
+    }
+
+    public void Update(ItemInfo info)
+    {
+        Info = info;
+        Refill(info);
+        OnPropertyChanged(string.Empty);
+    }
+
+    private void Refill(ItemInfo info)
+    {
+        // keep the button objects when the list has the same shape, so a progress tick does not rebuild the card
+        if (Offers.Count == info.Offers.Count)
+        {
+            for (var i = 0; i < Offers.Count; i++)
+                Offers[i].Update(info.Offers[i]);
+        }
+        else
+        {
+            Offers.Clear();
+            for (var i = 0; i < info.Offers.Count; i++)
+                Offers.Add(new OfferViewModel(this, i, info.Offers[i]));
+        }
+
+        var others = Offers.Where(o => o.Index != info.Chosen && o.Usable).ToList();
+        if (!others.SequenceEqual(OtherOffers))
+        {
+            OtherOffers.Clear();
+            foreach (var o in others)
+                OtherOffers.Add(o);
+        }
+
+        Fmt.Sync(Details, info.Details);
+        Fmt.Sync(Changelog, info.Changelog);
+    }
+
+    public void Choose(int index) => _main.ChooseSource(Id, index);
+
+    [RelayCommand]
+    private void SkipVersion() => _main.SkipVersion(Id);
+
+    [RelayCommand]
+    private void OpenPage() => _main.OpenUrl(Info.PageUrl);
+
+    [RelayCommand]
+    private void Reopen() => _main.Reopen(Id);
+
+    [RelayCommand]
+    private void SkipThis() => _main.SkipWaiting(Id);
+
+    [RelayCommand]
+    private Task LoadAlternatives() => _main.LoadAlternativesAsync(Id);
+
+    [RelayCommand]
+    private Task Undo() => Info.HistoryId is { } id ? _main.UndoAsync(id) : Task.CompletedTask;
+}
+
+internal enum ModChip
+{
+    None,
+    Ok,
+    Warn,
+    Bad,
+    Info,
+}
+
+/// <summary>One line of the All mods list.</summary>
+internal sealed partial class ModRowViewModel : ObservableObject
+{
+    private readonly MainViewModel _main;
+
+    [ObservableProperty]
+    private ModRow _row;
+
+    public ModRowViewModel(MainViewModel main, ModRow row)
+    {
+        _main = main;
+        _row = row;
+    }
+
+    public string Name => Row.Name;
+    public string UniqueId => Row.UniqueId;
+    public string Version => Row.Version;
+    public bool IsContentPack => Row.IsContentPack;
+    public string Meta => (string.IsNullOrEmpty(Row.Author) ? "" : Row.Author + " · ") + Row.Note;
+    public bool HasNeeds => Row.Needs is { Length: > 0 };
+    public string NeedsText => Row.Needs is { Length: > 0 } n ? "Needs " + string.Join(", ", n) + " (not installed)" : "";
+    public bool IsOff => Row.State == RowState.Disabled;
+    public bool IsLocked => Row.State == RowState.Bundled;
+    public bool IsOn => !IsOff;
+    public bool CanToggle => !IsLocked;
+    public double RowOpacity => IsOff ? 0.6 : 1;
+    public string SwitchTip => IsLocked ? "Part of SMAPI, always on" : IsOff ? "Turn this mod on" : "Turn this mod off";
+
+    public string StatusText
+    {
+        get
+        {
+            if (Row.State == RowState.Update)
+                return "Update " + (Row.Note.Split(": ").ElementAtOrDefault(1) ?? "");
+            if (!string.IsNullOrEmpty(Row.SkippedVersion))
+                return "Skipped " + Row.SkippedVersion;
+            return Row.State switch
+            {
+                RowState.UpToDate => "Up to date",
+                RowState.NoInfo => "Cannot check",
+                RowState.Error => "Check failed",
+                RowState.Disabled => "Switched off",
+                RowState.Bundled => "Part of SMAPI",
+                RowState.Ignored => "Skipped by you",
+                RowState.Warning => "Warning",
+                _ => "",
+            };
+        }
+    }
+
+    private ModChip Chip =>
+        Row.State == RowState.Update ? ModChip.Warn
+        : !string.IsNullOrEmpty(Row.SkippedVersion) ? ModChip.None
+        : Row.State switch { RowState.UpToDate => ModChip.Ok, RowState.Error => ModChip.Bad, RowState.Warning => ModChip.Warn, _ => ModChip.None };
+
+    public bool ChipOk => Chip == ModChip.Ok;
+    public bool ChipWarn => Chip == ModChip.Warn;
+    public bool ChipBad => Chip == ModChip.Bad;
+    public bool HasUnofficial => !string.IsNullOrEmpty(Row.Unofficial);
+    public string UnofficialText => "Unofficial fix " + Row.Unofficial;
+    public bool HasUrl => !string.IsNullOrEmpty(Row.Url);
+    public bool HasSkipped => !string.IsNullOrEmpty(Row.SkippedVersion);
+    public string StopSkippingText => "Stop skipping " + Row.SkippedVersion;
+    public bool CanIgnore => Row.State is not (RowState.Bundled or RowState.Disabled);
+    public bool IsIgnored => Row.State == RowState.Ignored;
+    public string IgnoreText => IsIgnored ? "Check this mod again" : "Never check this mod";
+
+    public void Update(ModRow row)
+    {
+        Row = row;
+        OnPropertyChanged(string.Empty);
+    }
+
+    [RelayCommand]
+    private Task Toggle() => _main.ToggleModAsync(this, !IsOn);
+
+    [RelayCommand]
+    private void OpenPage() => _main.OpenUrl(Row.Url);
+
+    [RelayCommand]
+    private void OpenUnofficial() => _main.OpenUrl(Row.UnofficialUrl);
+
+    [RelayCommand]
+    private void ShowFolder() => _main.RevealMod(Row.UniqueId);
+
+    [RelayCommand]
+    private void StopSkipping() => _main.UnskipVersion(Row.UniqueId);
+
+    [RelayCommand]
+    private void ToggleIgnore() => _main.SetIgnored(Row.UniqueId, !IsIgnored);
+}
+
+internal sealed partial class HistoryViewModel(MainViewModel main, HistoryInfo info) : ObservableObject
+{
+    [ObservableProperty]
+    private HistoryInfo _info = info;
+
+    public string Name => Info.Name;
+    public string ArtKind => Info.Undone ? "skip" : Info.From is not null ? "arrowup" : "gift";
+    public string Detail => (Info.From is not null ? $"{Info.From} → {Info.To}" : $"{Info.To} (new install)") + " · from " + Info.Source + " · " + Fmt.Time(Info.When);
+    public bool Undone => Info.Undone;
+    public bool CanUndo => !Info.Undone && Info.CanUndo;
+    public bool BackupGone => !Info.Undone && !Info.CanUndo;
+
+    public void Update(HistoryInfo i)
+    {
+        Info = i;
+        OnPropertyChanged(string.Empty);
+    }
+
+    [RelayCommand]
+    private Task Undo() => main.UndoAsync(Info.Id);
+}
+
+internal sealed partial class FoundViewModel(MainViewModel main, FoundInfo info) : ObservableObject
+{
+    [ObservableProperty]
+    private FoundInfo _info = info;
+
+    public ObservableCollection<string> Lines { get; } = new(info.Lines);
+    public string Id => Info.Id;
+    public string Header => Info.File + " · from " + Info.Origin;
+    public bool HasError => !string.IsNullOrEmpty(Info.Error);
+    public string Error => Info.Error ?? "";
+    public bool CanInstall => !(HasError && Info.Lines.Count == 0);
+    public bool Busy => Info.Busy;
+    public string InstallText => Info.Busy ? "Installing..." : "Install it";
+
+    public void Update(FoundInfo i)
+    {
+        Info = i;
+        Fmt.Sync(Lines, i.Lines);
+        OnPropertyChanged(string.Empty);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanClick))]
+    private Task Install() => main.InstallFoundAsync(Info.Id);
+
+    private bool CanClick() => !Info.Busy;
+
+    [RelayCommand]
+    private void Dismiss() => main.DismissFound(Info.Id);
+}

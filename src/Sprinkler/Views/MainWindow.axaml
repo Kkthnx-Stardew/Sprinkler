@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Sprinkler.ViewModels"
+        xmlns:ctl="using:Sprinkler.Controls"
+        xmlns:v="using:Sprinkler.Views"
+        x:Class="Sprinkler.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Sprinkler" Width="1120" Height="820" MinWidth="760" MinHeight="540"
+        Icon="avares://Sprinkler/Assets/icon-256.png"
+        DragDrop.AllowDrop="True">
+
+  <Window.DataTemplates>
+    <DataTemplate DataType="vm:ConfirmDialogViewModel"><v:ConfirmDialogView /></DataTemplate>
+    <DataTemplate DataType="vm:TourDialogViewModel"><v:TourDialogView /></DataTemplate>
+  </Window.DataTemplates>
+
+  <Grid>
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+      <!-- ===== header ===== -->
+      <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+            <Border Classes="logo">
+              <Image Source="avares://Sprinkler/Assets/logo.png" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel VerticalAlignment="Center" Spacing="4">
+              <TextBlock Classes="h1" Text="Sprinkler" />
+              <WrapPanel Orientation="Horizontal">
+                <Border Classes="chip" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
+                <Border Classes="chip ok" Margin="0,0,6,0" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip bad" Margin="0,0,6,0" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip ok" Margin="0,0,6,0" IsVisible="{Binding NexusConnected}">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{Binding NexusChip}" /></StackPanel>
+                </Border>
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="Connect Nexus" /></StackPanel>
+                </Button>
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" Command="{Binding OpenAppUpdateCommand}">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Text="{Binding AppUpdateText}" /></StackPanel>
+                </Button>
+              </WrapPanel>
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Border Classes="chip warn" IsVisible="{Binding GameRunning}"><TextBlock Text="Game is running" /></Border>
+            <Button Command="{Binding CheckCommand}" IsEnabled="{Binding CanCheck}" IsVisible="{Binding HasGame}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="Check again" /></StackPanel>
+            </Button>
+            <Button Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}" ToolTip.Tip="Start Stardew Valley through SMAPI">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="Play" /></StackPanel>
+            </Button>
+            <Button Classes="icon" Command="{Binding ShowTourFromStartCommand}" ToolTip.Tip="Quick tour and help" AutomationProperties.Name="Quick tour">
+              <ctl:IconView Kind="help" Size="18" />
+            </Button>
+            <Button Classes="icon" Command="{Binding CycleThemeCommand}" ToolTip.Tip="Switch light or dark" AutomationProperties.Name="Switch theme">
+              <ctl:IconView Kind="{Binding ThemeIcon}" Size="18" />
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- ===== tabs ===== -->
+      <Border Grid.Row="1" Padding="20,6,20,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
+        <ListBox Classes="tabs" SelectedIndex="{Binding TabIndex}" HorizontalAlignment="Left" AutomationProperties.Name="Sections">
+          <ListBoxItem>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <ctl:IconView Kind="arrowup" Size="17" /><TextBlock Text="Updates" />
+              <Border Background="{DynamicResource AccentBrush}" CornerRadius="99" MinWidth="20" Padding="6,0" IsVisible="{Binding HasUpdateCount}" VerticalAlignment="Center">
+                <TextBlock Text="{Binding UpdateCount}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" HorizontalAlignment="Center" />
+              </Border>
+            </StackPanel>
+          </ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="package" Size="17" /><TextBlock Text="All mods" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="clock" Size="17" /><TextBlock Text="History" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="Nexus and settings" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="Help" /></StackPanel></ListBoxItem>
+        </ListBox>
+      </Border>
+
+      <!-- ===== notices that apply to every tab ===== -->
+      <ScrollViewer Grid.Row="2" MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <v:NoticesView MaxWidth="980" Margin="20,0" />
+      </ScrollViewer>
+
+      <!-- ===== the tabs ===== -->
+      <Panel Grid.Row="3">
+        <v:UpdatesView IsVisible="{Binding ShowUpdatesTab}" />
+        <v:ModsView IsVisible="{Binding ShowModsTab}" />
+        <v:HistoryView IsVisible="{Binding ShowHistoryTab}" />
+        <v:SettingsView IsVisible="{Binding ShowSettingsTab}" />
+        <v:HelpView IsVisible="{Binding ShowHelpTab}" />
+      </Panel>
+    </Grid>
+
+    <!-- ===== toasts ===== -->
+    <ItemsControl ItemsSource="{Binding Toasts}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16" IsHitTestVisible="False">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:ToastViewModel">
+          <Border Classes="toast" Margin="0,4,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <ctl:IconView Kind="{Binding Kind}" Size="20" Foreground="{DynamicResource GoodBrush}" IsVisible="{Binding !IsBad}" />
+              <ctl:IconView Kind="{Binding Kind}" Size="20" Foreground="{DynamicResource BadBrush}" IsVisible="{Binding IsBad}" />
+              <TextBlock Text="{Binding Text}" TextWrapping="Wrap" MaxWidth="300" FontWeight="Medium" VerticalAlignment="Center" />
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- ===== dialogs ===== -->
+    <Grid IsVisible="{Binding HasDialog}" Background="{DynamicResource ScrimBrush}">
+      <ContentControl Content="{Binding Dialog}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16" />
+    </Grid>
+
+    <!-- ===== drop target ===== -->
+    <Border x:Name="DropOverlay" IsVisible="False" Background="#E6E8A93D" IsHitTestVisible="False">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+        <ctl:IconView Kind="upload" Size="56" Foreground="{DynamicResource AccentInkBrush}" HorizontalAlignment="Center" />
+        <TextBlock Text="Drop a mod .zip, .7z or .rar to install it" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

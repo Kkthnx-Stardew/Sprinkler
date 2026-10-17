@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.ModsView"
+             x:DataType="vm:MainViewModel">
+  <Grid MaxWidth="980" Margin="20,8,20,20">
+    <Border Classes="panel center" IsVisible="{Binding NoMods}" VerticalAlignment="Top">
+      <StackPanel Spacing="10" HorizontalAlignment="Center">
+        <ctl:IconView Kind="package" Size="48" HorizontalAlignment="Center" />
+        <TextBlock Classes="h2" Text="No mods found yet" HorizontalAlignment="Center" />
+        <TextBlock Classes="muted" Text="Put mods in your Mods folder, or drop a downloaded .zip onto this window." HorizontalAlignment="Center" />
+      </StackPanel>
+    </Border>
+
+    <Border Classes="panel" IsVisible="{Binding HasMods}" Margin="0">
+      <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
+        <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{Binding ModsTitle}" /></StackPanel>
+        <TextBlock Grid.Row="1" Classes="muted small" TextWrapping="Wrap" Text="Use the switch to turn a mod off or on. SMAPI skips a mod that is switched off. &quot;Cannot check&quot; means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this window." />
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+          <TextBox Text="{Binding ModSearch}" Watermark="Search mods or authors" AutomationProperties.Name="Search mods" />
+          <ComboBox Grid.Column="1" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="Sort mods">
+            <ComboBoxItem Content="Needs attention first" />
+            <ComboBoxItem Content="Name" />
+            <ComboBoxItem Content="Author" />
+          </ComboBox>
+        </Grid>
+        <ItemsControl Grid.Row="3" ItemsSource="{Binding ModChips}">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:FilterChipViewModel">
+              <ToggleButton Classes="filter" IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding PickCommand}" Margin="0,0,6,6"><TextBlock Text="{Binding Text}" /></ToggleButton>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid Grid.Row="4" RowDefinitions="Auto,*">
+          <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
+            <TextBlock Classes="muted small strong" Text="ON" />
+            <TextBlock Grid.Column="1" Classes="muted small strong" Text="MOD" />
+            <TextBlock Grid.Column="2" Classes="muted small strong" Text="VERSION" />
+            <TextBlock Grid.Column="3" Classes="muted small strong" Text="STATUS" />
+          </Grid>
+          <Border Grid.Row="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
+            <Grid>
+              <TextBlock Classes="muted" Text="Nothing matches." HorizontalAlignment="Center" Margin="0,30" IsVisible="{Binding NoModMatches}" />
+              <ListBox Classes="plain" ItemsSource="{Binding Mods}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ModRowViewModel">
+                    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="4,10" Opacity="{Binding RowOpacity}">
+                      <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12">
+                        <ToggleSwitch IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" ToolTip.Tip="{Binding SwitchTip}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                          <DockPanel LastChildFill="True">
+                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="content pack" /></Border>
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                          </DockPanel>
+                          <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasNeeds}">
+                            <ctl:IconView Kind="alert" Size="14" Foreground="{DynamicResource WarnBrush}" />
+                            <TextBlock Classes="warn small strong" Text="{Binding NeedsText}" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                        </StackPanel>
+                        <TextBlock Grid.Column="2" Text="{Binding Version}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <WrapPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                          <Border Classes="chip" Classes.ok="{Binding ChipOk}" Classes.warn="{Binding ChipWarn}" Classes.bad="{Binding ChipBad}" Margin="0,0,6,0"><TextBlock Text="{Binding StatusText}" /></Border>
+                          <Button Classes="chipbtn" Command="{Binding OpenUnofficialCommand}" IsVisible="{Binding HasUnofficial}" ToolTip.Tip="A community fix exists that is not the mod author's release"><TextBlock Text="{Binding UnofficialText}" /></Button>
+                        </WrapPanel>
+                        <Button Grid.Column="4" Classes="icon ghost" Width="32" Height="32" MinHeight="32" VerticalAlignment="Center" AutomationProperties.Name="More actions" ToolTip.Tip="More actions">
+                          <ctl:IconView Kind="more" Size="20" />
+                          <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                              <MenuItem Header="Open the mod page" Command="{Binding OpenPageCommand}" IsVisible="{Binding HasUrl}" />
+                              <MenuItem Header="Show the folder" Command="{Binding ShowFolderCommand}" />
+                              <MenuItem Header="{Binding StopSkippingText}" Command="{Binding StopSkippingCommand}" IsVisible="{Binding HasSkipped}" />
+                              <MenuItem Header="{Binding IgnoreText}" Command="{Binding ToggleIgnoreCommand}" IsVisible="{Binding CanIgnore}" />
+                            </MenuFlyout>
+                          </Button.Flyout>
+                        </Button>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

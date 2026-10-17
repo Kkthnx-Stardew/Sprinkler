@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.NoticesView"
+             x:DataType="vm:MainViewModel">
+  <StackPanel>
+    <Border Classes="banner bad" IsVisible="{Binding HasError}">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <ctl:IconView Kind="xcircle" Size="20" Margin="0,0,12,0" VerticalAlignment="Top" />
+        <TextBlock Grid.Column="1" Classes="body" Text="{Binding ErrorText}" TextWrapping="Wrap" />
+        <Button Grid.Column="2" Classes="icon ghost" Height="26" MinHeight="26" Width="26" Command="{Binding DismissErrorCommand}" AutomationProperties.Name="Dismiss">
+          <ctl:IconView Kind="close" Size="14" />
+        </Button>
+      </Grid>
+    </Border>
+
+    <Border Classes="banner warn" IsVisible="{Binding GameRunning}">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <ctl:IconView Kind="alert" Size="20" VerticalAlignment="Top" />
+        <TextBlock Classes="body" TextWrapping="Wrap" Text="Stardew Valley or SMAPI is running. You can look around, but close the game before updating, because it locks the files it uses." />
+      </StackPanel>
+    </Border>
+
+    <Border Classes="banner warn" IsVisible="{Binding NoSmapi}">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <ctl:IconView Kind="alert" Size="20" VerticalAlignment="Top" />
+        <TextBlock Classes="body" TextWrapping="Wrap" Text="SMAPI was not found in this game folder. Mods only load through SMAPI, so install it first from smapi.io." />
+      </StackPanel>
+    </Border>
+
+    <ItemsControl ItemsSource="{Binding Found}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:FoundViewModel">
+          <Border Classes="panel infoedge">
+            <StackPanel Spacing="8">
+              <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="gift" Size="22" Foreground="{DynamicResource InfoBrush}" /><TextBlock Classes="h2" Text="Found a mod file" /></StackPanel>
+              <TextBlock Classes="muted small" Text="{Binding Header}" TextWrapping="Wrap" />
+              <ItemsControl ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" /></DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Classes="bad strong" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="primary" Command="{Binding InstallCommand}" IsVisible="{Binding CanInstall}" IsEnabled="{Binding !Busy}"><TextBlock Text="{Binding InstallText}" /></Button>
+                <Button Command="{Binding DismissCommand}"><TextBlock Text="Ignore" /></Button>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </StackPanel>
+</UserControl>

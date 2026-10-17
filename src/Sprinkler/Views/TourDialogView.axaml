@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.TourDialogView"
+             x:DataType="vm:TourDialogViewModel">
+  <Border Classes="dialog" Width="460">
+    <StackPanel Spacing="8">
+      <Border Width="96" Height="96" CornerRadius="24" Background="{DynamicResource AccentSoftBrush}" HorizontalAlignment="Center" Margin="0,4,0,6">
+        <Panel>
+          <Image Source="avares://Sprinkler/Assets/logo.png" Width="64" Height="64" IsVisible="{Binding IsFirst}" />
+          <ctl:IconView Kind="{Binding Current.Icon}" Size="44" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !IsFirst}" />
+        </Panel>
+      </Border>
+      <TextBlock Classes="h2" Text="{Binding Current.Title}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+      <TextBlock Classes="muted" Text="{Binding Current.Text}" TextAlignment="Center" TextWrapping="Wrap" />
+      <ItemsControl ItemsSource="{Binding Dots}" HorizontalAlignment="Center" Margin="0,14,0,4">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:Boolean"><Border Classes="dot2" Classes.on="{Binding}" /></DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" Margin="0,10,0,0">
+        <Button Command="{Binding FinishCommand}"><TextBlock Text="{Binding SkipText}" /></Button>
+        <Button Grid.Column="2" Command="{Binding BackCommand}" IsVisible="{Binding !IsFirst}"><TextBlock Text="Back" /></Button>
+        <Button Grid.Column="3" Classes="primary" Command="{Binding NextCommand}"><TextBlock Text="{Binding NextText}" /></Button>
+      </Grid>
+    </StackPanel>
+  </Border>
+</UserControl>

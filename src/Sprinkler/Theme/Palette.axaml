@@ -1,0 +1,54 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    Brand palette: Loam (soil brown), Harvest Gold, Parchment, Sprout and Barn Red, with a text-safe darker tone for each.
+    Every text and background pair used by the app is checked against WCAG AA (4.5 : 1) in ContrastTests.
+    Keep one SolidColorBrush per name with a literal colour so the test can read it.
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="BgBrush" Color="#F7F2E7" />
+      <SolidColorBrush x:Key="PanelBrush" Color="#FFFDF8" />
+      <SolidColorBrush x:Key="Panel2Brush" Color="#F0E8D6" />
+      <SolidColorBrush x:Key="InkBrush" Color="#2B211C" />
+      <SolidColorBrush x:Key="MutedBrush" Color="#6A5C50" />
+      <SolidColorBrush x:Key="LineBrush" Color="#E0D5BE" />
+      <SolidColorBrush x:Key="AccentBrush" Color="#E8A93D" />
+      <SolidColorBrush x:Key="AccentHoverBrush" Color="#D99A2B" />
+      <SolidColorBrush x:Key="AccentInkBrush" Color="#2B211C" />
+      <SolidColorBrush x:Key="AccentTextBrush" Color="#7C5200" />
+      <SolidColorBrush x:Key="AccentSoftBrush" Color="#FBEFD2" />
+      <SolidColorBrush x:Key="GoodBrush" Color="#3B6A2A" />
+      <SolidColorBrush x:Key="GoodSoftBrush" Color="#E5F0DC" />
+      <SolidColorBrush x:Key="InfoBrush" Color="#1B5C9E" />
+      <SolidColorBrush x:Key="InfoSoftBrush" Color="#E1ECF7" />
+      <SolidColorBrush x:Key="WarnBrush" Color="#85470A" />
+      <SolidColorBrush x:Key="WarnSoftBrush" Color="#FBE9C6" />
+      <SolidColorBrush x:Key="BadBrush" Color="#A33527" />
+      <SolidColorBrush x:Key="BadSoftBrush" Color="#F8DFD9" />
+      <SolidColorBrush x:Key="ScrimBrush" Color="#8C1A120E" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="BgBrush" Color="#1E1713" />
+      <SolidColorBrush x:Key="PanelBrush" Color="#2A201B" />
+      <SolidColorBrush x:Key="Panel2Brush" Color="#362A21" />
+      <SolidColorBrush x:Key="InkBrush" Color="#F5EEDC" />
+      <SolidColorBrush x:Key="MutedBrush" Color="#BCAE99" />
+      <SolidColorBrush x:Key="LineBrush" Color="#46372B" />
+      <SolidColorBrush x:Key="AccentBrush" Color="#E8A93D" />
+      <SolidColorBrush x:Key="AccentHoverBrush" Color="#F0BB5A" />
+      <SolidColorBrush x:Key="AccentInkBrush" Color="#2B211C" />
+      <SolidColorBrush x:Key="AccentTextBrush" Color="#F0BB5A" />
+      <SolidColorBrush x:Key="AccentSoftBrush" Color="#3E2F15" />
+      <SolidColorBrush x:Key="GoodBrush" Color="#9CCB86" />
+      <SolidColorBrush x:Key="GoodSoftBrush" Color="#263320" />
+      <SolidColorBrush x:Key="InfoBrush" Color="#8DBBEE" />
+      <SolidColorBrush x:Key="InfoSoftBrush" Color="#1E3047" />
+      <SolidColorBrush x:Key="WarnBrush" Color="#F2B866" />
+      <SolidColorBrush x:Key="WarnSoftBrush" Color="#40300F" />
+      <SolidColorBrush x:Key="BadBrush" Color="#F28B7B" />
+      <SolidColorBrush x:Key="BadSoftBrush" Color="#47211C" />
+      <SolidColorBrush x:Key="ScrimBrush" Color="#B3000000" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

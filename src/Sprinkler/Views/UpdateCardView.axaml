@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.UpdateCardView"
+             x:DataType="vm:ItemViewModel">
+  <Border Classes="card" Classes.done="{Binding CardDone}" Classes.failed="{Binding CardFailed}">
+    <StackPanel>
+      <!-- header -->
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="16,14,16,6" ColumnSpacing="12">
+        <CheckBox IsChecked="{Binding Selected}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSelect}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
+        <Border Grid.Column="1" Classes="art"><ctl:IconView Kind="{Binding ArtKind}" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
+          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Border Classes="tag new" IsVisible="{Binding IsNew}"><TextBlock Text="New install" /></Border>
+            <Border Classes="tag" IsVisible="{Binding HasParts}"><TextBlock Text="{Binding PartsText}" /></Border>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+          <TextBlock Classes="muted" Text="{Binding Installed}" IsVisible="{Binding HasInstalled}" VerticalAlignment="Center" />
+          <TextBlock Classes="muted" Text="→" IsVisible="{Binding HasInstalled}" VerticalAlignment="Center" />
+          <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="8" Padding="9,2"><TextBlock Classes="accent" FontWeight="SemiBold" Text="{Binding Target}" /></Border>
+        </StackPanel>
+      </Grid>
+
+      <!-- body -->
+      <StackPanel Margin="68,0,16,14" Spacing="4">
+        <TextBlock Classes="muted small" Text="{Binding Why}" IsVisible="{Binding HasWhy}" TextWrapping="Wrap" />
+
+        <!-- where the file comes from -->
+        <ItemsControl ItemsSource="{Binding Offers}" IsVisible="{Binding ShowSources}" Margin="0,4,0,0">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:OfferViewModel">
+              <Button Classes="src" Classes.chosen="{Binding IsChosen}" Command="{Binding ChooseCommand}" IsEnabled="{Binding Usable}" ToolTip.Tip="{Binding Note}" Margin="0,0,8,6">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Border Classes="badge" Background="{Binding BadgeBrush}"><TextBlock Text="{Binding Letter}" /></Border>
+                  <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                  <Border Classes="tag auto" IsVisible="{Binding IsAuto}"><TextBlock Text="{Binding ModeText}" /></Border>
+                  <Border Classes="tag click" IsVisible="{Binding IsClick}"><TextBlock Text="{Binding ModeText}" /></Border>
+                  <Border Classes="tag" IsVisible="{Binding NotUsable}"><TextBlock Text="not available" /></Border>
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Classes="link" Command="{Binding LoadAlternativesCommand}" IsVisible="{Binding ShowOtherSources}"><TextBlock Classes="small" Text="Other sources" /></Button>
+        <TextBlock Classes="muted small" Text="{Binding ChosenNote}" IsVisible="{Binding ShowChosenNote}" TextWrapping="Wrap" />
+        <TextBlock Classes="muted small" Text="{Binding LookingUpText}" IsVisible="{Binding ShowLookingUp}" TextWrapping="Wrap" />
+        <TextBlock Classes="bad strong" Text="{Binding Message}" IsVisible="{Binding IsFailed}" TextWrapping="Wrap" />
+
+        <ItemsControl ItemsSource="{Binding Details}" IsVisible="{Binding HasDetails}">
+          <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Classes="small" Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Margin="0,1" /></DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Expander Classes="flat" Header="{Binding ChangelogTitle}" IsVisible="{Binding HasChangelog}">
+          <ItemsControl ItemsSource="{Binding Changelog}">
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Classes="small" Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Margin="0,1" /></DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Expander>
+        <Button Classes="link" Command="{Binding OpenPageCommand}" IsVisible="{Binding ShowPageLink}"><TextBlock Classes="small" Text="Mod page and changelog" /></Button>
+        <Button Classes="link" Command="{Binding SkipVersionCommand}" IsVisible="{Binding ShowSkipVersion}" ToolTip.Tip="Hide this version. A newer one will show up again."><TextBlock Classes="small" Text="Skip this version" /></Button>
+
+        <!-- queued and working -->
+        <TextBlock Classes="muted small" Text="{Binding Message}" IsVisible="{Binding IsQueued}" TextWrapping="Wrap" />
+        <StackPanel IsVisible="{Binding IsWorking}" Spacing="4">
+          <TextBlock Classes="muted small" Text="{Binding Message}" TextWrapping="Wrap" />
+          <ProgressBar Value="{Binding ProgressValue}" IsIndeterminate="{Binding ProgressIndeterminate}" Minimum="0" Maximum="100" />
+        </StackPanel>
+
+        <!-- your turn -->
+        <Border Classes="wait" IsVisible="{Binding IsWaiting}">
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <ctl:IconView Kind="pointer" Size="24" Foreground="{DynamicResource WarnBrush}" VerticalAlignment="Top" />
+            <StackPanel Grid.Column="1" Spacing="8">
+              <TextBlock TextWrapping="Wrap"><Run Text="Your turn: " FontWeight="SemiBold" /><Run Text="{Binding Message}" /></TextBlock>
+              <WrapPanel Orientation="Horizontal">
+                <Button Classes="slim" Command="{Binding ReopenCommand}" Margin="0,0,8,6"><TextBlock Text="Open the page again" /></Button>
+                <ItemsControl ItemsSource="{Binding OtherOffers}">
+                  <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:OfferViewModel"><Button Classes="slim" Command="{Binding ChooseCommand}" ToolTip.Tip="{Binding Note}" Margin="0,0,8,6"><TextBlock Text="{Binding Label, StringFormat='Use {0} instead'}" /></Button></DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Classes="slim" Command="{Binding SkipThisCommand}" Margin="0,0,8,6"><TextBlock Text="Skip this one" /></Button>
+              </WrapPanel>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- done -->
+        <StackPanel IsVisible="{Binding IsDone}" Spacing="4">
+          <TextBlock FontWeight="SemiBold" Text="{Binding Message}" TextWrapping="Wrap" />
+          <Button Classes="link" Command="{Binding UndoCommand}" IsVisible="{Binding HasHistory}"><TextBlock Classes="small" Text="Undo this update" /></Button>
+        </StackPanel>
+        <TextBlock Classes="muted small" Text="{Binding Message}" IsVisible="{Binding IsSkipped}" TextWrapping="Wrap" />
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

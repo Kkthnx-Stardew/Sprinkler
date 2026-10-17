@@ -1,0 +1,234 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             xmlns:v="using:Sprinkler.Views"
+             x:Class="Sprinkler.Views.UpdatesView"
+             x:DataType="vm:MainViewModel">
+  <Grid RowDefinitions="*,Auto">
+    <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <StackPanel MaxWidth="980" Margin="20,8,20,24">
+
+        <!-- progress steps -->
+        <ItemsControl ItemsSource="{Binding Steps}" IsVisible="{Binding HasSteps}" Margin="0,8,0,4">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:StepViewModel">
+              <Border Classes="step" Classes.on="{Binding IsOn}" Classes.done="{Binding IsDone}" Margin="0,0,6,0"><TextBlock Text="{Binding Text}" FontSize="13" FontWeight="SemiBold" /></Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- starting -->
+        <Border Classes="panel center" IsVisible="{Binding IsStarting}">
+          <StackPanel Spacing="10" HorizontalAlignment="Center">
+            <Image Source="avares://Sprinkler/Assets/logo.png" Width="72" Height="72" HorizontalAlignment="Center" />
+            <TextBlock Classes="h2" Text="Looking for Stardew Valley..." HorizontalAlignment="Center" />
+          </StackPanel>
+        </Border>
+
+        <!-- choose the game -->
+        <Border Classes="panel" IsVisible="{Binding IsChoosing}">
+          <StackPanel Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="folder" Size="22" /><TextBlock Classes="h2" Text="{Binding ChooseTitle}" /></StackPanel>
+            <TextBlock Classes="muted" Text="{Binding ChooseText}" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding Candidates}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:CandidateViewModel">
+                  <Button Command="{Binding Pick}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Height="42" Margin="0,3">
+                    <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="folder" Size="16" /><TextBlock Text="{Binding Text}" /></StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+              <TextBox Text="{Binding GamePathInput}" Watermark="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
+              <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="Browse..." /></Button>
+              <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="Use this folder" /></Button>
+            </Grid>
+            <TextBlock Classes="bad small strong" Text="{Binding GamePathError}" IsVisible="{Binding HasGamePathError}" TextWrapping="Wrap" />
+            <Expander Classes="flat" Header="How do I find the folder?">
+              <TextBlock Classes="muted small" Text="{Binding FindGameHelp}" TextWrapping="Wrap" />
+            </Expander>
+          </StackPanel>
+        </Border>
+
+        <!-- scanning and checking -->
+        <Border Classes="panel center" IsVisible="{Binding IsWorking}">
+          <StackPanel Spacing="10" HorizontalAlignment="Center">
+            <Image Source="avares://Sprinkler/Assets/logo.png" Width="72" Height="72" HorizontalAlignment="Center" />
+            <TextBlock Classes="h2" Text="{Binding StatusText}" HorizontalAlignment="Center" />
+            <TextBlock Classes="muted" TextWrapping="Wrap" MaxWidth="520" TextAlignment="Center" Text="The app reads each mod's manifest, then asks SMAPI's update service (smapi.io) for the newest version of each. Nothing on your computer changes during this step." />
+          </StackPanel>
+        </Border>
+
+        <!-- the check did not finish -->
+        <Border Classes="panel center" IsVisible="{Binding IsIdle}">
+          <StackPanel Spacing="10" HorizontalAlignment="Center">
+            <ctl:IconView Kind="alert" Size="44" Foreground="{DynamicResource WarnBrush}" HorizontalAlignment="Center" />
+            <TextBlock Classes="h2" Text="The check did not finish" HorizontalAlignment="Center" />
+            <TextBlock Classes="muted" Text="See the message above, then try again." HorizontalAlignment="Center" />
+            <Button Classes="primary big" Command="{Binding CheckCommand}" HorizontalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="18" /><TextBlock Text="Try again" /></StackPanel>
+            </Button>
+          </StackPanel>
+        </Border>
+
+        <!-- welcome -->
+        <Border Classes="panel" IsVisible="{Binding ShowWelcome}">
+          <StackPanel Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" /><TextBlock Classes="h2" Text="Welcome" /></StackPanel>
+            <TextBlock Classes="muted" TextWrapping="Wrap" Text="Sprinkler keeps your Stardew Valley mods up to date. Here is what I found on this computer:" />
+            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+              <TextBlock Classes="muted" Text="Game folder" /><SelectableTextBlock Grid.Column="1" Text="{Binding GamePath}" TextWrapping="Wrap" />
+              <TextBlock Grid.Row="1" Classes="muted" Text="Mods folder" /><SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ModsPath}" TextWrapping="Wrap" />
+              <TextBlock Grid.Row="2" Classes="muted" Text="SMAPI" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SmapiFoundText}" TextWrapping="Wrap" />
+            </Grid>
+            <UniformGrid Columns="3" Margin="0,8">
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,12,0"><ctl:IconView Kind="shield" Size="22" Foreground="{DynamicResource GoodBrush}" VerticalAlignment="Top" /><StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="Nothing changes yet" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="You see the plan first and press Update yourself." /></StackPanel></Grid>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,12,0"><ctl:IconView Kind="package" Size="22" VerticalAlignment="Top" /><StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="Backups and undo" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Every mod is saved before it is replaced. Your config.json files stay." /></StackPanel></Grid>
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10"><ctl:IconView Kind="key" Size="22" VerticalAlignment="Top" /><StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="No hidden accounts" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="No ads, no tracking. Your Nexus key stays on this computer." /></StackPanel></Grid>
+            </UniformGrid>
+            <TextBlock Classes="muted small" Text="Wrong folder? Change it under Nexus and settings." />
+            <Button Classes="primary big" Command="{Binding ConfirmWelcomeCommand}" HorizontalAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="check" Size="18" /><TextBlock Text="Looks right, continue" /></StackPanel>
+            </Button>
+          </StackPanel>
+        </Border>
+
+        <!-- SMAPI has an update -->
+        <Border Classes="banner info" IsVisible="{Binding HasSmapiUpdate}">
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <ctl:IconView Kind="gift" Size="20" VerticalAlignment="Top" />
+            <StackPanel Spacing="4"><TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding SmapiUpdateText}" /><Button Classes="link" Command="{Binding OpenSmapiUpdateCommand}"><TextBlock Text="Get SMAPI" /></Button></StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- overview -->
+        <StackPanel IsVisible="{Binding IsReview}">
+          <Border Classes="hero">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">
+              <Border Classes="heroart"><Image Source="avares://Sprinkler/Assets/logo.png" Width="60" Height="60" /></Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                <TextBlock Classes="hero" Text="{Binding HeroTitle}" TextWrapping="Wrap" />
+                <TextBlock Classes="muted" Text="{Binding HeroText}" TextWrapping="Wrap" />
+              </StackPanel>
+              <Button Grid.Column="2" Classes="primary big" Command="{Binding LaunchCommand}" IsVisible="{Binding HeroPlay}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="16" /><TextBlock Text="Play Stardew Valley" /></StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+          <UniformGrid Columns="4" Margin="0,7">
+            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,0">
+              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="package" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountAll}" /><TextBlock Classes="muted small" Text="mods in your folder" /></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="3,0">
+              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="arrowup" Size="22" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUpdates}" /><TextBlock Classes="muted small" Text="updates or installs" /></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="3,0">
+              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="check" Size="22" Foreground="{DynamicResource GoodBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUpToDate}" /><TextBlock Classes="muted small" Text="up to date" /></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="6,0,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="12"><Border Classes="dot"><ctl:IconView Kind="help" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel><TextBlock Classes="count" Text="{Binding CountUnchecked}" /><TextBlock Classes="muted small" Text="cannot be checked" /></StackPanel></StackPanel>
+            </Button>
+          </UniformGrid>
+        </StackPanel>
+
+        <!-- what SMAPI said about the last session -->
+        <Border Classes="panel warnedge" IsVisible="{Binding HealthVisible}">
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" Foreground="{DynamicResource WarnBrush}" /><TextBlock Classes="h2" Text="{Binding HealthTitle}" TextWrapping="Wrap" /></StackPanel>
+            <TextBlock Classes="muted small" Text="{Binding HealthSubtitle}" TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding SkippedMods}" IsVisible="{Binding HasSkippedMods}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SkippedModViewModel">
+                  <StackPanel Margin="0,4"><TextBlock Classes="strong" Text="{Binding Title}" /><TextBlock Classes="small" Text="{Binding Reason}" TextWrapping="Wrap" /><TextBlock Classes="muted small" Text="{Binding Hint}" TextWrapping="Wrap" /></StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Expander Classes="flat" Header="Mods that logged errors" IsVisible="{Binding HasLogErrors}">
+              <ItemsControl ItemsSource="{Binding LogErrors}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:LogErrorViewModel"><TextBlock Classes="small" Text="{Binding Text}" Margin="0,2" /></DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Expander>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="slim" Command="{Binding CheckCommand}"><StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="refresh" Size="14" /><TextBlock Text="Check again" /></StackPanel></Button>
+              <Button Classes="slim" Command="{Binding DismissLogCommand}"><TextBlock Text="Dismiss until the next game session" /></Button>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- tick what you want -->
+        <Border Classes="panel tight" IsVisible="{Binding ShowTickPanel}">
+          <StackPanel Spacing="6">
+            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="arrowup" Size="20" Foreground="{DynamicResource AccentTextBrush}" /><TextBlock Classes="strong" Text="Tick what you want, then press Update" /></StackPanel>
+            <Expander Classes="flat" Header="What do the labels mean?">
+              <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag auto"><TextBlock Text="Automatic" /></Border><TextBlock Classes="small" Text="The app downloads and installs it by itself." /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="One click" /></Border><TextBlock Classes="small" Text="You click &quot;Mod Manager Download&quot; on Nexus, and the app does the rest." /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="You download" /></Border><TextBlock Classes="small" Text="You press the download button on the site. The app installs the file the moment it lands in your Downloads folder." TextWrapping="Wrap" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag new"><TextBlock Text="New install" /></Border><TextBlock Classes="small" Text="A mod you need but do not have yet. SMAPI skips other mods until it is installed." TextWrapping="Wrap" /></StackPanel>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </Border>
+
+        <!-- finished -->
+        <Border Classes="panel center" IsVisible="{Binding IsFinished}">
+          <StackPanel Spacing="10" HorizontalAlignment="Center">
+            <ctl:IconView Kind="check" Size="52" Foreground="{DynamicResource GoodBrush}" HorizontalAlignment="Center" />
+            <TextBlock Classes="h2" Text="Finished" HorizontalAlignment="Center" />
+            <TextBlock Classes="muted" Text="{Binding FinishedText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="560" />
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+              <Button Classes="primary big" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="16" /><TextBlock Text="Play Stardew Valley" /></StackPanel></Button>
+              <Button Classes="big" Command="{Binding BackToReviewCommand}"><TextBlock Text="Back to the list" /></Button>
+              <Button Classes="big" Command="{Binding CheckCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="Check again" /></StackPanel></Button>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- the update cards -->
+        <ItemsControl ItemsSource="{Binding VisibleItems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ItemViewModel"><v:UpdateCardView /></DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- things the app noticed -->
+        <Border Classes="panel" IsVisible="{Binding HasProblems}">
+          <StackPanel Spacing="6">
+            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" Foreground="{DynamicResource WarnBrush}" /><TextBlock Classes="h2" Text="Heads up" /></StackPanel>
+            <TextBlock Classes="muted small" Text="Things the app noticed that may affect your game." />
+            <ItemsControl ItemsSource="{Binding Problems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProblemViewModel">
+                  <Border Classes="banner warn" Classes.bad="{Binding IsError}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Classes="body small" Text="{Binding Detail}" TextWrapping="Wrap" />
+                      <Button Classes="link" Command="{Binding Open}" IsVisible="{Binding HasLink}"><TextBlock Text="{Binding LinkText}" /></Button>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- the update bar stays at the bottom -->
+    <Border Grid.Row="1" Padding="20,0,20,16" IsVisible="{Binding ShowActions}">
+      <Border Classes="actions" MaxWidth="980">
+        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="10">
+          <Button Classes="primary big" Command="{Binding UpdateSelectedCommand}" IsEnabled="{Binding CanUpdate}">
+            <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="arrowup" Size="18" /><TextBlock Text="{Binding UpdateButtonText}" /></StackPanel>
+          </Button>
+          <Button Grid.Column="1" Command="{Binding SelectAllCommand}"><TextBlock Text="Select all" /></Button>
+          <Button Grid.Column="2" Command="{Binding SelectNoneCommand}"><TextBlock Text="Select none" /></Button>
+          <TextBlock Grid.Column="4" Classes="warn small strong" Text="Close the game to continue." IsVisible="{Binding GameRunning}" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

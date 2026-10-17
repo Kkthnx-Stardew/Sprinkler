@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.ConfirmDialogView"
+             x:DataType="vm:ConfirmDialogViewModel">
+  <Border Classes="dialog" Width="520">
+    <StackPanel Spacing="10">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <ctl:IconView Kind="{Binding Icon}" Size="24" Foreground="{DynamicResource AccentTextBrush}" />
+        <TextBlock Classes="h2" Text="{Binding Title}" TextWrapping="Wrap" />
+      </StackPanel>
+      <ItemsControl ItemsSource="{Binding Lines}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DialogLine">
+            <StackPanel Margin="0,4" Spacing="2">
+              <TextBlock Text="{Binding Lead}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Classes="muted small" Text="{Binding Text}" TextWrapping="Wrap" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <ItemsControl ItemsSource="{Binding Bullets}" IsVisible="{Binding HasBullets}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:String"><TextBlock Classes="muted small" Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Margin="0,2" /></DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+        <Button Command="{Binding NoCommand}"><TextBlock Text="{Binding NoText}" /></Button>
+        <Button Classes="primary" Command="{Binding YesCommand}"><TextBlock Text="{Binding YesText}" /></Button>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

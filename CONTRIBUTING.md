@@ -38,6 +38,8 @@ Set `SPRINKLER_DATA` to a temporary folder to keep settings, history, backups an
 | `src/Sprinkler` | The Avalonia app. `ViewModels` turn snapshots into what the screens show, `Views` are the screens, `Theme` holds the palette and control styles, `Controls` has the icon control. |
 | `tests/Sprinkler.Tests` | Unit tests, app logic tests, a contrast check of the palette, integration tests that run the whole update flow against a fake local server, and headless UI tests that open the real window and press the real commands (xunit v3). |
 
+Every sentence the person reads is a key in `src/Sprinkler.Core/Locales/en.json`, used as `{loc:T key}` in XAML or `Loc.T("key", args)` in code. Add the English text there, then add the key to every other language file (the English text is fine as a placeholder until someone translates it). The locale tests fail if any file lacks a key. See `docs/TRANSLATING.md`.
+
 A new value on screen needs three small steps: add it to `UpdateService.Snapshot()` (and `Snapshot.cs`), expose it on the right view model, and bind it in the XAML. Compiled bindings are on, so a typo fails the build instead of showing a blank.
 
 ## Ground rules

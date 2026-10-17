@@ -29,10 +29,10 @@
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
               <TextBlock Classes="h1" Text="Sprinkler" />
               <WrapPanel Orientation="Horizontal">
-                <Border Classes="chip" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
-                <Border Classes="chip ok" Margin="0,0,6,0" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
-                <Border Classes="chip bad" Margin="0,0,6,0" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
-                <Border Classes="chip ok" Margin="0,0,6,0" IsVisible="{Binding NexusConnected}">
+                <Border Classes="chip" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
+                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip bad" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding NexusConnected}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{Binding NexusChip}" /></StackPanel>
                 </Border>
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">

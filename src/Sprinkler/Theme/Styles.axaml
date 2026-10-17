@@ -86,7 +86,8 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="TextElement.Foreground" Value="{DynamicResource MutedBrush}" />
   </Style>
-  <Style Selector="Border.chip TextBlock"><Setter Property="FontSize" Value="12.5" /><Setter Property="FontWeight" Value="Medium" /></Style>
+  <Style Selector="Border.chip TextBlock"><Setter Property="VerticalAlignment" Value="Center" /><Setter Property="FontSize" Value="12.5" /><Setter Property="FontWeight" Value="Medium" /></Style>
+  <Style Selector="Border.chip > StackPanel"><Setter Property="VerticalAlignment" Value="Center" /></Style>
   <Style Selector="Border.chip.ok"><Setter Property="Background" Value="{DynamicResource GoodSoftBrush}" /><Setter Property="BorderThickness" Value="0" /><Setter Property="TextElement.Foreground" Value="{DynamicResource GoodBrush}" /></Style>
   <Style Selector="Border.chip.warn"><Setter Property="Background" Value="{DynamicResource WarnSoftBrush}" /><Setter Property="BorderThickness" Value="0" /><Setter Property="TextElement.Foreground" Value="{DynamicResource WarnBrush}" /></Style>
   <Style Selector="Border.chip.bad"><Setter Property="Background" Value="{DynamicResource BadSoftBrush}" /><Setter Property="BorderThickness" Value="0" /><Setter Property="TextElement.Foreground" Value="{DynamicResource BadBrush}" /></Style>

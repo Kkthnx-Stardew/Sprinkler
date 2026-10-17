@@ -95,7 +95,7 @@ internal sealed partial class UpdateService
         });
         try
         {
-            var staged = await SelfUpdate.FetchAsync(release, SelfKeyOverride ?? SelfUpdate.DefaultKey, path, p => Update(() => _appProgress = p), _cts.Token);
+            var staged = await SelfUpdate.FetchAsync(release, SelfKeyOverride ?? SelfUpdate.DefaultKey, path, p => Update(() => _appProgress = p), _appCts.Token);
             var starts = await (SelfCheckOverride ?? SelfUpdate.ReportsVersionAsync)(staged, release.Version);
             if (!starts)
             {

@@ -22,10 +22,14 @@ internal static class ModScanner
         || name.Equals("mcs", StringComparison.OrdinalIgnoreCase)
         || name.StartsWith("._", StringComparison.Ordinal);
 
-    private static void ScanFolder(string folder, List<ModInfo> mods, bool disabled, bool isRoot)
+    // Real mod folders sit one or two levels down. The cap only stops a folder link that points back at its own parent
+    // (possible on Linux) from being followed until the path gets too long.
+    private const int MaxDepth = 12;
+
+    private static void ScanFolder(string folder, List<ModInfo> mods, bool disabled, bool isRoot, int depth = 0)
     {
         var name = Path.GetFileName(folder);
-        if (!isRoot && IsIgnoredFolder(name))
+        if (!isRoot && IsIgnoredFolder(name) || depth > MaxDepth)
             return;
 
         var isDisabled = disabled || (!isRoot && name.StartsWith('.'));
@@ -50,6 +54,6 @@ internal static class ModScanner
         }
 
         foreach (var sub in subfolders)
-            ScanFolder(sub, mods, isDisabled, isRoot: false);
+            ScanFolder(sub, mods, isDisabled, isRoot: false, depth + 1);
     }
 }

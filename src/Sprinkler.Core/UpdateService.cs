@@ -106,6 +106,9 @@ internal sealed partial class UpdateService : IDisposable
     private readonly Action<string> _openUrl;
     private CancellationTokenSource _cts = new();
 
+    // The download of a new version of this program is not part of a check of the mods, so a new check must not cancel it.
+    private readonly CancellationTokenSource _appCts = new();
+
     private long _version;
     private Phase _phase = Phase.Starting;
     private string _status = "";
@@ -283,6 +286,7 @@ internal sealed partial class UpdateService : IDisposable
                 return;
 
             _cts.Cancel();
+            _cts.Dispose();
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
 
@@ -1802,6 +1806,7 @@ internal sealed partial class UpdateService : IDisposable
     {
         _disposed = true;
         _cts.Cancel();
+        _appCts.Cancel();
         _watcher.Dispose();
     }
 }

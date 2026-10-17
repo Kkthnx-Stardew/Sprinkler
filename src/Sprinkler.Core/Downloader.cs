@@ -141,9 +141,17 @@ internal sealed class DownloadWatcher : IDisposable
         {
             if (!await WaitUntilStable(path))
                 return;
-            var info = new FileInfo(path);
-            if (info.Length > MaxWatchedBytes)
-                return;
+            FileInfo info;
+            try
+            {
+                info = new FileInfo(path);
+                if (info.Length > MaxWatchedBytes)
+                    return;
+            }
+            catch (IOException)
+            {
+                return; // the browser removed or renamed it again
+            }
             if (info.CreationTimeUtc < _startedAt && info.LastWriteTimeUtc < _startedAt)
                 return;
             var key = $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}";

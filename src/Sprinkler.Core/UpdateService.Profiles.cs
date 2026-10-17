@@ -235,8 +235,7 @@ internal sealed partial class UpdateService
             var id = queue.Dequeue();
             foreach (var m in byId[id])
             {
-                var needs = m.Dependencies.Where(d => d.Required).Select(d => d.UniqueId).Concat(m.ContentPackFor is null ? Array.Empty<string>() : new[] { m.ContentPackFor });
-                foreach (var need in needs)
+                foreach (var need in m.RequiredIds)
                     if (byId.ContainsKey(need) && want.Add(need))
                     {
                         queue.Enqueue(need);

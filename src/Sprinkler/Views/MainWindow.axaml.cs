@@ -146,7 +146,16 @@ public partial class MainWindow : Window, IUiServices
             .Select(f => f.TryGetLocalPath())
             .OfType<string>()
             .ToList();
-        if (paths.Count > 0 && ViewModel is { } vm)
+        if (paths.Count == 0 || ViewModel is not { } vm)
+            return;
+        try
+        {
             await vm.HandleDroppedAsync(paths);
+        }
+        catch (Exception ex)
+        {
+            // an async void handler that throws would end the whole program
+            Sprinkler.Core.Log.Write("Handling a drop failed: " + ex);
+        }
     }
 }

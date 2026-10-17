@@ -478,8 +478,7 @@ internal sealed partial class UpdateService : IDisposable
             string[]? needs = null;
             if (mod is not null && !mod.Disabled)
             {
-                var wanted = mod.Dependencies.Where(d => d.Required).Select(d => d.UniqueId).Concat(mod.ContentPackFor is null ? Array.Empty<string>() : new[] { mod.ContentPackFor });
-                var lacking = wanted.Where(d => !installedIds.Contains(d) && !d.StartsWith("SMAPI.", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase)
+                var lacking = mod.RequiredIds.Where(d => !installedIds.Contains(d) && !d.StartsWith("SMAPI.", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase)
                     .Select(d => results.TryGetValue(d, out var dr) && !string.IsNullOrWhiteSpace(dr.Name) ? dr.Name! : d).ToArray();
                 if (lacking.Length > 0)
                     needs = lacking;
@@ -597,11 +596,7 @@ internal sealed partial class UpdateService : IDisposable
         var missing = new Dictionary<string, List<ModInfo>>(StringComparer.OrdinalIgnoreCase);
         foreach (var m in active)
         {
-            var needs = m.Dependencies.Where(d => d.Required).Select(d => d.UniqueId).ToList();
-            if (m.ContentPackFor is not null)
-                needs.Add(m.ContentPackFor);
-
-            foreach (var id in needs.Distinct(StringComparer.OrdinalIgnoreCase))
+            foreach (var id in m.RequiredIds.Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 if (installedIds.Contains(id) || id.StartsWith("SMAPI.", StringComparison.OrdinalIgnoreCase)
                     || id.Equals("Pathoschild.SMAPI", StringComparison.OrdinalIgnoreCase))
@@ -1232,8 +1227,13 @@ internal sealed partial class UpdateService : IDisposable
                 AddFound(path, origin, error: ex.Message);
             return;
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // a file that is being written or removed, or one that is damaged in a way the reader reports oddly
+            if (ex is not IOException)
+                Log.Write($"Could not read {Path.GetFileName(path)}: {ex.Message}");
+            if (explicitFile && ex is not IOException)
+                AddFound(path, origin, error: Loc.T("core.archive_unreadable", ex.Message));
             return;
         }
         if (mods.Count == 0)
@@ -1640,11 +1640,7 @@ internal sealed partial class UpdateService : IDisposable
         {
             if (name.StartsWith('.'))
                 return (null, null);
-            var dependents = all
-                .Where(m => !m.Disabled && !m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)
-                    && (string.Equals(m.ContentPackFor, mod.UniqueId, StringComparison.OrdinalIgnoreCase)
-                        || m.Dependencies.Any(d => d.Required && d.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase))))
-                .Select(m => m.Name).Distinct().ToArray();
+            var dependents = DependentsOf(mod, all);
             if (dependents.Length > 0 && !force)
                 return (null, dependents);
         }
@@ -1791,11 +1787,17 @@ internal sealed partial class UpdateService : IDisposable
 
     public StateSnapshot Snapshot()
     {
+        GameInstall? game;
+        lock (_gate)
+            game = _game;
+        var running = game is not null && GameLocator.IsGameRunning();
+        var canLaunch = game is not null && GameProcess.CanLaunch(game);
+        var nxmStatus = NxmRegistration.Status();
+        var shortcut = Platform.IsLinux ? new ShortcutInfo(LinuxShortcut.IsInstalled()) : null;
+        var backupBytes = History.BackupBytes();
+
         lock (_gate)
         {
-            var game = _game;
-            var running = game is not null && GameLocator.IsGameRunning();
-            var nxmStatus = NxmRegistration.Status();
             return new StateSnapshot(
                 Version: _version,
                 Phase: _phase,
@@ -1804,10 +1806,10 @@ internal sealed partial class UpdateService : IDisposable
                 Summary: _lastSummary,
                 App: new AppInfo(
                     AppEnvironment.AppName, AppEnvironment.Version, AppEnvironment.RepoUrl, Platform.SmapiName, AppEnvironment.DataDir,
-                    Platform.IsLinux ? new ShortcutInfo(LinuxShortcut.IsInstalled()) : null,
+                    shortcut,
                     AppUpdateNotice()),
                 Game: game is null ? null : new GameInfo(
-                    game.GamePath, game.ModsPath, game.Store, game.GameVersion, game.SmapiVersion, running, GameProcess.CanLaunch(game), Platform.SmapiName),
+                    game.GamePath, game.ModsPath, game.Store, game.GameVersion, game.SmapiVersion, running, canLaunch, Platform.SmapiName),
                 Candidates: _candidates.Select(c => new CandidateInfo(c.GamePath, c.Store, c.SmapiVersion)).ToList(),
                 Welcomed: Settings.Data.Welcomed,
                 SmapiUpdate: _smapiUpdate is null ? null : new UpdateNotice(_smapiUpdate.Value.Version, _smapiUpdate.Value.Url),
@@ -1832,7 +1834,7 @@ internal sealed partial class UpdateService : IDisposable
                     _gameLog.WrittenAt, _gameLog.LoadedMods, _gameLog.LoadedContentPacks,
                     _gameLog.Skipped.Select(s => new SkippedInfo(s.Name, s.Version, s.Reason, s.Kind, s.Hint)).ToList(),
                     _gameLog.Errors, _gameLog.WrittenAt.Ticks <= Settings.Data.LogDismissedTicks),
-                BackupBytes: History.BackupBytes(),
+                BackupBytes: backupBytes,
                 Profiles: BuildProfilesInfoLocked(),
                 ModNotes: new Dictionary<string, string>(Settings.Data.ModNotes, StringComparer.OrdinalIgnoreCase),
                 Endorsed: _endorsed.ToList());

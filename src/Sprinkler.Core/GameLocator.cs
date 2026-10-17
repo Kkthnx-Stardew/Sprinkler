@@ -123,12 +123,15 @@ internal static partial class GameLocator
             yield return ($@"{programFiles}\Steam\steamapps\common\Stardew Valley", "Steam");
         }
 
+        // Only drives that are there are looked at. Asking about a disconnected network drive can stall for many seconds.
+        var fixedDrives = DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady).ToList();
+
         // Xbox app: the install drive can change, the folder on it cannot. This is the mods-enabled path, not the read-only one.
-        for (var letter = 'C'; letter <= 'Z'; letter++)
-            yield return ($@"{letter}:\Program Files\ModifiableWindowsApps\Stardew Valley", "Xbox");
+        foreach (var drive in fixedDrives)
+            yield return (Path.Combine(drive.RootDirectory.FullName, "Program Files", "ModifiableWindowsApps", "Stardew Valley"), "Xbox");
 
         // common manual layouts on any fixed drive
-        foreach (var drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
+        foreach (var drive in fixedDrives)
         {
             var root = drive.RootDirectory.FullName;
             yield return (Path.Combine(root, "SteamLibrary", "steamapps", "common", "Stardew Valley"), "Steam");

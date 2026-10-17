@@ -306,6 +306,38 @@ public class ServiceTests
     }
 
     [Fact]
+    public async Task AGitHubReleaseIsJudgedByItsOwnVersionNotByARequirementInItsTitle()
+    {
+        using var web = new FakeWeb();
+        web.Handler = (path, _) => path.EndsWith("/releases")
+            ? FakeWeb.Json(
+                $$"""[{"tag_name":"v1.0.5","name":"1.0.5 for SMAPI 4.1.0","draft":false,"prerelease":false,"html_url":"{{web.Base}}/old","assets":[{"name":"Thing-1.0.5.zip","browser_download_url":"{{web.Base}}/dl/old.zip"}]},"""
+                + $$"""{"tag_name":"v1.1.0","name":"1.1.0","draft":false,"prerelease":false,"html_url":"{{web.Base}}/new","assets":[{"name":"Thing-1.1.0.zip","browser_download_url":"{{web.Base}}/dl/new.zip"}]}]""")
+            : null;
+
+        var offer = await new GitHubClient().FindAsync("me/thing", "1.1.0", "Thing", "me.Thing", false, CancellationToken.None);
+
+        Assert.NotNull(offer);
+        Assert.True(offer!.Usable);
+        Assert.EndsWith("/dl/new.zip", offer.DownloadUrl);
+        Assert.Equal(ModVersion.Parse("1.1.0"), ModVersion.Parse(offer.Version));
+    }
+
+    [Fact]
+    public async Task ACurseForgeFileIsJudgedByItsOwnVersionNotByARequirementInItsTitle()
+    {
+        using var web = new FakeWeb();
+        web.Handler = (path, _) => path.EndsWith("/files")
+            ? FakeWeb.Json("""{"data":[{"id":7,"dateCreated":"2026-10-01T00:00:00Z","displayName":"Thing 1.0.5 (SMAPI 4.1.0)","fileName":"Thing 1.0.5.zip","releaseType":1}]}""")
+            : null;
+
+        var offer = await new CurseForgeClient().FindAsync(10, "1.1.0", false, CancellationToken.None);
+
+        Assert.NotNull(offer);
+        Assert.False(offer!.Usable);
+    }
+
+    [Fact]
     public async Task OffersToInstallAnUpdatedFileFoundInDownloads()
     {
         using var rig = new Rig(SourcePolicy.NexusFirst);

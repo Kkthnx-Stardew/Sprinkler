@@ -46,7 +46,7 @@ You can also drag any mod `.zip`, `.7z` or `.rar` onto the window. Sprinkler sho
 
 ## What it does to your mods
 
-1. Reads the manifest inside the download. The mod ID must match the mod being updated, or the file is rejected.
+1. Reads the manifest inside the download. The mod ID must match the mod being updated, or the file is rejected. The one exception is a mod whose Nexus page moved to a new author with a new ID: the same Nexus page under a new ID updates the old folder in place.
 2. Zips the old folder into the backup folder.
 3. Copies the new files over. Your `config.json` is kept, old `.dll` files the new version dropped are removed, and files you added yourself are left alone.
 4. Reads the new manifest back to confirm the version.

@@ -295,8 +295,10 @@ internal sealed partial class MainViewModel
                 File.Copy(path, staged, overwrite: true);
                 await _svc.AddUploadedFileAsync(staged, name);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
+                if (ex is not (IOException or UnauthorizedAccessException))
+                    Log.Write($"Reading the dropped file {name} failed: {ex}");
                 Toast(Loc.T("act.read_failed", name, ex.Message), true);
             }
         }

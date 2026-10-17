@@ -134,6 +134,7 @@ internal sealed class HistoryStore
         catch (Exception ex) when (ex is IOException or JsonException)
         {
             Log.Write("History unreadable: " + ex.Message);
+            try { File.Move(_file, _file + ".unreadable", overwrite: true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
             _entries = new();
         }
     }

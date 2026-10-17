@@ -54,10 +54,38 @@ internal sealed class SettingsStore
     /// <summary>A short phrase saying where the Nexus key is kept, shown to the user.</summary>
     public string KeyStorage => _secrets.Description;
 
+    private readonly object _keyGate = new();
+    private string? _keyCache;
+    private DateTime _keyReadAt = DateTime.MinValue;
+
+    /// <summary>
+    /// The Nexus key. Asking the keyring can mean starting a helper program, and every request to Nexus asks for the key, so
+    /// the answer is kept. A missing key is only remembered for a few seconds, so one added in the meantime is noticed.
+    /// </summary>
     public string? NexusKey
     {
-        get => _secrets.Read();
-        set => _secrets.Write(value);
+        get
+        {
+            lock (_keyGate)
+            {
+                var age = DateTime.UtcNow - _keyReadAt;
+                if (age > (_keyCache is null ? TimeSpan.FromSeconds(10) : TimeSpan.FromMinutes(10)))
+                {
+                    _keyCache = _secrets.Read();
+                    _keyReadAt = DateTime.UtcNow;
+                }
+                return _keyCache;
+            }
+        }
+        set
+        {
+            _secrets.Write(value);
+            lock (_keyGate)
+            {
+                _keyCache = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+                _keyReadAt = DateTime.UtcNow;
+            }
+        }
     }
 
     public string DownloadsPath => string.IsNullOrWhiteSpace(Data.DownloadsPath) ? Platform.DownloadsFolder() : Data.DownloadsPath!;
@@ -83,6 +111,8 @@ internal sealed class SettingsStore
         catch (Exception ex) when (ex is IOException or JsonException)
         {
             Log.Write("Settings unreadable, using defaults: " + ex.Message);
+            // keep the damaged file: it holds the saved Nexus key, notes and ignored mods, and the next save would replace it
+            try { File.Move(_file, _file + ".unreadable", overwrite: true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
             Data = new SettingsData();
         }
     }

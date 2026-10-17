@@ -95,6 +95,17 @@ public class LinuxProcessTests
     public void IgnoresOtherPrograms(string executable) =>
         Assert.False(GameProcess.CommandLineMatches(Cmd(executable)));
 
+    [Theory]
+    [InlineData("code", "/home/deck/.local/share/Steam/steamapps/common/Stardew Valley")]
+    [InlineData("dolphin", "/home/deck/.local/share/Steam/steamapps/common/Stardew Valley")]
+    [InlineData("/usr/bin/nano", "/games/Stardew Valley")]
+    public void AnEditorOrFileManagerOpenOnTheGameFolderIsNotTheGame(string program, string folder) =>
+        Assert.False(GameProcess.CommandLineMatches(Cmd(program, folder)));
+
+    [Fact]
+    public void ProtonStartingTheGameExecutableStillCounts() =>
+        Assert.True(GameProcess.CommandLineMatches(Cmd("/steam/proton", "waitforexitandrun", "Z:\\games\\Stardew Valley\\Stardew Valley.exe")));
+
     [Fact]
     public void ScansAProcFolderAndSkipsItself()
     {

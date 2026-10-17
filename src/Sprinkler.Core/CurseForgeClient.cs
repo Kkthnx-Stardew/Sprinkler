@@ -40,10 +40,10 @@ internal sealed class CurseForgeClient
         var target = ModVersion.Parse(targetVersion);
         foreach (var file in files)
         {
-            var tokens = ModVersion.FindAll(file.DisplayName).Concat(ModVersion.FindAll(file.FileName)).ToList();
-            if (target is null || tokens.Any(t => t >= target))
+            // the file's own version is the first one in its title or name, not a "for SMAPI 4.1.0" that follows it
+            var best = ModVersion.FindAll(file.DisplayName).FirstOrDefault() ?? ModVersion.FindAll(file.FileName).FirstOrDefault();
+            if (target is null || (best is not null && best >= target))
             {
-                var best = tokens.Count > 0 ? tokens.Max() : null;
                 return new SourceOffer
                 {
                     Kind = SourceKind.CurseForge,

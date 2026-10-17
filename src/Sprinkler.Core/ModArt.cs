@@ -134,9 +134,16 @@ internal sealed class ModArtStore
             if (entry is null)
                 return; // nothing was learned (no key yet, or a network problem): try again next time
 
+            string? replaced = null;
             lock (_gate)
+            {
+                if (_entries.TryGetValue(key, out var old) && old.File is not null && old.File != entry.File)
+                    replaced = old.File;
                 _entries[key] = entry;
+            }
             Save();
+            if (replaced is not null)
+                Cleanup.TryDeleteFile(Path.Combine(_dir, replaced));
             Changed?.Invoke();
         }
         finally
@@ -170,7 +177,7 @@ internal sealed class ModArtStore
 
         string? file = null;
         if (IsAllowedImageUrl(info.PictureUrl, "nexusmods.com"))
-            file = await DownloadAsync(info.PictureUrl!, "nexus-" + modId);
+            file = await DownloadAsync(info.PictureUrl!, "nexus-" + modId, allowedHosts: new[] { "nexusmods.com" });
 
         return new ArtEntry
         {
@@ -279,18 +286,24 @@ internal sealed class ModArtStore
         return new();
     }
 
+    private readonly object _saveGate = new();
+
     private void Save()
     {
         try
         {
             Directory.CreateDirectory(_dir);
-            string json;
-            lock (_gate)
-                json = JsonSerializer.Serialize(_entries, AppEnvironment.JsonPretty);
-            var file = Path.Combine(_dir, "index.json");
-            var temp = file + ".tmp";
-            System.IO.File.WriteAllText(temp, json, new UTF8Encoding(false));
-            System.IO.File.Move(temp, file, overwrite: true);
+            // two pictures can finish at once, and both write through the same temporary file
+            lock (_saveGate)
+            {
+                string json;
+                lock (_gate)
+                    json = JsonSerializer.Serialize(_entries, AppEnvironment.JsonPretty);
+                var file = Path.Combine(_dir, "index.json");
+                var temp = file + ".tmp";
+                System.IO.File.WriteAllText(temp, json, new UTF8Encoding(false));
+                System.IO.File.Move(temp, file, overwrite: true);
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

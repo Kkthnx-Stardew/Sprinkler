@@ -57,6 +57,19 @@ public partial class App : Application
             _channel.MessageReceived += message => Dispatcher.UIThread.Post(() => OnInstanceMessage(window, message));
             _channel.Start();
 
+            // last line of defence: a failure nobody expected is written to the log and shown, not allowed to close the program
+            Dispatcher.UIThread.UnhandledException += (_, e) =>
+            {
+                Log.Write("Unhandled error: " + e.Exception);
+                e.Handled = true;
+                _viewModel?.Toast(Loc.T("vm.went_wrong", e.Exception.Message), true);
+            };
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                Log.Write("Unobserved task error: " + e.Exception);
+                e.SetObserved();
+            };
+
             _viewModel.Start();
 
             if (options.NxmUrl is { } nxm)

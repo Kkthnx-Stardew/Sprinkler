@@ -7,6 +7,12 @@ internal sealed partial class UpdateService
     private readonly HashSet<long> _endorsed = new();
     private DateTime _endorsedLoadedAt = DateTime.MinValue;
 
+    /// <summary>The names of the switched-on mods that need <paramref name="mod"/>, so switching it off or removing it can warn first.</summary>
+    internal static string[] DependentsOf(ModInfo mod, IEnumerable<ModInfo> all) =>
+        all.Where(m => !m.Disabled && !m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)
+                && m.RequiredIds.Any(id => id.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)))
+            .Select(m => m.Name).Distinct().ToArray();
+
     // ---------------------------------------------------------------- remove
 
     /// <summary>
@@ -30,11 +36,7 @@ internal sealed partial class UpdateService
         if (game is null || mod is null || mod.Bundled)
             return (Loc.T("core.mod_not_found"), null);
 
-        var dependents = all
-            .Where(m => !m.Disabled && !m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)
-                && (string.Equals(m.ContentPackFor, mod.UniqueId, StringComparison.OrdinalIgnoreCase)
-                    || m.Dependencies.Any(d => d.Required && d.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase))))
-            .Select(m => m.Name).Distinct().ToArray();
+        var dependents = DependentsOf(mod, all);
         if (dependents.Length > 0 && !force)
             return (null, dependents);
 

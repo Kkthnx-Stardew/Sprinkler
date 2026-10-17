@@ -65,6 +65,11 @@ internal sealed class ModInfo
     public bool Bundled { get; init; }
 
     public IEnumerable<UpdateKey> ParsedKeys => UpdateKeys.Select(UpdateKey.Parse).OfType<UpdateKey>();
+
+    /// <summary>The IDs of the mods this one cannot work without: its required dependencies and the mod it is a content pack for.</summary>
+    public IEnumerable<string> RequiredIds =>
+        Dependencies.Where(d => d.Required).Select(d => d.UniqueId)
+            .Concat(ContentPackFor is null ? Array.Empty<string>() : new[] { ContentPackFor });
 }
 
 /// <summary>The parts of a manifest that matter for matching an archive to an installed mod.</summary>

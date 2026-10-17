@@ -70,10 +70,15 @@ internal static class GameProcess
     {
         if (rawCmdline.Length == 0)
             return false;
-        foreach (var arg in System.Text.Encoding.UTF8.GetString(rawCmdline).Split('\0', StringSplitOptions.RemoveEmptyEntries).Take(4))
+        var args = System.Text.Encoding.UTF8.GetString(rawCmdline).Split('\0', StringSplitOptions.RemoveEmptyEntries).Take(4).ToArray();
+        for (var i = 0; i < args.Length; i++)
         {
-            var file = arg[(arg.LastIndexOfAny(new[] { '/', '\\' }) + 1)..];
-            if (GameNames.Contains(file, StringComparer.OrdinalIgnoreCase))
+            var file = args[i][(args[i].LastIndexOfAny(new[] { '/', '\\' }) + 1)..];
+            if (!GameNames.Contains(file, StringComparer.OrdinalIgnoreCase))
+                continue;
+            // The program itself is the first word. After that only a program file counts (dotnet X.dll, proton X.exe), so a
+            // file manager or editor that was opened on the "Stardew Valley" folder is not taken for the game.
+            if (i == 0 || file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
         return false;

@@ -58,8 +58,9 @@ internal sealed class ArchiveFile : IDisposable
             Dispose();
             throw;
         }
-        catch (Exception ex) when (ex is InvalidDataException or SharpCompress.Common.ArchiveException or NotSupportedException or IOException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // the readers throw many kinds of exception for a damaged or mislabelled file (a text file named .7z, say)
             Dispose();
             throw new ArchiveException(Loc.T("core.archive_unreadable", ex.Message));
         }
@@ -82,11 +83,19 @@ internal sealed class ArchiveFile : IDisposable
     public Stream OpenEntry(string path) =>
         _openers.TryGetValue(path, out var open) ? open() : throw new FileNotFoundException(path);
 
-    public byte[] ReadAll(string path)
+    public byte[] ReadAll(string path, long maxBytes = long.MaxValue)
     {
         using var s = OpenEntry(path);
         using var ms = new MemoryStream();
-        s.CopyTo(ms);
+        var buffer = new byte[81920];
+        int n;
+        while ((n = s.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            // the size in an archive header can be false, so count what is really read
+            if (ms.Length + n > maxBytes)
+                throw new ArchiveException(Loc.T("core.archive_lies"));
+            ms.Write(buffer, 0, n);
+        }
         return ms.ToArray();
     }
 
@@ -151,6 +160,8 @@ internal sealed record ArchiveMod(string RootPath, ManifestSummary Manifest);
 
 internal static class ArchiveInspector
 {
+    private const long MaxManifestBytes = 1024 * 1024;
+
     /// <summary>Finds the outermost manifests, the same mod roots SMAPI would load.</summary>
     public static List<ArchiveMod> FindMods(ArchiveFile archive)
     {
@@ -174,7 +185,9 @@ internal static class ArchiveInspector
                 e.Path.Equals(root.Length == 0 ? "manifest.json" : root + "/manifest.json", StringComparison.OrdinalIgnoreCase)
                 || (root.Length > 0 && e.Path.StartsWith(root + "/", StringComparison.OrdinalIgnoreCase)
                     && e.Path[(root.Length + 1)..].Equals("manifest.json", StringComparison.OrdinalIgnoreCase)));
-            var summary = ManifestReader.Summarize(archive.ReadAll(entry.Path));
+            if (entry.Size > MaxManifestBytes)
+                continue; // a real manifest is a few kilobytes, and one this big would only fill memory
+            var summary = ManifestReader.Summarize(archive.ReadAll(entry.Path, MaxManifestBytes));
             if (summary is not null)
                 mods.Add(new ArchiveMod(root, summary));
         }

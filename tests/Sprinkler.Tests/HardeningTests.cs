@@ -1,0 +1,93 @@
+using Sprinkler.Core;
+using Xunit;
+
+namespace Sprinkler.Tests;
+
+/// <summary>Files and answers that are damaged, odd or hostile must end as a message, never as a crash or a lost setting.</summary>
+public class HardeningTests
+{
+    [Theory]
+    [InlineData("notes.7z", "this is plain text that only has an archive name")]
+    [InlineData("empty.7z", "")]
+    [InlineData("broken.rar", "Rar!\u001a\u0007\u0001\u0000 cut off")]
+    public void AMislabelledArchiveIsReportedAsUnreadable(string name, string content)
+    {
+        using var d = new TempDir();
+        var path = d.Write(name, content);
+        Assert.Throws<ArchiveException>(() => ArchiveFile.Open(path));
+    }
+
+    [Fact]
+    public void AnOversizedManifestIsIgnoredInsteadOfReadIntoMemory()
+    {
+        using var d = new TempDir();
+        var zip = Zips.Build(d, "big.zip",
+            ("Mod/manifest.json", new string(' ', 2 * 1024 * 1024) + Zips.Manifest("a.b", "1.0.0")),
+            ("Other/manifest.json", Zips.Manifest("c.d", "2.0.0")));
+        using var archive = ArchiveFile.Open(zip);
+        var found = Assert.Single(ArchiveInspector.FindMods(archive));
+        Assert.Equal("c.d", found.Manifest.UniqueId);
+    }
+
+    [Fact]
+    public void ReadAllStopsAtTheLimitEvenWhenTheHeaderSaysLess()
+    {
+        using var d = new TempDir();
+        var zip = Zips.Build(d, "x.zip", ("a.txt", new string('x', 5000)));
+        using var archive = ArchiveFile.Open(zip);
+        Assert.Throws<ArchiveException>(() => archive.ReadAll("a.txt", maxBytes: 1000));
+        Assert.Equal(5000, archive.ReadAll("a.txt").Length);
+    }
+
+    [Fact]
+    public void ADamagedSettingsFileIsKeptBesideTheNewOne()
+    {
+        using var d = new TempDir();
+        var file = d.Write("settings.json", "{ this is not json");
+        var store = new SettingsStore(file);
+
+        Assert.True(store.Data.CheckAppUpdates);
+        Assert.True(File.Exists(file + ".unreadable"));
+        Assert.Equal("{ this is not json", File.ReadAllText(file + ".unreadable"));
+    }
+
+    [Fact]
+    public void ADamagedHistoryFileIsKeptBesideTheNewOne()
+    {
+        using var d = new TempDir();
+        var file = d.Write("history.json", "[ nope");
+        var history = new HistoryStore(file, d.Combine("backups"));
+
+        Assert.Empty(history.All());
+        Assert.True(File.Exists(file + ".unreadable"));
+    }
+
+    [Fact]
+    public void TheNexusKeyIsReadFromTheStoreOnceNotForEveryRequest()
+    {
+        using var d = new TempDir();
+        var store = new SettingsStore(d.Combine("settings.json"));
+        store.NexusKey = "a-test-key-that-is-long-enough";
+
+        Assert.Equal("a-test-key-that-is-long-enough", store.NexusKey);
+        // changing it through the store is seen at once, and clearing it too
+        store.NexusKey = "another-test-key-long-enough";
+        Assert.Equal("another-test-key-long-enough", store.NexusKey);
+        store.NexusKey = null;
+        Assert.Null(store.NexusKey);
+    }
+
+    [Fact]
+    public void ModsThatNeedAnotherModAreListedByName()
+    {
+        var core = new ModInfo { UniqueId = "me.Core", Name = "Core" };
+        var needy = new ModInfo { UniqueId = "me.Needy", Name = "Needy", Dependencies = new[] { new ModDependency("me.Core", null, true) } };
+        var pack = new ModInfo { UniqueId = "me.Pack", Name = "Pack", ContentPackFor = "me.Core" };
+        var optional = new ModInfo { UniqueId = "me.Opt", Name = "Opt", Dependencies = new[] { new ModDependency("me.Core", null, false) } };
+        var off = new ModInfo { UniqueId = "me.Off", Name = "Off", Disabled = true, ContentPackFor = "me.Core" };
+
+        var names = UpdateService.DependentsOf(core, new[] { core, needy, pack, optional, off });
+
+        Assert.Equal(new[] { "Needy", "Pack" }, names.OrderBy(x => x).ToArray());
+    }
+}

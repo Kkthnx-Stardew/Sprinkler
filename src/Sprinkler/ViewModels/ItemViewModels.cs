@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Media.Immutable;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sprinkler.Core;
@@ -21,12 +22,17 @@ internal sealed partial class OfferViewModel(ItemViewModel owner, int index, Off
     public bool NotUsable => !Info.Usable;
     public string Letter => Info.Source switch { SourceKind.Nexus => "N", SourceKind.CurseForge => "C", SourceKind.GitHub => "G", SourceKind.ModDrop => "M", _ => "?" };
 
+    private static readonly IBrush NexusBadge = new ImmutableSolidColorBrush(Color.Parse("#B0520D"));
+    private static readonly IBrush CurseForgeBadge = new ImmutableSolidColorBrush(Color.Parse("#C24A22"));
+    private static readonly IBrush GitHubBadge = new ImmutableSolidColorBrush(Color.Parse("#3A3F4B"));
+    private static readonly IBrush OtherBadge = new ImmutableSolidColorBrush(Color.Parse("#2E6BA8"));
+
     public IBrush BadgeBrush => Info.Source switch
     {
-        SourceKind.Nexus => new SolidColorBrush(Color.Parse("#B0520D")),
-        SourceKind.CurseForge => new SolidColorBrush(Color.Parse("#C24A22")),
-        SourceKind.GitHub => new SolidColorBrush(Color.Parse("#3A3F4B")),
-        _ => new SolidColorBrush(Color.Parse("#2E6BA8")),
+        SourceKind.Nexus => NexusBadge,
+        SourceKind.CurseForge => CurseForgeBadge,
+        SourceKind.GitHub => GitHubBadge,
+        _ => OtherBadge,
     };
 
     public bool IsAuto => Info.Usable && Info.Mode == DeliveryMode.Auto;

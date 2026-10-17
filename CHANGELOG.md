@@ -10,6 +10,14 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 - Fixed: the "One click" and "Automatic" tags on a chosen source button blended into the button in the dark theme. They now have an outline and sit centred in both themes.
 - The question rows in Help and the other fold-out sections now keep their arrows in one column at the right edge, and the Mod column of All mods gets more of the width so names and notes are cut off less.
 - Fixed: hovering a fold-out row (such as the questions in Help) turned it black with a boxed arrow. It now gets a soft tint and keeps its link colour.
+- Fixed: dropping a damaged file, or a text file named like an archive (`.7z` or `.rar`), onto the window could close the program. It now says the file cannot be read. Unexpected errors are also written to the log, and one that slips through is shown as a message instead of ending the program.
+- Fixed: on Linux, an editor or file manager that was open on the Stardew Valley folder made Sprinkler think the game was running and refuse to update.
+- Fixed: an older GitHub or CurseForge release could be offered as a newer one when its title mentioned a higher number, such as "for SMAPI 4.1.0". A release is now judged by its own version.
+- A manifest larger than 1 MB inside an archive is ignored instead of being read into memory.
+- A settings or history file that cannot be read is kept as `.unreadable` beside the new one, so the saved Nexus key and notes are not lost to the next save.
+- The Xbox app folder is only looked for on drives that are connected, so a disconnected network drive can no longer slow the search for the game.
+- On Linux the Nexus key is read from the keyring once, not for every request, and the window no longer waits on a scan of running programs while other work is going on.
+- Mod pictures that a newer picture replaces are deleted from the cache, and two pictures finishing at the same moment can no longer collide while saving the index.
 
 ## 1.0.0 (2026-10-17)
 

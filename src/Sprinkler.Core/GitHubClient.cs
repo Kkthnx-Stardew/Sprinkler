@@ -38,8 +38,10 @@ internal sealed class GitHubClient
         var target = ModVersion.Parse(targetVersion);
         foreach (var rel in (releases ?? new()).Where(r => !r.Draft && (allowPrerelease || !r.Prerelease)))
         {
-            var tokens = ModVersion.FindAll(rel.TagName).Concat(ModVersion.FindAll(rel.Name)).ToList();
-            if (target is not null && !tokens.Any(t => t >= target))
+            // The release's own version is the first one in its tag or title. A later number such as "for SMAPI 4.1.0" is
+            // a requirement of the mod, and must not make an older release look new.
+            var version = ModVersion.FindAll(rel.TagName).FirstOrDefault() ?? ModVersion.FindAll(rel.Name).FirstOrDefault();
+            if (target is not null && (version is null || version < target))
                 continue;
 
             var asset = PickAsset(rel.Assets ?? new(), modName, uniqueId);
@@ -50,7 +52,7 @@ internal sealed class GitHubClient
             {
                 Kind = SourceKind.GitHub,
                 Mode = DeliveryMode.Auto,
-                Version = (tokens.Count > 0 ? tokens.Max() : null)?.ToString(),
+                Version = version?.ToString(),
                 PageUrl = rel.HtmlUrl ?? page,
                 DownloadUrl = asset.BrowserDownloadUrl,
                 FileName = asset.Name,

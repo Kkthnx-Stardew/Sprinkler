@@ -26,7 +26,7 @@
               <TextBlock Text="3. Paste it below." />
             </StackPanel>
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-              <TextBox Text="{Binding NexusKeyInput}" PasswordChar="•" Watermark="Paste your Personal API Key here" AutomationProperties.Name="Nexus API key" />
+              <TextBox Text="{Binding NexusKeyInput}" PasswordChar="•" PlaceholderText="Paste your Personal API Key here" AutomationProperties.Name="Nexus API key" />
               <Button Grid.Column="1" Classes="primary" Command="{Binding ConnectNexusCommand}" IsEnabled="{Binding CanConnect}"><TextBlock Text="{Binding ConnectButtonText}" /></Button>
             </Grid>
             <TextBlock Classes="bad small strong" Text="{Binding NexusKeyError}" IsVisible="{Binding HasNexusKeyError}" TextWrapping="Wrap" />
@@ -82,7 +82,7 @@
           </StackPanel>
           <TextBlock Classes="h3" Text="Change the game folder" />
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding GamePathInput}" Watermark="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
+            <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
             <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="Browse..." /></Button>
             <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="Use this folder" /></Button>
           </Grid>

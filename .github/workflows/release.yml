@@ -30,23 +30,23 @@ jobs:
       - name: Check the tag matches the project version
         shell: pwsh
         run: |
-          [xml]$project = Get-Content src/StardewModUpdater/StardewModUpdater.csproj
-          $version = $project.Project.PropertyGroup[0].Version
+          [xml]$props = Get-Content Directory.Build.props
+          $version = $props.Project.PropertyGroup.Version
           if ("v$version" -ne $env:TAG) { throw "Tag $env:TAG does not match the project version v$version" }
 
       - name: Test
-        run: dotnet test tests/StardewModUpdater.Tests -c Release
+        run: dotnet test tests/Sprinkler.Tests -c Release
 
       - name: Publish
-        run: dotnet publish src/StardewModUpdater -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
+        run: dotnet publish src/Sprinkler -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
 
       - name: Package for Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $name = "StardewModUpdater-$env:TAG-win-x64"
+          $name = "Sprinkler-$env:TAG-win-x64"
           New-Item -ItemType Directory dist | Out-Null
-          Copy-Item artifacts/publish/StardewModUpdater.exe dist/
+          Copy-Item artifacts/publish/Sprinkler.exe dist/
           Copy-Item LICENSE, THIRD-PARTY-NOTICES.md, README.md dist/
           Compress-Archive -Path dist/* -DestinationPath "$name.zip"
           $hash = (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower()
@@ -55,10 +55,10 @@ jobs:
       - name: Package for Linux
         if: runner.os == 'Linux'
         run: |
-          name="StardewModUpdater-$TAG-linux-x64"
+          name="Sprinkler-$TAG-linux-x64"
           mkdir -p "dist/$name"
-          cp artifacts/publish/StardewModUpdater "dist/$name/"
-          chmod +x "dist/$name/StardewModUpdater"
+          cp artifacts/publish/Sprinkler "dist/$name/"
+          chmod +x "dist/$name/Sprinkler"
           cp LICENSE THIRD-PARTY-NOTICES.md README.md "dist/$name/"
           tar -C dist -czf "$name.tar.gz" "$name"
           sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
@@ -67,9 +67,9 @@ jobs:
         with:
           name: package-${{ matrix.rid }}
           path: |
-            StardewModUpdater-*.zip
-            StardewModUpdater-*.tar.gz
-            StardewModUpdater-*.sha256
+            Sprinkler-*.zip
+            Sprinkler-*.tar.gz
+            Sprinkler-*.sha256
           if-no-files-found: error
 
   publish:
@@ -98,4 +98,4 @@ jobs:
         run: |
           flags=""
           case "$TAG" in *-*) flags="--prerelease" ;; esac
-          gh release create "$TAG" packages/* --title "Stardew Mod Updater $TAG" --notes-file release-notes.md $flags
+          gh release create "$TAG" packages/* --title "Sprinkler $TAG" --notes-file release-notes.md $flags

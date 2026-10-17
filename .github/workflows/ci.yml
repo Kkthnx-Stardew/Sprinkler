@@ -24,33 +24,31 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 9.0.x
-      - name: Test
-        run: dotnet test tests/StardewModUpdater.Tests -c Release
-      - name: Publish the single-file build
-        run: dotnet publish src/StardewModUpdater -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
 
-      - name: Smoke test the published exe
+      - name: Test
+        run: dotnet test tests/Sprinkler.Tests -c Release
+
+      - name: Publish the single-file build
+        run: dotnet publish src/Sprinkler -c Release -r ${{ matrix.rid }} -p:PublishSingleFile=true -o artifacts/publish
+
+      - name: Smoke test the published program (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          if (-not (Test-Path artifacts/publish/StardewModUpdater.exe)) { throw "exe missing" }
-          $p = Start-Process artifacts/publish/StardewModUpdater.exe -ArgumentList "--version" -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "exe exited with code $($p.ExitCode)" }
+          $exe = "artifacts/publish/Sprinkler.exe"
+          if (-not (Test-Path $exe)) { throw "program missing" }
+          $p = Start-Process $exe -ArgumentList "--version" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "exited with code $($p.ExitCode)" }
 
-      - name: Smoke test the published binary
+      - name: Smoke test the published program (Linux)
         if: runner.os == 'Linux'
         run: |
-          chmod +x artifacts/publish/StardewModUpdater
-          artifacts/publish/StardewModUpdater --version
-          # start the server without a window and ask it to answer a request with its per-run token
-          export SMU_DATA="$RUNNER_TEMP/smu-data"
-          mkdir -p "$SMU_DATA"
-          artifacts/publish/StardewModUpdater --no-browser --port 5077 &
-          pid=$!
-          for i in $(seq 1 40); do
-            [ -f "$SMU_DATA/instance.json" ] && break
-            sleep 0.25
-          done
-          token=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['token'])" "$SMU_DATA/instance.json")
-          curl --fail --silent --show-error -H "X-Token: $token" http://127.0.0.1:5077/api/ping
-          kill "$pid"
+          chmod +x artifacts/publish/Sprinkler
+          artifacts/publish/Sprinkler --version
+          # a fake game folder: the check finds it, reads an empty Mods folder and exits without opening a window
+          export SPRINKLER_DATA="$RUNNER_TEMP/sprinkler-data"
+          game="$RUNNER_TEMP/Stardew Valley"
+          mkdir -p "$SPRINKLER_DATA" "$game/Mods"
+          : > "$game/Stardew Valley.dll"
+          artifacts/publish/Sprinkler --check --game "$game" | tee check.txt
+          grep -q "No updates." check.txt

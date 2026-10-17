@@ -134,6 +134,34 @@ public class PlatformHelperTests
     }
 
     [Fact]
+    public void AnOldDataFolderIsCarriedOverOnce()
+    {
+        using var d = new TempDir();
+        d.Write("old/settings.json", "{\"nexusKeyProtected\":\"abc\"}");
+        d.Write("old/history.json", "[]");
+        d.Write("old/backups/a.zip", "zip");
+        d.Write("old/window-profiles/x/junk", "junk");
+        using var held = new FileStream(d.Combine("old", "instance.lock"), FileMode.Create, FileAccess.ReadWrite, FileShare.None); // a running older copy
+
+        Platform.MigrateLegacyDataDir(d.Combine("old"), d.Combine("new"));
+
+        Assert.Equal("{\"nexusKeyProtected\":\"abc\"}", File.ReadAllText(d.Combine("new", "settings.json")));
+        Assert.True(File.Exists(d.Combine("new", "backups", "a.zip")));
+        Assert.False(File.Exists(d.Combine("new", "instance.lock")));
+        Assert.False(Directory.Exists(d.Combine("new", "window-profiles")));
+    }
+
+    [Fact]
+    public void AnExistingNewDataFolderIsNeverOverwritten()
+    {
+        using var d = new TempDir();
+        d.Write("old/settings.json", "old");
+        d.Write("new/settings.json", "new");
+        Platform.MigrateLegacyDataDir(d.Combine("old"), d.Combine("new"));
+        Assert.Equal("new", File.ReadAllText(d.Combine("new", "settings.json")));
+    }
+
+    [Fact]
     public void SmapiPlatformNameIsOneSmapiAccepts() =>
         Assert.Contains(Platform.SmapiName, new[] { "Windows", "Linux", "Mac" });
 

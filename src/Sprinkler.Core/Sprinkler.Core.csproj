@@ -6,7 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Sprinkler.Core</AssemblyName>
     <RootNamespace>Sprinkler.Core</RootNamespace>
-    <Version>0.1.0-alpha.1</Version>
     <InvariantGlobalization>true</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

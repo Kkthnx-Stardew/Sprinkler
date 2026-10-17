@@ -1,20 +1,24 @@
 # Third-party notices
 
-Stardew Mod Updater is MIT licensed (see `LICENSE`). It includes or uses the following.
+Sprinkler is MIT licensed (see `LICENSE`). It includes or uses the following.
 
 | Component | Use | License |
 | --- | --- | --- |
-| [Inter](https://rsms.me/inter/) (variable font, latin subset) | The page font, bundled so the app works offline. License text: `src/StardewModUpdater/Web/Inter-LICENSE.txt`. | SIL Open Font License 1.1 |
+| [Avalonia](https://avaloniaui.net) (core, Desktop, Fluent theme) | The window and controls. | MIT |
+| [Inter](https://rsms.me/inter/) through the Avalonia.Fonts.Inter package | The app font, bundled so the app works offline. | SIL Open Font License 1.1 |
+| [SkiaSharp](https://github.com/mono/SkiaSharp) and [HarfBuzzSharp](https://github.com/mono/SkiaSharp) | Drawing and text shaping under Avalonia. | MIT |
+| [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet) | View model plumbing. | MIT |
 | [SharpCompress](https://github.com/adamhathcock/sharpcompress) | Reading .7z and .rar archives. | MIT |
 | [System.Security.Cryptography.ProtectedData](https://github.com/dotnet/runtime) | Encrypting the saved Nexus key for the current Windows user. | MIT |
-| [.NET runtime and ASP.NET Core](https://github.com/dotnet) | The self-contained runtime inside the exe. | MIT |
+| [Feather icons](https://feathericons.com) | The line icon shapes, stored as path data in `src/Sprinkler/Controls/IconData.cs`. | MIT |
+| [.NET runtime](https://github.com/dotnet) | The self-contained runtime inside the program. | MIT |
 
 ## Services
 
-The app reads public data from the [SMAPI update service](https://smapi.io), [Nexus Mods](https://www.nexusmods.com), [CurseForge](https://www.curseforge.com) and [GitHub](https://github.com). It is not affiliated with or endorsed by any of them.
+The app reads public data from the [SMAPI update service](https://smapi.io), [Nexus Mods](https://www.nexusmods.com), [CurseForge](https://www.curseforge.com) and [GitHub](https://github.com). Mod pictures are downloaded from the sites that host the mods. The app is not affiliated with or endorsed by any of them.
 
-## Game art
+## Artwork
 
-`src/StardewModUpdater/Web/chicken.png` is the white chicken sprite from Stardew Valley, which is the work of ConcernedApe. It is used as a fan logo and is not covered by this project's MIT license. If you fork or redistribute this project and are not comfortable with that, replace the file with your own image; nothing else depends on it.
+The Sprinkler logo and banner (`docs/brand`, `src/Sprinkler/Assets`) were supplied by the project owner for this project, in a pixel-art style. The detailed sprinkler image in `docs/brand` is kept only as a source file. If you fork or redistribute this project, replace them with your own images; nothing else depends on them.
 
-Stardew Valley is a trademark of ConcernedApe. This project is not affiliated with or endorsed by ConcernedApe.
+Stardew Valley is a trademark of ConcernedApe. This project is a fan-made tool and is not affiliated with or endorsed by ConcernedApe.

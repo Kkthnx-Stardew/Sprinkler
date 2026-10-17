@@ -42,7 +42,7 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-              <TextBox Text="{Binding GamePathInput}" Watermark="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
+              <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
               <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="Browse..." /></Button>
               <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="Use this folder" /></Button>
             </Grid>

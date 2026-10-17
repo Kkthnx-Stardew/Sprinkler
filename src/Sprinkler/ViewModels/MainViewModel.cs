@@ -54,8 +54,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             _debounce.Stop();
             Refresh();
         };
-        _poll = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _poll.Tick += (_, _) => Refresh();
+        _poll = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        _poll.Tick += (_, _) => PollForOutsideChanges();
 
         ModChips = new ObservableCollection<FilterChipViewModel>
         {
@@ -79,6 +79,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     internal string? ArtKeyOf(string uniqueId) => _svc.ArtKeyOf(uniqueId);
     private bool _artDirty;
+    private long _lastVersion = -1;
+    private bool _lastRunning;
 
     /// <summary>For screenshots and tests: show this theme and skip the first-run tour without saving anything.</summary>
     public string? ThemeOverride { get; init; }
@@ -91,6 +93,14 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         Refresh();
         _ = Run(_svc.InitializeAsync);
         _ = Run(_svc.CheckAppUpdateAsync);
+    }
+
+    /// <summary>The service tells us about its own changes. Things it cannot know, like the game being closed, are noticed here, and only then is anything rebuilt.</summary>
+    private void PollForOutsideChanges()
+    {
+        var running = GameLocator.IsGameRunning();
+        if (_svc.Version != _lastVersion || running != _lastRunning)
+            Refresh();
     }
 
     private void OnServiceChanged()
@@ -169,6 +179,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         var s = _svc.Snapshot();
         Snap = s;
+        _lastVersion = s.Version;
+        _lastRunning = s.Game?.Running == true;
 
         if (!_themeApplied)
         {

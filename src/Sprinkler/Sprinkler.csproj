@@ -7,7 +7,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Sprinkler</AssemblyName>
     <RootNamespace>Sprinkler</RootNamespace>
-    <Version>0.1.0-alpha.1</Version>
     <InvariantGlobalization>true</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -20,8 +19,15 @@
   <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
     <SelfContained>true</SelfContained>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <TrimmerSingleWarn>true</TrimmerSingleWarn>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);IL2026;IL2087;IL2091;IL3050</NoWarn>
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <EventSourceSupport>false</EventSourceSupport>
     <TieredPGO>false</TieredPGO>

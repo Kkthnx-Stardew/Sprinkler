@@ -2,9 +2,9 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
-## 0.1.0-alpha.1 (not released)
+## 1.0.0 (2026-10-17)
 
-First public build.
+First public release.
 
 - Checks every mod in your Mods folder against the SMAPI update service. No account or key needed.
 - A native desktop app (Avalonia) for Windows and Linux, including Steam Deck, Flatpak Steam and extra Steam libraries. No browser is needed. The Linux build is new and has had less testing.
@@ -26,5 +26,7 @@ First public build.
 - 17 languages: English plus Spanish, French, German, Brazilian Portuguese, Italian, Dutch, Russian, Ukrainian, Polish, Turkish, Hungarian, Bulgarian, Simplified Chinese, Japanese, Korean and Thai. The app follows the system language and can be switched under Nexus and settings, with every screen, message and counted phrase redrawn at once. The 16 translations were written with machine help and have not been read by native speakers yet. Tests keep every file complete and its placeholders in step with English. See docs/TRANSLATING.md.
 - On Linux, adds itself to the application menu with an icon (`--install-shortcut` or a button in settings), and finds mods whose manifest is spelled `Manifest.json`, as SMAPI does there.
 - Every text and background colour pair meets the WCAG AA contrast ratio of 4.5 to 1 in both themes, and a test keeps it that way.
-- About 24 MB to download and about 145 MB of memory in use.
+- A Support panel on the Help tab links to Ko-fi, Buy Me a Coffee and PayPal. Nothing is locked behind it.
+- Found in the final review and fixed: a new check could cancel the download of an app update, the mod scanner could follow a folder link in a loop on Linux, and a few messages were still English in other languages. The header, tabs and statistic tiles now line up on wide windows and wrap or scroll on narrow ones.
+- About 24 MB to download and about 165 MB of memory in use.
 - Renamed from Stardew Mod Updater. An older data folder is carried over on first start.

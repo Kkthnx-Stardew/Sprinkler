@@ -21,7 +21,7 @@ Sprinkler first shipped as a local web page shown in a Chromium window. It worke
 
 | | Local web page in a Chromium window | Avalonia (current) |
 | --- | --- | --- |
-| Memory with a real mod folder | about 400 MB in total, almost all the browser | about 145 MB private |
+| Memory with a real mod folder | about 400 MB in total, almost all the browser | about 165 MB private |
 | Download | about 32 MB | about 24 MB, trimmed and compressed |
 | Needs a browser | Yes (a tab fallback worked, but it was not an app) | No |
 | Idle CPU | near zero | near zero |

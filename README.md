@@ -68,7 +68,7 @@ It also finds required mods that are missing (the ones SMAPI skips without a cle
 
 ## Speed
 
-Measured on a Windows 11 machine with a real 36-mod folder, using the published single file: the download is about 24 MB (Windows and Linux alike), memory is about 145 MB while the window is open, idle CPU is effectively zero, and the full update check finishes in about 1 second. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains why Sprinkler is built this way and what the alternatives cost.
+Measured on a Windows 11 machine with the published single file: the download is about 24 MB (Windows and Linux alike), the window opens in about 1.5 seconds on a warm start, memory is about 165 MB private (about 190 MB working set) with a small mod folder after the first check, and idle CPU stays under 1 percent of one core. Reading a folder of 400 mods takes about 40 milliseconds and drawing its list about 0.2 seconds; the rest of an update check is waiting for the network. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains why Sprinkler is built this way and what the alternatives cost.
 
 ## Safety
 

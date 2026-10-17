@@ -75,10 +75,14 @@ internal sealed class ModInfo
 /// <summary>The parts of a manifest that matter for matching an archive to an installed mod.</summary>
 internal sealed record ManifestSummary(string UniqueId, string Name, string Version, string[]? UpdateKeys = null)
 {
-    /// <summary>True when the manifest points at this Nexus mod page.</summary>
-    public bool HasNexusKey(long modId) =>
+    /// <summary>The Nexus mod pages the manifest points at.</summary>
+    public IEnumerable<long> NexusIds =>
         (UpdateKeys ?? Array.Empty<string>()).Select(UpdateKey.Parse)
-            .Any(k => k is { Site: SourceKind.Nexus } && k.Id == modId.ToString());
+            .Where(k => k is { Site: SourceKind.Nexus } && long.TryParse(k.Id, out _))
+            .Select(k => long.Parse(k!.Id));
+
+    /// <summary>True when the manifest points at this Nexus mod page.</summary>
+    public bool HasNexusKey(long modId) => NexusIds.Contains(modId);
 }
 
 internal sealed record GameInstall(string GamePath, string ModsPath, string Store, string? GameVersion, string? SmapiVersion)

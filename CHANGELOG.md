@@ -7,6 +7,7 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 - Fixed: a mod whose Nexus page was handed to a new owner, who gave it a new mod ID, could never be updated. The download was silently ignored. Sprinkler now recognises the same Nexus page under a new ID and updates the old folder in place, with a backup and an Undo as usual.
 - Fixed: a file downloaded twice (named like "Mod-123-1-0-0-1752000000 (1).zip") was not matched to its Nexus mod.
 - Failed Nexus link downloads are now written to the log.
+- Fixed: a file for a mod whose Nexus page moved to a new ID was also ignored when it simply turned up in Downloads without an update waiting for it (for example after pressing the Nexus button and downloading by hand). It now appears under Updates as a found file that replaces the old mod in place, and every file the app skips is written to the log with the reason.
 - Fixed: the "One click" and "Automatic" tags on a chosen source button blended into the button in the dark theme. They now have an outline and sit centred in both themes.
 - The question rows in Help and the other fold-out sections now keep their arrows in one column at the right edge, and the Mod column of All mods gets more of the width so names and notes are cut off less.
 - Fixed: hovering a fold-out row (such as the questions in Help) turned it black with a boxed arrow. It now gets a soft tint and keeps its link colour.

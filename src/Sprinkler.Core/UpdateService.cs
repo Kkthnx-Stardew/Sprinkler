@@ -1279,7 +1279,8 @@ internal sealed partial class UpdateService : IDisposable
         var installed = _mods;
         var interesting = mods.Any(m =>
         {
-            var have = installed.FirstOrDefault(x => x.UniqueId.Equals(m.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase));
+            var have = installed.FirstOrDefault(x => x.UniqueId.Equals(m.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase))
+                ?? MovedFromInstalled(m, mods);
             if (have is null)
                 return explicitFile;
             var a = ModVersion.Parse(m.Manifest.Version);
@@ -1288,6 +1289,8 @@ internal sealed partial class UpdateService : IDisposable
         });
         if (interesting)
             AddFound(path, origin, error: null, mods);
+        else
+            Log.Write($"Ignored {Path.GetFileName(path)}: nothing in it is a newer version of an installed mod, and no update was waiting for it.");
     }
 
     private void AddFound(string path, string origin, string? error, List<ArchiveMod>? mods = null)
@@ -1298,9 +1301,12 @@ internal sealed partial class UpdateService : IDisposable
             foreach (var m in mods)
             {
                 var have = _mods.FirstOrDefault(x => x.UniqueId.Equals(m.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase));
-                f.Lines.Add(have is null
+                var moved = have is null ? MovedFromInstalled(m, mods) : null;
+                f.Lines.Add(have is null && moved is null
                     ? Loc.T("core.found_new", m.Manifest.Name, m.Manifest.Version)
-                    : Loc.T("core.found_update", m.Manifest.Name, have.Version, m.Manifest.Version));
+                    : Loc.T("core.found_update", m.Manifest.Name, (have ?? moved)!.Version, m.Manifest.Version));
+                if (moved is not null)
+                    f.Lines.Add(Loc.T("core.moved_id", moved.UniqueId, m.Manifest.UniqueId));
             }
         }
         Update(() =>
@@ -1325,7 +1331,8 @@ internal sealed partial class UpdateService : IDisposable
             try
             {
                 using var archive = ArchiveFile.Open(f.Path);
-                var plan = Installer.Plan(f.Path, archive, _game!.ModsPath, _mods);
+                var archiveMods = ArchiveInspector.FindMods(archive);
+                var plan = Installer.Plan(f.Path, archive, _game!.ModsPath, _mods, movedFrom: m => MovedFromInstalled(m, archiveMods));
                 await Task.Run(() => _installer.Apply(plan, _game.ModsPath, label));
             }
             finally
@@ -1459,6 +1466,23 @@ internal sealed partial class UpdateService : IDisposable
     {
         if (item.NexusId is not { } page || item.UniqueIds.Count == 0)
             return null;
+        return MovedMod(mod, all, page, m => item.UniqueIds.Contains(m.UniqueId, StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The same rule for a file that turned up with no update waiting for it: the installed mod that shares its Nexus page.</summary>
+    private ModInfo? MovedFromInstalled(ArchiveMod mod, IReadOnlyList<ArchiveMod> all)
+    {
+        foreach (var page in mod.Manifest.NexusIds)
+        {
+            var found = MovedMod(mod, all, page, m => !m.Bundled && m.ParsedKeys.Any(k => k.Site == SourceKind.Nexus && k.Id == page.ToString()));
+            if (found is not null)
+                return found;
+        }
+        return null;
+    }
+
+    private ModInfo? MovedMod(ArchiveMod mod, IReadOnlyList<ArchiveMod> all, long page, Func<ModInfo, bool> belongsToPage)
+    {
         var installed = _mods;
         bool Unmatched(ArchiveMod a) => a.Manifest.HasNexusKey(page)
             && !installed.Any(m => m.UniqueId.Equals(a.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase));
@@ -1466,9 +1490,7 @@ internal sealed partial class UpdateService : IDisposable
             return null;
 
         var inArchive = all.Select(a => a.Manifest.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var left = installed
-            .Where(m => item.UniqueIds.Contains(m.UniqueId, StringComparer.OrdinalIgnoreCase) && !inArchive.Contains(m.UniqueId))
-            .ToList();
+        var left = installed.Where(m => belongsToPage(m) && !inArchive.Contains(m.UniqueId)).ToList();
         return left.Count == 1 ? left[0] : null;
     }
 

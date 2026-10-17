@@ -299,6 +299,43 @@ public class ServiceTests
     }
 
     [Fact]
+    public async Task AFileForAMovedModThatTurnsUpWithNoUpdateWaitingIsOfferedAndInstalledInPlace()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+
+        // the person downloaded the file from the Nexus page without pressing Update first
+        using var d = new TempDir();
+        var zip = Zips.Build(d, "Thing-5-1-1-0-1752000000.zip",
+            ("Thing/manifest.json", Zips.Manifest("new.Owner", "1.1.0", "Thing", ", \"UpdateKeys\": [\"Nexus:5\"]")));
+        await rig.Service.HandleArchiveAsync(zip, "your browser download", CancellationToken.None);
+
+        var found = rig.Snapshot().GetProperty("found");
+        Assert.Equal(1, found.GetArrayLength());
+        Assert.Contains(found[0].GetProperty("lines").EnumerateArray(), l => l.GetString()!.Contains("new.Owner"));
+
+        await rig.Service.InstallFoundAsync(found[0].GetProperty("id").GetString()!);
+        var written = ManifestReader.ReadFile(rig.Dir.Combine("game", "Mods", "Thing", "manifest.json"), "x")!;
+        Assert.Equal("new.Owner", written.UniqueId);
+        Assert.Single(Directory.GetDirectories(rig.Dir.Combine("game", "Mods")));
+    }
+
+    [Fact]
+    public async Task AFileWithANewIdAndNoLinkToAnInstalledModIsStillIgnoredWhenNothingWaits()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+
+        using var d = new TempDir();
+        var zip = Zips.Build(d, "Stranger.zip", ("Thing/manifest.json", Zips.Manifest("new.Owner", "9.0.0", "Thing")));
+        await rig.Service.HandleArchiveAsync(zip, "your browser download", CancellationToken.None);
+
+        Assert.Equal(0, rig.Snapshot().GetProperty("found").GetArrayLength());
+    }
+
+    [Fact]
     public void NexusFileModIdIgnoresTheBrowsersCopyNumber()
     {
         Assert.Equal(17272, UpdateService.NexusFileModId("C:/Downloads/(CP) Seasonal VPR UI-17272-3-0-1-1778419831 (2).zip"));

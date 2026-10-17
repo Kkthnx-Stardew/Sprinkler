@@ -360,9 +360,26 @@
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
-    <Setter Property="Padding" Value="0,4" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Margin" Value="-8,0" />
     <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <!-- The default look turns the whole row black and the arrow into a box on hover. Keep both quiet: a soft tint and the same link colour. -->
+  <Style Selector="Expander.flat /template/ ToggleButton#ExpanderHeader /template/ Border#ToggleButtonBackground">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Expander.flat /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ToggleButtonBackground, Expander.flat /template/ ToggleButton#ExpanderHeader:pressed /template/ Border#ToggleButtonBackground, Expander.flat /template/ ToggleButton#ExpanderHeader:checked /template/ Border#ToggleButtonBackground">
+    <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+  <Style Selector="Expander.flat /template/ ToggleButton#ExpanderHeader:pointerover /template/ ContentPresenter#PART_ContentPresenter, Expander.flat /template/ ToggleButton#ExpanderHeader:pressed /template/ ContentPresenter#PART_ContentPresenter, Expander.flat /template/ ToggleButton#ExpanderHeader:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+  </Style>
+  <Style Selector="Expander.flat /template/ ToggleButton#ExpanderHeader /template/ Border#ExpandCollapseChevronBorder, Expander.flat /template/ ToggleButton#ExpanderHeader:pointerover /template/ Border#ExpandCollapseChevronBorder, Expander.flat /template/ ToggleButton#ExpanderHeader:pressed /template/ Border#ExpandCollapseChevronBorder">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
   <Style Selector="Expander.flat /template/ Border#ExpanderContent">
     <Setter Property="Background" Value="Transparent" />

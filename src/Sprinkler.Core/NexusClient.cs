@@ -7,6 +7,16 @@ namespace Sprinkler.Core;
 
 internal sealed record NexusUser(string Name, bool IsPremium);
 
+internal enum EndorseOutcome
+{
+    Endorsed,
+    Abstained,
+    IsOwnMod,
+    TooSoonAfterDownload,
+    NotDownloaded,
+    Unknown,
+}
+
 internal enum NexusError
 {
     InvalidKey,
@@ -165,6 +175,94 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             return null;
         var mod = await GetAsync<ModResponse>($"/games/{AppEnvironment.NexusGame}/mods/{modId}.json", key, ct);
         return new NexusModInfo(mod.PictureUrl, mod.Summary, mod.Author, mod.Downloads, mod.Endorsements);
+    }
+
+    /// <summary>The Stardew Valley mods the person has endorsed on Nexus.</summary>
+    public async Task<HashSet<long>> GetEndorsedAsync(CancellationToken ct)
+    {
+        var key = keyProvider();
+        var endorsed = new HashSet<long>();
+        if (string.IsNullOrEmpty(key))
+            return endorsed;
+        var (status, body) = await SendRawAsync(HttpMethod.Get, "/user/endorsements.json", key, null, ct);
+        if (status != HttpStatusCode.OK)
+            throw new NexusException(status == HttpStatusCode.TooManyRequests ? NexusError.RateLimited : NexusError.Other, $"Nexus answered {(int)status}.");
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            foreach (var e in doc.RootElement.EnumerateArray())
+            {
+                var domain = e.TryGetProperty("domain_name", out var d) ? d.GetString() : null;
+                var state = e.TryGetProperty("status", out var s) ? s.GetString() : null;
+                if (string.Equals(domain, AppEnvironment.NexusGame, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(state, "Endorsed", StringComparison.OrdinalIgnoreCase)
+                    && e.TryGetProperty("mod_id", out var id) && id.TryGetInt64(out var modId))
+                    endorsed.Add(modId);
+            }
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            throw new NexusException(NexusError.Other, "Nexus sent an answer the app could not read.");
+        }
+        return endorsed;
+    }
+
+    /// <summary>Endorses a mod, or takes the endorsement back. Nexus decides whether the person is allowed to.</summary>
+    public async Task<EndorseOutcome> SetEndorsementAsync(long modId, bool endorse, string version, CancellationToken ct)
+    {
+        var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, "No Nexus key is saved.");
+        var path = $"/games/{AppEnvironment.NexusGame}/mods/{modId}/{(endorse ? "endorse" : "abstain")}.json";
+        var payload = JsonSerializer.Serialize(new { Version = string.IsNullOrWhiteSpace(version) ? "1.0.0" : version });
+        var (status, body) = await SendRawAsync(HttpMethod.Post, path, key, payload, ct);
+        if (status == HttpStatusCode.TooManyRequests)
+            throw new NexusException(NexusError.RateLimited, "Nexus is rate limiting this key for now.");
+        if (status == HttpStatusCode.Unauthorized)
+            throw new NexusException(NexusError.InvalidKey, "Nexus did not accept the key.");
+
+        string? state = null, message = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            state = doc.RootElement.TryGetProperty("status", out var s) ? s.GetString() : null;
+            message = doc.RootElement.TryGetProperty("message", out var m) ? m.GetString() : null;
+        }
+        catch (JsonException)
+        {
+        }
+
+        if (string.Equals(state, "ENDORSED", StringComparison.OrdinalIgnoreCase)) return EndorseOutcome.Endorsed;
+        if (string.Equals(state, "ABSTAINED", StringComparison.OrdinalIgnoreCase)) return EndorseOutcome.Abstained;
+        return (message ?? "").ToUpperInvariant() switch
+        {
+            "IS_OWN_MOD" => EndorseOutcome.IsOwnMod,
+            "TOO_SOON_AFTER_DOWNLOAD" => EndorseOutcome.TooSoonAfterDownload,
+            "NOT_DOWNLOADED_MOD" => EndorseOutcome.NotDownloaded,
+            _ => EndorseOutcome.Unknown,
+        };
+    }
+
+    private static async Task<(HttpStatusCode Status, string Body)> SendRawAsync(HttpMethod method, string path, string key, string? json, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(method, AppEnvironment.NexusApiUrl + path);
+        request.Headers.TryAddWithoutValidation("apikey", key);
+        request.Headers.TryAddWithoutValidation("Application-Name", AppEnvironment.AppName);
+        request.Headers.TryAddWithoutValidation("Application-Version", AppEnvironment.Version);
+        if (json is not null)
+            request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(25));
+        try
+        {
+            using var response = await AppEnvironment.Http.SendAsync(request, timeout.Token);
+            return (response.StatusCode, await response.Content.ReadAsStringAsync(timeout.Token));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            if (ct.IsCancellationRequested)
+                throw;
+            throw new NexusException(NexusError.Network, "Nexus could not be reached.");
+        }
     }
 
     internal static FileEntry? Pick(List<FileEntry> files, string targetVersion, string? subkey)

@@ -22,6 +22,7 @@ internal sealed class SettingsData
     public string? NxmPreviousHandler { get; set; }
     public List<string> Ignored { get; set; } = new();
     public Dictionary<string, string> SkippedVersions { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> ModNotes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public int BackupsPerMod { get; set; } = 5;
     public bool Welcomed { get; set; }
     public bool AppWindow { get; set; } = true;

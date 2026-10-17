@@ -171,6 +171,80 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         return new InstallResult(id, messages);
     }
 
+    /// <summary>
+    /// Removes a mod folder. It is zipped to the backup folder first and the backup is read back before anything is
+    /// deleted, so Undo can bring the mod back exactly as it was, including its settings.
+    /// </summary>
+    public InstallResult Remove(string folderPath, string modsPath, string uniqueId, string name, string? version)
+    {
+        if (GameLocator.IsGameRunning(fresh: true))
+            throw new InstallException("Stardew Valley or SMAPI is running. Close it first so no file is in use.");
+
+        var folder = Path.GetFullPath(folderPath).TrimEnd('\\', '/');
+        var root = Path.GetFullPath(modsPath).TrimEnd('\\', '/');
+        if (!folder.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || !Directory.Exists(folder))
+            throw new InstallException("That mod folder was not found inside your Mods folder, so nothing was removed.");
+
+        var id = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6];
+        var backupFile = id + ".zip";
+        var backupPath = Path.Combine(history.BackupsDir, backupFile);
+        var relative = RelativeTo(root, folder);
+        Directory.CreateDirectory(history.BackupsDir);
+
+        try
+        {
+            using (var zip = ZipFile.Open(backupPath, ZipArchiveMode.Create))
+                AddFolderToZip(zip, folder, relative);
+            using (var check = ZipFile.OpenRead(backupPath))
+                if (check.Entries.Count == 0)
+                    throw new InstallException("The backup came out empty, so nothing was removed.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            TryDeleteFile(backupPath);
+            throw new InstallException("The backup could not be written (" + ex.Message + "), so nothing was removed.");
+        }
+
+        try
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // some files may be gone already: put the folder back from the backup before reporting
+            try
+            {
+                using var zip = ZipFile.OpenRead(backupPath);
+                foreach (var e in zip.Entries.Where(e => !e.FullName.EndsWith('/')))
+                {
+                    var dest = SafeJoin(root, e.FullName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                    e.ExtractToFile(dest, overwrite: true);
+                }
+            }
+            catch (Exception restore) when (restore is IOException or UnauthorizedAccessException or InvalidDataException)
+            {
+                Log.Write("Could not restore after a failed removal: " + restore.Message);
+            }
+            TryDeleteFile(backupPath);
+            throw new InstallException("The folder could not be removed (" + ex.Message + "). Close the game and any program showing it, then try again. It was left as it was.");
+        }
+
+        history.Add(new HistoryEntry
+        {
+            Id = id,
+            When = DateTime.Now,
+            Name = name,
+            FromVersion = version,
+            ToVersion = "removed",
+            Source = "removed by you",
+            BackupFile = backupFile,
+            Note = "Removed",
+            Folders = new List<HistoryFolder> { new() { RelativePath = relative, UniqueId = uniqueId, WasNew = false } },
+        }, settings.Data.BackupsPerMod);
+        return new InstallResult(id, new List<string>());
+    }
+
     /// <summary>Puts a previous install back: restores the backup, or removes the folders it added.</summary>
     public void Undo(string historyId, string modsPath)
     {

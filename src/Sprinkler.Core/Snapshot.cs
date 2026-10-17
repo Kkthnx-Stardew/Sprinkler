@@ -26,7 +26,11 @@ internal sealed record ItemInfo(
 
 internal sealed record FoundInfo(string Id, string File, string Origin, List<string> Lines, bool Busy, string? Error);
 
-internal sealed record HistoryInfo(string Id, DateTime When, string Name, string? From, string To, string Source, bool Undone, bool CanUndo);
+internal sealed record HistoryInfo(string Id, DateTime When, string Name, string? From, string To, string Source, bool Undone, bool CanUndo, bool Removed);
+
+internal sealed record ProfileSummary(string Name, int ModCount, int MissingCount, DateTime Updated, int ConfigCount, bool IsActive);
+
+internal sealed record ProfilesInfo(string? Active, bool Modified, bool KeepConfigs, List<ProfileSummary> Profiles);
 
 internal sealed record SkippedInfo(string Name, string? Version, string Reason, SkipKind Kind, string Hint);
 
@@ -36,4 +40,5 @@ internal sealed record StateSnapshot(
     long Version, Phase Phase, string Status, string? Error, string? Summary,
     AppInfo App, GameInfo? Game, List<CandidateInfo> Candidates, bool Welcomed, UpdateNotice? SmapiUpdate, DateTime? LastChecked,
     NexusInfo Nexus, SettingsInfo Settings, List<ItemInfo> Items, List<ModRow> Rows, List<Problem> Problems,
-    List<FoundInfo> Found, List<HistoryInfo> History, GameLogInfo? GameLog, long BackupBytes);
+    List<FoundInfo> Found, List<HistoryInfo> History, GameLogInfo? GameLog, long BackupBytes,
+    ProfilesInfo Profiles, Dictionary<string, string> ModNotes, List<long> Endorsed);

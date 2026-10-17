@@ -86,7 +86,7 @@ internal sealed class FoundArchive
 }
 
 /// <summary>The brain of the app: scans, checks, plans and applies updates, and exposes a thread-safe state snapshot for the UI.</summary>
-internal sealed class UpdateService : IDisposable
+internal sealed partial class UpdateService : IDisposable
 {
     public const int MaxOpenPages = 3;
 
@@ -144,11 +144,13 @@ internal sealed class UpdateService : IDisposable
             mods = _mods.ToList();
         foreach (var key in mods.Select(ModArtStore.KeyFor).Where(k => k is not null).Distinct())
             Art.Request(key);
+        _ = RefreshEndorsementsAsync();
     }
 
-    public UpdateService(SettingsStore settings, HistoryStore history, Action<string> openUrl)
+    public UpdateService(SettingsStore settings, HistoryStore history, Action<string> openUrl, ProfileStore? profiles = null)
     {
         Settings = settings;
+        Profiles = profiles ?? new ProfileStore();
         History = history;
         _openUrl = openUrl;
         _installer = new Installer(history, settings);
@@ -334,6 +336,12 @@ internal sealed class UpdateService : IDisposable
         var installedIds = new HashSet<string>(mods.Where(m => !m.Disabled).Select(m => m.UniqueId), StringComparer.OrdinalIgnoreCase);
 
         var missing = FindMissingRequirements(active, installedIds);
+        foreach (var (wantedId, wantedBy) in ProfileWantedMods(InstalledIds(mods)))
+        {
+            if (!missing.TryGetValue(wantedId, out var list))
+                missing[wantedId] = list = new();
+            list.AddRange(wantedBy);
+        }
 
         var queries = active
             .GroupBy(m => m.UniqueId, StringComparer.OrdinalIgnoreCase)
@@ -494,7 +502,9 @@ internal sealed class UpdateService : IDisposable
                 Installed = null,
                 Target = target,
                 IsNew = true,
-                Why = $"Required by {who}. SMAPI skips those mods until this is installed.",
+                Why = needs.All(n => n.UniqueId == "profile")
+                    ? $"Part of {who}, but not installed here."
+                    : $"Required by {who}. SMAPI skips those mods until this is installed.",
                 NexusId = ident.Nexus,
                 CurseForgeId = ident.CurseForge,
                 GitHubRepo = ident.GitHub,
@@ -1608,20 +1618,10 @@ internal sealed class UpdateService : IDisposable
             return ("This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in your file manager.", null);
         }
 
-        var target = Path.Combine(parent, enable ? name.TrimStart('.') : "." + name);
-        if (target.Length == parent.Length + 1 || Directory.Exists(target) || File.Exists(target))
-            return ("A folder with the new name already exists, so nothing was changed.", null);
+        var renameError = RenameMod(mod, enable);
+        if (renameError is not null)
+            return (renameError, null);
 
-        try
-        {
-            Directory.Move(folder, target);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return ("The folder could not be renamed (" + ex.Message + "). Close anything that is using it and try again.", null);
-        }
-
-        Log.Write($"{(enable ? "Enabled" : "Disabled")} {mod.Name}: {name} -> {Path.GetFileName(target)}");
         await RescanQuietlyAsync();
         _ = CheckAsync();
         return (null, null);
@@ -1771,12 +1771,15 @@ internal sealed class UpdateService : IDisposable
                 Found: _found.Select(f => new FoundInfo(f.Id, f.FileName, f.Origin, f.Lines.ToList(), f.Busy, f.Error)).ToList(),
                 History: History.All().Take(40).Select(h => new HistoryInfo(
                     h.Id, h.When, h.Name, h.FromVersion, h.ToVersion, h.Source, h.Undone,
-                    !h.Undone && (h.BackupFile is not null || h.Folders.All(f => f.WasNew)))).ToList(),
+                    !h.Undone && (h.BackupFile is not null || h.Folders.All(f => f.WasNew)), h.Note == "Removed")).ToList(),
                 GameLog: _gameLog is null ? null : new GameLogInfo(
                     _gameLog.WrittenAt, _gameLog.LoadedMods, _gameLog.LoadedContentPacks,
                     _gameLog.Skipped.Select(s => new SkippedInfo(s.Name, s.Version, s.Reason, s.Kind, s.Hint)).ToList(),
                     _gameLog.Errors, _gameLog.WrittenAt.Ticks <= Settings.Data.LogDismissedTicks),
-                BackupBytes: History.BackupBytes());
+                BackupBytes: History.BackupBytes(),
+                Profiles: BuildProfilesInfoLocked(),
+                ModNotes: new Dictionary<string, string>(Settings.Data.ModNotes, StringComparer.OrdinalIgnoreCase),
+                Endorsed: _endorsed.ToList());
         }
     }
 

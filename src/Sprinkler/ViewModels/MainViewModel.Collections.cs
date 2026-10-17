@@ -16,7 +16,7 @@ internal sealed partial class MainViewModel
     private bool _lookingUp;
 
     public bool CanLookUp => HasGame && !LookingUp && !string.IsNullOrWhiteSpace(CollectionAddress);
-    public string LookUpText => LookingUp ? "Looking it up..." : "Look it up";
+    public string LookUpText => Loc.T(LookingUp ? "col.looking" : "col.look_up");
 
     [RelayCommand]
     private async Task LookUpCollection()

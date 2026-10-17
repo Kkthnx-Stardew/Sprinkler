@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              xmlns:v="using:Sprinkler.Views"
@@ -9,22 +10,22 @@
     <Border Classes="panel center" IsVisible="{Binding NoMods}" VerticalAlignment="Top">
       <StackPanel Spacing="10" HorizontalAlignment="Center">
         <ctl:IconView Kind="package" Size="48" HorizontalAlignment="Center" />
-        <TextBlock Classes="h2" Text="No mods found yet" HorizontalAlignment="Center" />
-        <TextBlock Classes="muted" Text="Put mods in your Mods folder, or drop a downloaded .zip onto this window." HorizontalAlignment="Center" />
+        <TextBlock Classes="h2" Text="{loc:T ui.no_mods_found_yet}" HorizontalAlignment="Center" />
+        <TextBlock Classes="muted" Text="{loc:T ui.put_mods_in_your_mods_folder_or_drop_a_downl}" HorizontalAlignment="Center" />
       </StackPanel>
     </Border>
 
     <Border Classes="panel" IsVisible="{Binding HasMods}" Margin="0">
       <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
         <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{Binding ModsTitle}" /></StackPanel>
-        <TextBlock Grid.Row="1" Classes="muted small" TextWrapping="Wrap" Text="Use the switch to turn a mod off or on. SMAPI skips a mod that is switched off. &quot;Cannot check&quot; means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this window." />
+        <TextBlock Grid.Row="1" Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" />
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
-          <TextBox Text="{Binding ModSearch}" PlaceholderText="Search mods or authors" AutomationProperties.Name="Search mods" />
-          <CheckBox Grid.Column="1" IsChecked="{Binding GroupPacks}" Content="Group content packs under their mod" VerticalAlignment="Center" />
-          <ComboBox Grid.Column="2" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="Sort mods">
-            <ComboBoxItem Content="Needs attention first" />
-            <ComboBoxItem Content="Name" />
-            <ComboBoxItem Content="Author" />
+          <TextBox Text="{Binding ModSearch}" PlaceholderText="{loc:T ui.search_mods_or_authors}" AutomationProperties.Name="{loc:T ui.search_mods}" />
+          <CheckBox Grid.Column="1" IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Center" />
+          <ComboBox Grid.Column="2" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="{loc:T ui.sort_mods}">
+            <ComboBoxItem Content="{loc:T ui.needs_attention_first}" />
+            <ComboBoxItem Content="{loc:T ui.name}" />
+            <ComboBoxItem Content="{loc:T ui.author}" />
           </ComboBox>
         </Grid>
         <ItemsControl Grid.Row="3" ItemsSource="{Binding ModChips}">
@@ -38,14 +39,14 @@
 
         <Grid Grid.Row="4" RowDefinitions="Auto,*">
           <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
-            <TextBlock Classes="muted small strong" Text="ON" />
-            <TextBlock Grid.Column="1" Classes="muted small strong" Text="MOD" />
-            <TextBlock Grid.Column="2" Classes="muted small strong" Text="VERSION" />
-            <TextBlock Grid.Column="3" Classes="muted small strong" Text="STATUS" />
+            <TextBlock Classes="muted small strong" Text="{loc:T ui.on}" />
+            <TextBlock Grid.Column="1" Classes="muted small strong" Text="{loc:T ui.mod}" />
+            <TextBlock Grid.Column="2" Classes="muted small strong" Text="{loc:T ui.version}" />
+            <TextBlock Grid.Column="3" Classes="muted small strong" Text="{loc:T ui.status}" />
           </Grid>
           <Border Grid.Row="1" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
             <Grid>
-              <TextBlock Classes="muted" Text="Nothing matches." HorizontalAlignment="Center" Margin="0,30" IsVisible="{Binding NoModMatches}" />
+              <TextBlock Classes="muted" Text="{loc:T ui.nothing_matches}" HorizontalAlignment="Center" Margin="0,30" IsVisible="{Binding NoModMatches}" />
               <ListBox Classes="plain" ItemsSource="{Binding Mods}">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:ModRowViewModel">
@@ -56,8 +57,8 @@
                         <v:ModIconView DataContext="{Binding}" Width="38" Height="38" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                           <DockPanel LastChildFill="True">
-                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="content pack" /></Border>
-                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsEndorsed}"><StackPanel Orientation="Horizontal" Spacing="4"><ctl:IconView Kind="heart" Size="11" /><TextBlock Text="endorsed" /></StackPanel></Border>
+                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="{loc:T ui.content_pack}" /></Border>
+                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsEndorsed}"><StackPanel Orientation="Horizontal" Spacing="4"><ctl:IconView Kind="heart" Size="11" /><TextBlock Text="{loc:T ui.endorsed}" /></StackPanel></Border>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                           </DockPanel>
                           <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
@@ -74,20 +75,20 @@
                         <TextBlock Grid.Column="2" Text="{Binding Version}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <WrapPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                           <Border Classes="chip" Classes.ok="{Binding ChipOk}" Classes.warn="{Binding ChipWarn}" Classes.bad="{Binding ChipBad}" Margin="0,0,6,0"><TextBlock Text="{Binding StatusText}" /></Border>
-                          <Button Classes="chipbtn" Command="{Binding OpenUnofficialCommand}" IsVisible="{Binding HasUnofficial}" ToolTip.Tip="A community fix exists that is not the mod author's release"><TextBlock Text="{Binding UnofficialText}" /></Button>
+                          <Button Classes="chipbtn" Command="{Binding OpenUnofficialCommand}" IsVisible="{Binding HasUnofficial}" ToolTip.Tip="{loc:T ui.a_community_fix_exists_that_is_not_the_mod_a}"><TextBlock Text="{Binding UnofficialText}" /></Button>
                         </WrapPanel>
-                        <Button Grid.Column="4" Classes="icon ghost" Width="32" Height="32" MinHeight="32" VerticalAlignment="Center" AutomationProperties.Name="More actions" ToolTip.Tip="More actions">
+                        <Button Grid.Column="4" Classes="icon ghost" Width="32" Height="32" MinHeight="32" VerticalAlignment="Center" AutomationProperties.Name="{loc:T ui.more_actions}" ToolTip.Tip="{loc:T ui.more_actions}">
                           <ctl:IconView Kind="more" Size="20" />
                           <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
-                              <MenuItem Header="Open the mod page" Command="{Binding OpenPageCommand}" IsVisible="{Binding HasUrl}" />
-                              <MenuItem Header="Show the folder" Command="{Binding ShowFolderCommand}" />
-                              <MenuItem Header="Open its settings file" Command="{Binding OpenConfigCommand}" IsVisible="{Binding HasConfig}" />
+                              <MenuItem Header="{loc:T ui.open_the_mod_page}" Command="{Binding OpenPageCommand}" IsVisible="{Binding HasUrl}" />
+                              <MenuItem Header="{loc:T ui.show_the_folder}" Command="{Binding ShowFolderCommand}" />
+                              <MenuItem Header="{loc:T ui.open_its_settings_file}" Command="{Binding OpenConfigCommand}" IsVisible="{Binding HasConfig}" />
                               <MenuItem Header="{Binding NoteMenuText}" Command="{Binding EditNoteCommand}" />
                               <MenuItem Header="{Binding EndorseText}" Command="{Binding ToggleEndorsementCommand}" IsVisible="{Binding CanEndorse}" />
                               <MenuItem Header="{Binding StopSkippingText}" Command="{Binding StopSkippingCommand}" IsVisible="{Binding HasSkipped}" />
                               <MenuItem Header="{Binding IgnoreText}" Command="{Binding ToggleIgnoreCommand}" IsVisible="{Binding CanIgnore}" />
-                              <MenuItem Header="Remove this mod..." Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" />
+                              <MenuItem Header="{loc:T ui.remove_this_mod}" Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" />
                             </MenuFlyout>
                           </Button.Flyout>
                         </Button>

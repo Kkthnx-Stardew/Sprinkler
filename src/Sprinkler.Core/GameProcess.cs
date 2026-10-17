@@ -91,7 +91,7 @@ internal static class GameProcess
     public static string? Launch(GameInstall game)
     {
         if (IsRunning())
-            return "The game is already running.";
+            return Loc.T("core.game_running");
 
         if (Platform.IsWindows)
         {

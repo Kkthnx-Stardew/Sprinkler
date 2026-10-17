@@ -38,7 +38,7 @@ internal static partial class NexusCollections
         {
             if (!m.Groups["domain"].Value.Equals(AppEnvironment.NexusGame, StringComparison.OrdinalIgnoreCase)
                 && !m.Groups["domain"].Value.Equals("games", StringComparison.OrdinalIgnoreCase))
-                throw new CollectionException("That collection is for a different game than Stardew Valley.");
+                throw new CollectionException(Loc.T("core.col_other_game"));
             return (m.Groups["slug"].Value.ToLowerInvariant(), m.Groups["rev"].Success ? int.Parse(m.Groups["rev"].Value) : null);
         }
         return SlugPattern().IsMatch(t) ? (t.ToLowerInvariant(), null) : null;
@@ -64,18 +64,18 @@ internal static partial class NexusCollections
             timeout.CancelAfter(TimeSpan.FromSeconds(30));
             using var response = await AppEnvironment.Http.PostAsJsonAsync(AppEnvironment.NexusGraphQlUrl, body, timeout.Token);
             if (!response.IsSuccessStatusCode)
-                throw new CollectionException($"Nexus answered {(int)response.StatusCode}. Try again in a moment.");
+                throw new CollectionException(Loc.T("core.col_status", (int)response.StatusCode));
             doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(timeout.Token), cancellationToken: timeout.Token);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             if (ct.IsCancellationRequested)
                 throw;
-            throw new CollectionException("Nexus could not be reached.");
+            throw new CollectionException(Loc.T("core.nx_unreachable"));
         }
         catch (JsonException)
         {
-            throw new CollectionException("Nexus sent an answer the app could not read.");
+            throw new CollectionException(Loc.T("core.nx_unreadable"));
         }
 
         using (doc)
@@ -83,7 +83,7 @@ internal static partial class NexusCollections
             var root = doc.RootElement;
             if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object
                 || !data.TryGetProperty("collectionRevision", out var rev) || rev.ValueKind != JsonValueKind.Object)
-                throw new CollectionException("Nexus has no collection called \"" + slug + "\" for Stardew Valley. Check the address.");
+                throw new CollectionException(Loc.T("core.col_missing", slug));
 
             var info = rev.TryGetProperty("collection", out var c) && c.ValueKind == JsonValueKind.Object ? c : default;
             var name = Text(info, "name") ?? slug;

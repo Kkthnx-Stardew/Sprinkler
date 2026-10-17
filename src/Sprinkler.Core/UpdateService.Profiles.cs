@@ -70,7 +70,7 @@ internal sealed partial class UpdateService
         }
         else if (!name.StartsWith('.'))
         {
-            return "This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in your file manager.";
+            return Loc.T("core.parent_off");
         }
 
         var target = Path.Combine(parent, enable ? name.TrimStart('.') : "." + name);
@@ -83,7 +83,7 @@ internal sealed partial class UpdateService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return "The folder could not be renamed (" + ex.Message + "). Close anything that is using it and try again.";
+            return Loc.T("core.rename_failed", ex.Message);
         }
 
         Log.Write($"{(enable ? "Enabled" : "Disabled")} {mod.Name}: {name} -> {Path.GetFileName(target)}");
@@ -150,14 +150,14 @@ internal sealed partial class UpdateService
     {
         try
         {
-            var game = CurrentGame() ?? throw new ProfileException("Choose your game folder first.");
+            var game = CurrentGame() ?? throw new ProfileException(Loc.T("core.choose_game_first"));
             var mods = ScanNow(game);
             var profile = new Profile { Name = name, Enabled = EnabledIds(mods).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList() };
             if (Profiles.KeepConfigs)
                 profile.Configs = SnapshotConfigs(mods);
             Profiles.Add(profile, makeActive: true);
             Update(() => { });
-            return ProfileResult.Ok($"Saved \"{profile.Name}\" with {Fmt(profile.Enabled.Count)}.");
+            return ProfileResult.Ok(Loc.T("core.prof_saved", profile.Name, Fmt(profile.Enabled.Count)));
         }
         catch (ProfileException ex)
         {
@@ -165,15 +165,15 @@ internal sealed partial class UpdateService
         }
     }
 
-    private static string Fmt(int n) => n == 1 ? "1 mod" : n + " mods";
+    private static string Fmt(int n) => Loc.Count("n.mod", n);
 
     /// <summary>Updates the active profile to match what is switched on now.</summary>
     public ProfileResult SaveActiveProfile()
     {
         try
         {
-            var active = Profiles.Active ?? throw new ProfileException("No profile is active.");
-            var game = CurrentGame() ?? throw new ProfileException("Choose your game folder first.");
+            var active = Profiles.Active ?? throw new ProfileException(Loc.T("core.prof_none_active"));
+            var game = CurrentGame() ?? throw new ProfileException(Loc.T("core.choose_game_first"));
             var mods = ScanNow(game);
             var enabled = EnabledIds(mods).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
             // mods the profile lists but that are not installed here stay listed, so a shared profile does not lose them
@@ -186,7 +186,7 @@ internal sealed partial class UpdateService
                     p.Configs = SnapshotConfigs(mods);
             });
             Update(() => _mods = mods);
-            return ProfileResult.Ok($"Saved the changes to \"{active.Name}\".");
+            return ProfileResult.Ok(Loc.T("core.prof_changes_saved", active.Name));
         }
         catch (ProfileException ex)
         {
@@ -199,12 +199,12 @@ internal sealed partial class UpdateService
     {
         var game = CurrentGame();
         if (game is null)
-            return ProfileResult.Fail("Choose your game folder first.");
+            return ProfileResult.Fail(Loc.T("core.choose_game_first"));
         if (GameLocator.IsGameRunning(fresh: true))
-            return ProfileResult.Fail("Close Stardew Valley first. It keeps its mod files open while it runs.");
+            return ProfileResult.Fail(Loc.T("core.close_game_first"));
         var profile = Profiles.Find(name);
         if (profile is null)
-            return ProfileResult.Fail("That profile no longer exists.");
+            return ProfileResult.Fail(Loc.T("core.prof_gone"));
 
         var mods = ScanNow(game);
         var live = mods.Where(m => !m.Bundled).ToList();
@@ -215,7 +215,7 @@ internal sealed partial class UpdateService
             var leaving = Profiles.Active;
             if (leaving is null)
             {
-                var safe = Profiles.CleanName("Previous setup" + (Profiles.Find("Previous setup") is null ? "" : " " + DateTime.Now.ToString("yyyy-MM-dd HH-mm")));
+                var safe = Profiles.CleanName(Loc.T("core.prof_previous") + (Profiles.Find(Loc.T("core.prof_previous")) is null ? "" : " " + DateTime.Now.ToString("yyyy-MM-dd HH-mm")));
                 Profiles.Add(new Profile { Name = safe, Enabled = EnabledIds(mods).ToList(), Configs = SnapshotConfigs(mods) }, makeActive: false);
             }
             else if (!leaving.Name.Equals(profile.Name, StringComparison.OrdinalIgnoreCase))
@@ -274,16 +274,15 @@ internal sealed partial class UpdateService
         Update(() => _mods = after);
         _ = CheckAsync();
 
-        var sb = new StringBuilder($"Switched to \"{profile.Name}\": {turnedOn} turned on, {turnedOff} turned off");
+        var sb = new StringBuilder(Loc.T("core.sw_head", profile.Name, turnedOn, turnedOff));
         if (configsWritten > 0)
-            sb.Append($", settings restored for {Fmt(configsWritten)}");
-        sb.Append('.');
+            sb.Append(' ').Append(Loc.T("core.sw_configs", Fmt(configsWritten)));
         if (addedForRequirements.Count > 0)
-            sb.Append(" Also turned on what the others need: " + string.Join(", ", addedForRequirements.Distinct().Take(6)) + ".");
+            sb.Append(' ').Append(Loc.T("core.sw_added", string.Join(", ", addedForRequirements.Distinct().Take(6))));
         if (stuck.Count > 0)
-            sb.Append(" These could not be changed: " + string.Join(", ", stuck.Take(6)) + ".");
+            sb.Append(' ').Append(Loc.T("core.sw_stuck", string.Join(", ", stuck.Take(6))));
         if (missing.Count > 0)
-            sb.Append($" {Fmt(missing.Count)} in this profile {(missing.Count == 1 ? "is" : "are")} not installed; they appear under Updates as installs.");
+            sb.Append(' ').Append(Loc.Count("core.sw_missing", missing.Count));
         return ProfileResult.Ok(sb.ToString(), missing);
     }
 
@@ -293,7 +292,7 @@ internal sealed partial class UpdateService
         {
             Profiles.Rename(name, newName);
             Update(() => { });
-            return ProfileResult.Ok("Renamed.");
+            return ProfileResult.Ok(Loc.T("core.prof_renamed"));
         }
         catch (ProfileException ex)
         {
@@ -305,10 +304,10 @@ internal sealed partial class UpdateService
     {
         try
         {
-            var source = Profiles.Find(name) ?? throw new ProfileException("That profile no longer exists.");
+            var source = Profiles.Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
             Profiles.Add(source.Copy(newName), makeActive: false);
             Update(() => { });
-            return ProfileResult.Ok($"Copied to \"{newName.Trim()}\".");
+            return ProfileResult.Ok(Loc.T("core.prof_copied", newName.Trim()));
         }
         catch (ProfileException ex)
         {
@@ -322,7 +321,7 @@ internal sealed partial class UpdateService
         {
             Profiles.Delete(name);
             Update(() => { });
-            return ProfileResult.Ok("Deleted. Your mods were not changed.");
+            return ProfileResult.Ok(Loc.T("core.prof_deleted"));
         }
         catch (ProfileException ex)
         {
@@ -344,7 +343,7 @@ internal sealed partial class UpdateService
     /// <summary>The text of a profile file for sharing: the mods, their names, versions and where to get them. No settings, no paths.</summary>
     public string ExportProfile(string name)
     {
-        var profile = Profiles.Find(name) ?? throw new ProfileException("That profile no longer exists.");
+        var profile = Profiles.Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
         List<ModInfo> mods;
         lock (_gate)
             mods = _mods.ToList();
@@ -378,7 +377,7 @@ internal sealed partial class UpdateService
             var installed = InstalledIds(mods);
             var missing = profile.Enabled.Where(id => !installed.Contains(id) && !IsSmapiId(id)).ToList();
             Update(() => { });
-            return ProfileResult.Ok($"Added \"{profile.Name}\" with {Fmt(profile.Enabled.Count)}" + (missing.Count > 0 ? $", {missing.Count} of them not installed here yet." : "."), missing);
+            return ProfileResult.Ok(missing.Count > 0 ? Loc.T("core.prof_added_missing", profile.Name, Fmt(profile.Enabled.Count), missing.Count) : Loc.T("core.prof_added", profile.Name, Fmt(profile.Enabled.Count)), missing);
         }
         catch (ProfileException ex)
         {

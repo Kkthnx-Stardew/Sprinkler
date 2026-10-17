@@ -16,7 +16,7 @@ internal sealed partial class UpdateService
     public async Task<(string? Error, string[]? Dependents)> RemoveModAsync(string uniqueId, bool force)
     {
         if (GameLocator.IsGameRunning(fresh: true))
-            return ("Close Stardew Valley first. It keeps its mod files open while it runs.", null);
+            return (Loc.T("core.close_game_first"), null);
 
         GameInstall? game;
         ModInfo? mod;
@@ -28,7 +28,7 @@ internal sealed partial class UpdateService
             mod = all.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
         }
         if (game is null || mod is null || mod.Bundled)
-            return ("That mod was not found, or it is part of SMAPI.", null);
+            return (Loc.T("core.mod_not_found"), null);
 
         var dependents = all
             .Where(m => !m.Disabled && !m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)
@@ -116,7 +116,7 @@ internal sealed partial class UpdateService
     public async Task<(bool Ok, string Message)> SetEndorsementAsync(long nexusModId, bool endorse, string version)
     {
         if (_nexusUser is null)
-            return (false, "Connect your Nexus account first (Nexus and settings).");
+            return (false, Loc.T("core.endorse_connect"));
         try
         {
             var outcome = await _nexus.SetEndorsementAsync(nexusModId, endorse, version, CancellationToken.None);
@@ -124,18 +124,18 @@ internal sealed partial class UpdateService
             {
                 case EndorseOutcome.Endorsed:
                     Update(() => _endorsed.Add(nexusModId));
-                    return (true, "Endorsed on Nexus. Thank you, the author sees it.");
+                    return (true, Loc.T("core.endorsed"));
                 case EndorseOutcome.Abstained:
                     Update(() => _endorsed.Remove(nexusModId));
-                    return (true, "Endorsement removed.");
+                    return (true, Loc.T("core.endorse_removed"));
                 case EndorseOutcome.IsOwnMod:
-                    return (false, "That is your own mod, and Nexus does not allow endorsing it.");
+                    return (false, Loc.T("core.endorse_own"));
                 case EndorseOutcome.TooSoonAfterDownload:
-                    return (false, "Nexus asks you to use a mod for a while after downloading it before you endorse it. Try again later.");
+                    return (false, Loc.T("core.endorse_soon"));
                 case EndorseOutcome.NotDownloaded:
-                    return (false, "Nexus only lets you endorse mods you downloaded from its site with this account.");
+                    return (false, Loc.T("core.endorse_not_downloaded"));
                 default:
-                    return (false, "Nexus did not accept the endorsement.");
+                    return (false, Loc.T("core.endorse_refused"));
             }
         }
         catch (NexusException ex)

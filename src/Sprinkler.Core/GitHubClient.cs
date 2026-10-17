@@ -21,18 +21,18 @@ internal sealed class GitHubClient
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var response = await AppEnvironment.Http.SendAsync(request, timeout.Token);
             if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
-                return Unusable(page, "GitHub's hourly limit for anonymous requests is used up. Try again later.");
+                return Unusable(page, Loc.T("core.gh_limit"));
             if (response.StatusCode == HttpStatusCode.NotFound)
-                return Unusable(page, "The GitHub repository was not found.");
+                return Unusable(page, Loc.T("core.gh_missing"));
             if (!response.IsSuccessStatusCode)
-                return Unusable(page, $"GitHub answered {(int)response.StatusCode}.");
+                return Unusable(page, Loc.T("core.gh_status", (int)response.StatusCode));
             releases = await response.Content.ReadFromJsonAsync<List<Release>>(AppEnvironment.Json, timeout.Token);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
         {
             if (ct.IsCancellationRequested)
                 throw;
-            return Unusable(page, "GitHub could not be reached.");
+            return Unusable(page, Loc.T("core.gh_unreachable"));
         }
 
         var target = ModVersion.Parse(targetVersion);
@@ -44,7 +44,7 @@ internal sealed class GitHubClient
 
             var asset = PickAsset(rel.Assets ?? new(), modName, uniqueId);
             if (asset is null)
-                return Unusable(rel.HtmlUrl ?? page, "The release on GitHub has no zip, 7z or rar file attached.");
+                return Unusable(rel.HtmlUrl ?? page, Loc.T("core.gh_no_asset"));
 
             return new SourceOffer
             {
@@ -54,11 +54,11 @@ internal sealed class GitHubClient
                 PageUrl = rel.HtmlUrl ?? page,
                 DownloadUrl = asset.BrowserDownloadUrl,
                 FileName = asset.Name,
-                Note = "GitHub has this version and the app can download it without any clicks.",
+                Note = Loc.T("core.gh_direct"),
             };
         }
 
-        return Unusable(page, "GitHub has no release with this version yet.");
+        return Unusable(page, Loc.T("core.gh_no_release"));
     }
 
     private static Asset? PickAsset(List<Asset> assets, string modName, string uniqueId)

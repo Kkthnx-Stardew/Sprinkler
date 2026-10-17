@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              x:Class="Sprinkler.Views.HistoryView"
@@ -7,13 +8,13 @@
   <ScrollViewer HorizontalScrollBarVisibility="Disabled">
     <Border Classes="panel" MaxWidth="980" Margin="20,8,20,24">
       <StackPanel Spacing="8">
-        <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="clock" Size="22" /><TextBlock Classes="h2" Text="History and backups" /></StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="clock" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.history_and_backups}" /></StackPanel>
         <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{Binding BackupsText}" />
-        <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="backups" HorizontalAlignment="Left"><TextBlock Classes="small" Text="Open the backup folder" /></Button>
+        <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="backups" HorizontalAlignment="Left"><TextBlock Classes="small" Text="{loc:T ui.open_the_backup_folder}" /></Button>
 
         <StackPanel IsVisible="{Binding NoHistory}" Spacing="10" Margin="0,24" HorizontalAlignment="Center">
           <ctl:IconView Kind="shield" Size="44" HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
-          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" Text="Nothing has been changed yet. Updates you make will show up here, ready to undo." />
+          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" Text="{loc:T ui.nothing_has_been_changed_yet_updates_you_mak}" />
         </StackPanel>
 
         <ItemsControl ItemsSource="{Binding History}" IsVisible="{Binding HasHistory}">
@@ -27,9 +28,9 @@
                     <TextBlock Classes="muted small" Text="{Binding Detail}" TextWrapping="Wrap" />
                   </StackPanel>
                   <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                    <Border Classes="chip" IsVisible="{Binding Undone}"><TextBlock Text="Undone" /></Border>
-                    <Button Classes="slim" Command="{Binding UndoCommand}" IsVisible="{Binding CanUndo}"><TextBlock Text="Undo" /></Button>
-                    <TextBlock Classes="muted small" Text="Backup removed" IsVisible="{Binding BackupGone}" />
+                    <Border Classes="chip" IsVisible="{Binding Undone}"><TextBlock Text="{loc:T ui.undone}" /></Border>
+                    <Button Classes="slim" Command="{Binding UndoCommand}" IsVisible="{Binding CanUndo}"><TextBlock Text="{loc:T ui.undo}" /></Button>
+                    <TextBlock Classes="muted small" Text="{loc:T ui.backup_removed}" IsVisible="{Binding BackupGone}" />
                   </StackPanel>
                 </Grid>
               </Border>

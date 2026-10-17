@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              x:Class="Sprinkler.Views.CollectionPreviewDialogView"
@@ -22,10 +23,10 @@
           <TextBlock Classes="body small" Text="{Binding ToInstallText}" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
-      <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Adding saves the collection as a profile. It does not switch to the profile or change any of your mods." />
+      <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.adding_saves_the_collection_as_a_profile_it}" />
       <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,8,0,0">
-        <Button Command="{Binding CancelCommand}"><TextBlock Text="Cancel" /></Button>
-        <Button Classes="primary" Command="{Binding AddCommand}"><TextBlock Text="Add this collection" /></Button>
+        <Button Command="{Binding CancelCommand}"><TextBlock Text="{loc:T ui.cancel}" /></Button>
+        <Button Classes="primary" Command="{Binding AddCommand}"><TextBlock Text="{loc:T ui.add_this_collection}" /></Button>
       </StackPanel>
     </StackPanel>
   </Border>

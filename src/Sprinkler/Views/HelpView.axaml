@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              x:Class="Sprinkler.Views.HelpView"
@@ -9,60 +10,60 @@
 
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" /><TextBlock Classes="h2" Text="Getting started" /></StackPanel>
-          <TextBlock Classes="muted" Text="Three steps. You are always asked before anything changes." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" /><TextBlock Classes="h2" Text="{loc:T ui.getting_started}" /></StackPanel>
+          <TextBlock Classes="muted" Text="{loc:T ui.three_steps_you_are_always_asked_before_anyt}" />
           <UniformGrid Columns="3">
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,12,0">
               <Border Classes="qnum"><TextBlock Text="1" /></Border>
-              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="It checks" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="The app reads your Mods folder and asks SMAPI's update list which mods are out of date." /></StackPanel>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="{loc:T ui.it_checks}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.the_app_reads_your_mods_folder_and_asks_smap}" /></StackPanel>
             </Grid>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,12,0">
               <Border Classes="qnum"><TextBlock Text="2" /></Border>
-              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="You choose" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Tick the updates you want. Each card shows where the file comes from." /></StackPanel>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="{loc:T ui.you_choose}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.tick_the_updates_you_want_each_card_shows_wh}" /></StackPanel>
             </Grid>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
               <Border Classes="qnum"><TextBlock Text="3" /></Border>
-              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="Press Update" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Files are backed up, installed and checked. Undo any change from History." /></StackPanel>
+              <StackPanel Grid.Column="1"><TextBlock Classes="strong" Text="{loc:T ui.press_update}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.files_are_backed_up_installed_and_checked_un}" /></StackPanel>
             </Grid>
           </UniformGrid>
           <StackPanel Orientation="Horizontal" Spacing="10">
-            <Button Command="{Binding ShowTourFromStartCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="14" /><TextBlock Text="Show the quick tour" /></StackPanel></Button>
-            <Button Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="key" Size="16" /><TextBlock Text="Connect Nexus" /></StackPanel></Button>
+            <Button Command="{Binding ShowTourFromStartCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="14" /><TextBlock Text="{loc:T ui.show_the_quick_tour}" /></StackPanel></Button>
+            <Button Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="key" Size="16" /><TextBlock Text="{loc:T ui.connect_nexus}" /></StackPanel></Button>
           </StackPanel>
         </StackPanel>
       </Border>
 
       <Border Classes="panel">
         <StackPanel Spacing="8">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="download" Size="22" /><TextBlock Classes="h2" Text="Where files come from" /></StackPanel>
-          <TextBlock TextWrapping="Wrap" Text="Nexus Mods first. Nexus only hands files to logged-in users, so what happens depends on your setup:" />
-          <TextBlock TextWrapping="Wrap"><Run Text="Premium and a saved key: " FontWeight="SemiBold" /><Run Text="fully automatic." /></TextBlock>
-          <TextBlock TextWrapping="Wrap"><Run Text="Free account, key, and Nexus links on: " FontWeight="SemiBold" /><Run Text="one click per mod on Nexus." /></TextBlock>
-          <TextBlock TextWrapping="Wrap"><Run Text="No key: " FontWeight="SemiBold" /><Run Text="you press download on Nexus and the app installs the file from your Downloads folder." /></TextBlock>
-          <TextBlock TextWrapping="Wrap" Text="If Nexus fails, or you pick another source, CurseForge or GitHub are used when they have the same version." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="download" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.where_files_come_from}" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.nexus_mods_first_nexus_only_hands_files_to_l}" />
+          <TextBlock TextWrapping="Wrap"><Run Text="{loc:T ui.premium_and_a_saved_key}" FontWeight="SemiBold" /><Run Text="{loc:T ui.fully_automatic}" /></TextBlock>
+          <TextBlock TextWrapping="Wrap"><Run Text="{loc:T ui.free_account_key_and_nexus_links_on}" FontWeight="SemiBold" /><Run Text="{loc:T ui.one_click_per_mod_on_nexus}" /></TextBlock>
+          <TextBlock TextWrapping="Wrap"><Run Text="{loc:T ui.no_key}" FontWeight="SemiBold" /><Run Text="{loc:T ui.you_press_download_on_nexus_and_the_app_inst}" /></TextBlock>
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.if_nexus_fails_or_you_pick_another_source_cu}" />
         </StackPanel>
       </Border>
 
       <Border Classes="panel">
         <StackPanel Spacing="6">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="How an update is applied" /></StackPanel>
-          <TextBlock TextWrapping="Wrap" Text="1. The download is opened and its manifest read. The mod ID must match, or it is rejected." />
-          <TextBlock TextWrapping="Wrap" Text="2. The old folder is zipped into the backup folder." />
-          <TextBlock TextWrapping="Wrap" Text="3. New files are copied over. Your config.json stays, and old .dll files the new version dropped are removed." />
-          <TextBlock TextWrapping="Wrap" Text="4. The new manifest is read back. If anything fails, the old folder is restored." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.how_an_update_is_applied}" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.1_the_download_is_opened_and_its_manifest_re}" />
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.2_the_old_folder_is_zipped_into_the_backup_f}" />
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.3_new_files_are_copied_over_your_config_json}" />
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.4_the_new_manifest_is_read_back_if_anything}" />
         </StackPanel>
       </Border>
 
       <Border Classes="panel">
         <StackPanel Spacing="6">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="upload" Size="22" /><TextBlock Classes="h2" Text="Drag and drop" /></StackPanel>
-          <TextBlock TextWrapping="Wrap" Text="Drag any mod .zip, .7z or .rar onto this window. The app reads what is inside, shows what it would change, and installs it after you confirm." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="upload" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.drag_and_drop}" /></StackPanel>
+          <TextBlock TextWrapping="Wrap" Text="{loc:T ui.drag_any_mod_zip_7z_or_rar_onto_this_window}" />
         </StackPanel>
       </Border>
 
       <Border Classes="panel">
         <StackPanel Spacing="4">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="help" Size="22" /><TextBlock Classes="h2" Text="Questions" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="help" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.questions}" /></StackPanel>
           <ItemsControl ItemsSource="{Binding FaqList}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:QA">
@@ -75,7 +76,7 @@
 
       <Border Classes="panel">
         <StackPanel Spacing="4">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" /><TextBlock Classes="h2" Text="If something goes wrong" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.if_something_goes_wrong}" /></StackPanel>
           <ItemsControl ItemsSource="{Binding FixList}">
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:QA">
@@ -88,13 +89,13 @@
 
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="shield" Size="22" /><TextBlock Classes="h2" Text="About" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="shield" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.about}" /></StackPanel>
           <TextBlock Classes="small" Text="{Binding AboutText}" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" Spacing="10">
-            <Button Command="{Binding OpenRepoCommand}"><TextBlock Text="Source code on GitHub" /></Button>
-            <Button Command="{Binding ReportProblemCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="alert" Size="16" /><TextBlock Text="Report a problem" /></StackPanel></Button>
+            <Button Command="{Binding OpenRepoCommand}"><TextBlock Text="{loc:T ui.source_code_on_github}" /></Button>
+            <Button Command="{Binding ReportProblemCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="alert" Size="16" /><TextBlock Text="{loc:T ui.report_a_problem}" /></StackPanel></Button>
           </StackPanel>
-          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="A fan-made tool, not affiliated with ConcernedApe, SMAPI or Nexus Mods." />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.a_fan_made_tool_not_affiliated_with_concerne}" />
         </StackPanel>
       </Border>
     </StackPanel>

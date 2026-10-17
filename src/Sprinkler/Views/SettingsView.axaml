@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              x:Class="Sprinkler.Views.SettingsView"
@@ -10,23 +11,23 @@
       <!-- Nexus account -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="key" Size="22" /><TextBlock Classes="h2" Text="Nexus Mods account" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="key" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.nexus_mods_account}" /></StackPanel>
 
           <StackPanel IsVisible="{Binding NexusConnected}" Spacing="8">
-            <TextBlock TextWrapping="Wrap"><Run Text="Connected as " /><Run Text="{Binding NexusUser}" FontWeight="SemiBold" /><Run Text="{Binding NexusAccountKind}" /></TextBlock>
+            <TextBlock TextWrapping="Wrap" Text="{Binding NexusConnectedLine}" />
             <TextBlock Classes="muted small" Text="{Binding NexusAccountNote}" TextWrapping="Wrap" />
-            <Button Command="{Binding DisconnectNexusCommand}" HorizontalAlignment="Left"><TextBlock Text="Disconnect and forget the key" /></Button>
+            <Button Command="{Binding DisconnectNexusCommand}" HorizontalAlignment="Left"><TextBlock Text="{loc:T ui.disconnect_and_forget_the_key}" /></Button>
           </StackPanel>
 
           <StackPanel IsVisible="{Binding NexusNotConnected}" Spacing="10">
-            <TextBlock TextWrapping="Wrap" Text="Nexus Mods is where most mods live, and it only gives files to logged-in users. Connect your account so the app can find the exact file, show what changed, and (with Premium) download by itself." />
+            <TextBlock TextWrapping="Wrap" Text="{loc:T ui.nexus_mods_is_where_most_mods_live_and_it_on}" />
             <StackPanel Spacing="4">
-              <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="1. Log in to Nexus Mods in your browser." /><Button Classes="link" Command="{Binding OpenNexusKeyPageCommand}"><TextBlock Text="Open the API keys page" /></Button></StackPanel>
-              <TextBlock Text="2. Scroll to &quot;Personal API Key&quot;, press Request, and copy the long key." />
-              <TextBlock Text="3. Paste it below." />
+              <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="{loc:T ui.1_log_in_to_nexus_mods_in_your_browser}" /><Button Classes="link" Command="{Binding OpenNexusKeyPageCommand}"><TextBlock Text="{loc:T ui.open_the_api_keys_page}" /></Button></StackPanel>
+              <TextBlock Text="{loc:T ui.2_scroll_to_personal_api_key_press_request_a}" />
+              <TextBlock Text="{loc:T ui.3_paste_it_below}" />
             </StackPanel>
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-              <TextBox Text="{Binding NexusKeyInput}" PasswordChar="•" PlaceholderText="Paste your Personal API Key here" AutomationProperties.Name="Nexus API key" />
+              <TextBox Text="{Binding NexusKeyInput}" PasswordChar="•" PlaceholderText="{loc:T ui.paste_your_personal_api_key_here}" AutomationProperties.Name="{loc:T ui.nexus_api_key}" />
               <Button Grid.Column="1" Classes="primary" Command="{Binding ConnectNexusCommand}" IsEnabled="{Binding CanConnect}"><TextBlock Text="{Binding ConnectButtonText}" /></Button>
             </Grid>
             <TextBlock Classes="bad small strong" Text="{Binding NexusKeyError}" IsVisible="{Binding HasNexusKeyError}" TextWrapping="Wrap" />
@@ -39,17 +40,17 @@
       <!-- Nexus links -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="pointer" Size="22" /><TextBlock Classes="h2" Text="Nexus &quot;Mod Manager Download&quot; button" /></StackPanel>
-          <TextBlock Classes="muted" TextWrapping="Wrap" Text="On a free account, this button is how Nexus lets a program download for you. If this app handles it, one click on Nexus starts the download and install." />
-          <TextBlock Classes="muted small" TextWrapping="Wrap" IsVisible="{Binding NxmUnsupported}" Text="This system cannot hand Nexus links to a program. Use the &quot;Manual download&quot; button on a mod page, then drop the file onto this window or leave it in your Downloads folder, and the app installs it." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="pointer" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.nexus_mod_manager_download_button}" /></StackPanel>
+          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{loc:T ui.on_a_free_account_this_button_is_how_nexus_l}" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" IsVisible="{Binding NxmUnsupported}" Text="{loc:T ui.this_system_cannot_hand_nexus_links_to_a_pro}" />
           <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding NxmOn}">
-            <Border Classes="chip ok"><TextBlock Text="This app handles Nexus links" /></Border>
-            <Button Classes="slim" Command="{Binding TurnNxmOffCommand}"><TextBlock Text="Stop handling them" /></Button>
+            <Border Classes="chip ok"><TextBlock Text="{loc:T ui.this_app_handles_nexus_links}" /></Border>
+            <Button Classes="slim" Command="{Binding TurnNxmOffCommand}"><TextBlock Text="{loc:T ui.stop_handling_them}" /></Button>
           </StackPanel>
           <StackPanel IsVisible="{Binding NxmCanOffer}" Spacing="8">
-            <TextBlock Classes="warn small" IsVisible="{Binding NxmNeedsKey}" TextWrapping="Wrap" Text="Connect your Nexus account first; links do not work without the key." />
-            <TextBlock Classes="warn small" IsVisible="{Binding NxmOther}" TextWrapping="Wrap" Text="Another program (such as Vortex or Mod Organizer) handles Nexus links right now. Switching affects it too, and you can switch back here." />
-            <Button Command="{Binding TurnNxmOnCommand}" IsEnabled="{Binding NexusConnected}" HorizontalAlignment="Left"><TextBlock Text="Let this app handle Nexus links" /></Button>
+            <TextBlock Classes="warn small" IsVisible="{Binding NxmNeedsKey}" TextWrapping="Wrap" Text="{loc:T ui.connect_your_nexus_account_first_links_do_no}" />
+            <TextBlock Classes="warn small" IsVisible="{Binding NxmOther}" TextWrapping="Wrap" Text="{loc:T ui.another_program_such_as_vortex_or_mod_organi}" />
+            <Button Command="{Binding TurnNxmOnCommand}" IsEnabled="{Binding NexusConnected}" HorizontalAlignment="Left"><TextBlock Text="{loc:T ui.let_this_app_handle_nexus_links}" /></Button>
           </StackPanel>
           <TextBlock Classes="muted small" Text="{Binding NxmNote}" IsVisible="{Binding HasNxmNote}" TextWrapping="Wrap" />
         </StackPanel>
@@ -58,12 +59,12 @@
       <!-- where to download from -->
       <Border Classes="panel">
         <StackPanel Spacing="8">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="download" Size="22" /><TextBlock Classes="h2" Text="Where to download from" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="download" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.where_to_download_from}" /></StackPanel>
           <RadioButton GroupName="policy" IsChecked="{Binding PolicyNexusFirst}">
-            <StackPanel><TextBlock FontWeight="SemiBold" Text="Nexus first (default)" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="Use Nexus Mods, and switch to CurseForge or GitHub only if Nexus fails or you choose it." /></StackPanel>
+            <StackPanel><TextBlock FontWeight="SemiBold" Text="{loc:T ui.nexus_first_default}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_nexus_mods_and_switch_to_curseforge_or_g}" /></StackPanel>
           </RadioButton>
           <RadioButton GroupName="policy" IsChecked="{Binding PolicyInstantFirst}">
-            <StackPanel><TextBlock FontWeight="SemiBold" Text="Fastest first" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="If CurseForge or GitHub has the same version and downloads without clicks, use it. Otherwise use Nexus." /></StackPanel>
+            <StackPanel><TextBlock FontWeight="SemiBold" Text="{loc:T ui.fastest_first}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.if_curseforge_or_github_has_the_same_version}" /></StackPanel>
           </RadioButton>
         </StackPanel>
       </Border>
@@ -71,28 +72,28 @@
       <!-- folders -->
       <Border Classes="panel">
         <StackPanel Spacing="8">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="folder" Size="22" /><TextBlock Classes="h2" Text="Folders" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="folder" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.folders}" /></StackPanel>
           <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="6">
-            <TextBlock Classes="muted" Text="Game" /><SelectableTextBlock Grid.Column="1" Text="{Binding GamePath}" TextWrapping="Wrap" />
-            <TextBlock Grid.Row="1" Classes="muted" Text="Mods" /><SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ModsPath}" TextWrapping="Wrap" />
+            <TextBlock Classes="muted" Text="{loc:T ui.game}" /><SelectableTextBlock Grid.Column="1" Text="{Binding GamePath}" TextWrapping="Wrap" />
+            <TextBlock Grid.Row="1" Classes="muted" Text="{loc:T ui.mods}" /><SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ModsPath}" TextWrapping="Wrap" />
           </Grid>
           <StackPanel Orientation="Horizontal" Spacing="16">
-            <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="mods"><TextBlock Text="Open Mods folder" /></Button>
-            <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="logs"><TextBlock Text="Open log folder" /></Button>
+            <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="mods"><TextBlock Text="{loc:T ui.open_mods_folder}" /></Button>
+            <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="logs"><TextBlock Text="{loc:T ui.open_log_folder}" /></Button>
           </StackPanel>
-          <TextBlock Classes="h3" Text="Change the game folder" />
+          <TextBlock Classes="h3" Text="{loc:T ui.change_the_game_folder}" />
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="Game folder" />
-            <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="Browse..." /></Button>
-            <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="Use this folder" /></Button>
+            <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="{loc:T ui.game_folder}" />
+            <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
+            <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="{loc:T ui.use_this_folder}" /></Button>
           </Grid>
           <TextBlock Classes="bad small strong" Text="{Binding GamePathError}" IsVisible="{Binding HasGamePathError}" TextWrapping="Wrap" />
-          <TextBlock Classes="h3" Text="Downloads folder the app watches" />
-          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="When you download a mod in your browser, the app notices it here and installs it." />
+          <TextBlock Classes="h3" Text="{loc:T ui.downloads_folder_the_app_watches}" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.when_you_download_a_mod_in_your_browser_the}" />
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding DownloadsInput}" AutomationProperties.Name="Downloads folder" />
-            <Button Grid.Column="1" Command="{Binding BrowseDownloadsCommand}"><TextBlock Text="Browse..." /></Button>
-            <Button Grid.Column="2" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="Save" /></Button>
+            <TextBox Text="{Binding DownloadsInput}" AutomationProperties.Name="{loc:T ui.downloads_folder}" />
+            <Button Grid.Column="1" Command="{Binding BrowseDownloadsCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
+            <Button Grid.Column="2" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="{loc:T ui.save}" /></Button>
           </Grid>
         </StackPanel>
       </Border>
@@ -100,24 +101,39 @@
       <!-- Linux application menu -->
       <Border Classes="panel" IsVisible="{Binding ShowShortcut}">
         <StackPanel Spacing="8">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="pointer" Size="22" /><TextBlock Classes="h2" Text="Application menu" /></StackPanel>
-          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Adds Sprinkler to your desktop's application menu (in Desktop Mode on a Steam Deck too), with its icon, so you can start it like any other program. It points at the program where it is now, so move it first if you want it somewhere else." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="pointer" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.application_menu}" /></StackPanel>
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.adds_sprinkler_to_your_desktop_s_application}" />
           <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding ShortcutInstalled}">
-            <Border Classes="chip ok"><TextBlock Text="In your application menu" /></Border>
-            <Button Classes="slim" Command="{Binding RemoveShortcutCommand}"><TextBlock Text="Remove" /></Button>
+            <Border Classes="chip ok"><TextBlock Text="{loc:T ui.in_your_application_menu}" /></Border>
+            <Button Classes="slim" Command="{Binding RemoveShortcutCommand}"><TextBlock Text="{loc:T ui.remove}" /></Button>
           </StackPanel>
-          <Button Command="{Binding AddShortcutCommand}" IsVisible="{Binding ShortcutMissing}" HorizontalAlignment="Left"><TextBlock Text="Add to the application menu" /></Button>
+          <Button Command="{Binding AddShortcutCommand}" IsVisible="{Binding ShortcutMissing}" HorizontalAlignment="Left"><TextBlock Text="{loc:T ui.add_to_the_application_menu}" /></Button>
+        </StackPanel>
+      </Border>
+
+      <!-- language -->
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="h2" Text="{loc:T set.language}" />
+          <ComboBox ItemsSource="{Binding LanguageChoices}" SelectedItem="{Binding SelectedLanguage}" MinWidth="260" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T set.language}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:LanguageChoice">
+                <TextBlock Text="{Binding Name}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T set.lang_note}" />
         </StackPanel>
       </Border>
 
       <!-- look -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="{Binding ThemeIcon}" Size="22" /><TextBlock Classes="h2" Text="Look" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="{Binding ThemeIcon}" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.look}" /></StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsAuto, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="auto"><TextBlock Text="Follow my system" /></ToggleButton>
-            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsLight, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="light"><TextBlock Text="Light" /></ToggleButton>
-            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsDark, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="dark"><TextBlock Text="Dark" /></ToggleButton>
+            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsAuto, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="auto"><TextBlock Text="{loc:T ui.follow_my_system}" /></ToggleButton>
+            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsLight, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="light"><TextBlock Text="{loc:T ui.light}" /></ToggleButton>
+            <ToggleButton Classes="filter" IsChecked="{Binding ThemeIsDark, Mode=OneWay}" Command="{Binding PickThemeCommand}" CommandParameter="dark"><TextBlock Text="{loc:T ui.dark}" /></ToggleButton>
           </StackPanel>
         </StackPanel>
       </Border>

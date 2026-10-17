@@ -42,7 +42,7 @@ internal sealed class ToastViewModel(string text, bool bad)
 
 internal sealed class CandidateViewModel(MainViewModel main, CandidateInfo info)
 {
-    public string Text { get; } = $"{info.Store}: {info.Path}" + (info.Smapi is not null ? $"  (SMAPI {info.Smapi})" : "");
+    public string Text { get; } = info.Smapi is null ? Loc.T("cand.text", info.Store, info.Path) : Loc.T("cand.text_smapi", info.Store, info.Path, info.Smapi);
     public IRelayCommand Pick { get; } = new AsyncRelayCommand(() => main.SetGameFolderAsync(info.Path));
 }
 
@@ -53,20 +53,20 @@ internal sealed class ProblemViewModel(MainViewModel main, Problem problem)
     public bool IsError => problem.Level == "error";
     public bool IsWarn => problem.Level != "error";
     public bool HasLink => !string.IsNullOrEmpty(problem.Url);
-    public string LinkText => problem.UrlLabel ?? "Open";
+    public string LinkText => problem.UrlLabel ?? Loc.T("prob.open");
     public IRelayCommand Open { get; } = new RelayCommand(() => main.OpenUrl(problem.Url));
 }
 
 internal sealed class SkippedModViewModel(SkippedInfo info)
 {
     public string Title { get; } = info.Name + (info.Version is not null ? " " + info.Version : "");
-    public string Reason { get; } = "SMAPI says " + info.Reason;
-    public string Hint { get; } = "What to do: " + info.Hint;
+    public string Reason { get; } = Loc.T("skip.says", info.Reason);
+    public string Hint { get; } = Loc.T("skip.todo", info.Hint);
 }
 
 internal sealed class LogErrorViewModel(LogErrorSource source)
 {
-    public string Text { get; } = $"{source.Source}: {Fmt.Plural(source.Count, "error", "errors")}";
+    public string Text { get; } = Loc.T("log.errors", source.Source, Loc.Count("n.error", source.Count));
 }
 
 // ------------------------------------------------------------------ dialogs
@@ -142,8 +142,8 @@ internal sealed partial class TourDialogViewModel : DialogViewModel
     public TourStep Current => Steps[Index];
     public bool IsFirst => Index == 0;
     public bool IsLast => Index == Steps.Count - 1;
-    public string NextText => IsLast ? "Done" : "Next";
-    public string SkipText => IsLast ? "Close" : "Skip";
+    public string NextText => Loc.T(IsLast ? "tour.done" : "tour.next");
+    public string SkipText => Loc.T(IsLast ? "tour.close" : "tour.skip");
 
     partial void OnIndexChanged(int value)
     {
@@ -228,7 +228,7 @@ internal sealed partial class CollectionPreviewDialogViewModel : DialogViewModel
     public CollectionPreview Preview { get; }
 
     public string Title => Preview.Name;
-    public string Curator => Preview.Curator is null ? "" : "by " + Preview.Curator;
+    public string Curator => Preview.Curator is null ? "" : Loc.T("colp.by", Preview.Curator);
     public bool HasCurator => Preview.Curator is not null;
     public string? Summary => Preview.Summary;
     public bool HasSummary => !string.IsNullOrEmpty(Preview.Summary);
@@ -238,9 +238,9 @@ internal sealed partial class CollectionPreviewDialogViewModel : DialogViewModel
     {
         get
         {
-            var line = $"{Fmt.Plural(Preview.Required, "mod", "mods")}, {Preview.RequiredInstalled} already installed.";
+            var line = Loc.T("colp.counts", Loc.Count("n.mod", Preview.Required), Preview.RequiredInstalled);
             if (Preview.Optional > 0)
-                line += $" Plus {Fmt.Plural(Preview.Optional, "optional mod", "optional mods")}.";
+                line += " " + Loc.T("colp.plus", Loc.Count("n.optional_mod", Preview.Optional));
             return line;
         }
     }
@@ -251,12 +251,12 @@ internal sealed partial class CollectionPreviewDialogViewModel : DialogViewModel
         {
             var missing = Preview.Required - Preview.RequiredInstalled + (IncludeOptional ? Preview.Optional - Preview.OptionalInstalled : 0);
             return missing == 0
-                ? "Everything in it is already installed. The profile only remembers the list."
-                : $"{Fmt.Plural(missing, "mod", "mods")} will appear under Updates as installs. Nothing is changed until you press Update there.";
+                ? Loc.T("colp.all_installed")
+                : Loc.T("colp.to_install", Loc.Count("n.mod", missing));
         }
     }
 
-    public string OptionalText => $"Also add the {Fmt.Plural(Preview.Optional, "optional mod", "optional mods")}";
+    public string OptionalText => Loc.T("colp.also_add", Loc.Count("n.optional_mod", Preview.Optional));
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ToInstallText))]
@@ -279,3 +279,6 @@ internal sealed partial class CollectionPreviewDialogViewModel : DialogViewModel
         Close();
     }
 }
+
+/// <summary>One entry of the language list. "auto" follows the system.</summary>
+internal sealed record LanguageChoice(string Code, string Name);

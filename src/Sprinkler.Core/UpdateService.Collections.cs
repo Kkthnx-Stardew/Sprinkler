@@ -19,7 +19,7 @@ internal sealed partial class UpdateService
     public async Task<CollectionRevision> LookUpCollectionAsync(string text)
     {
         var parsed = NexusCollections.Parse(text)
-            ?? throw new CollectionException("That does not look like a Nexus collection. Paste the collection's address from nexusmods.com.");
+            ?? throw new CollectionException(Loc.T("core.col_not_collection"));
         return await NexusCollections.FetchAsync(parsed.Slug, parsed.Revision, CancellationToken.None);
     }
 
@@ -44,7 +44,7 @@ internal sealed partial class UpdateService
         {
             var selected = r.Mods.Where(m => includeOptional || !m.Optional).ToList();
             if (selected.Count == 0)
-                return ProfileResult.Fail("That collection has no mods to add.");
+                return ProfileResult.Fail(Loc.T("core.col_empty"));
 
             List<ModInfo> mods;
             lock (_gate)
@@ -71,9 +71,9 @@ internal sealed partial class UpdateService
             Update(() => { });
             _ = CheckAsync();
 
-            var message = $"Added \"{profile.Name}\": {Fmt(selected.Count)}, {selected.Count - toInstall} already installed.";
+            var message = Loc.T("core.col_added", profile.Name, Fmt(selected.Count), selected.Count - toInstall);
             if (toInstall > 0)
-                message += $" The other {toInstall} appear under Updates as installs.";
+                message += " " + Loc.T("core.col_added_more", toInstall);
             return ProfileResult.Ok(message);
         }
         catch (ProfileException ex)
@@ -90,7 +90,7 @@ internal sealed partial class UpdateService
             Profiles.Update(name, p => p.PendingInstall = false);
             Update(() => { });
             _ = CheckAsync();
-            return ProfileResult.Ok("The remaining mods of that collection are no longer offered as installs.");
+            return ProfileResult.Ok(Loc.T("core.col_dismissed"));
         }
         catch (ProfileException ex)
         {
@@ -142,7 +142,7 @@ internal sealed partial class UpdateService
                     Target = m.Version ?? "",
                     IsNew = true,
                     AcceptAnyMod = true,
-                    Why = $"Part of the collection \"{p.Collection.Name}\"" + (p.Collection.Curator is null ? "." : $" by {p.Collection.Curator}."),
+                    Why = p.Collection.Curator is null ? Loc.T("core.col_why", p.Collection.Name) : Loc.T("core.col_why_by", p.Collection.Name, p.Collection.Curator),
                     NexusId = m.ModId,
                     ModPageUrl = NexusPage(m.ModId),
                 });

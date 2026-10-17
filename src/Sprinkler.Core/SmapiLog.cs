@@ -118,21 +118,21 @@ internal static partial class SmapiLog
         }
 
         if (reason.StartsWith("it requires mods which aren't installed", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.MissingMods, "Install the mods named here. Check again and the app offers them as installs.");
+            return new SkippedMod(name, version, reason, SkipKind.MissingMods, Loc.T("core.skip_missing"));
         if (reason.StartsWith("it needs newer versions of some mods", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.NeedsNewerMods, "Update the mods named here, then check again.");
+            return new SkippedMod(name, version, reason, SkipKind.NeedsNewerMods, Loc.T("core.skip_newer_mods"));
         if (reason.StartsWith("it needs SMAPI", StringComparison.Ordinal) || reason.StartsWith("it needs Stardew Valley", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.NeedsNewerGameOrSmapi, "Update SMAPI or the game to the latest version.");
+            return new SkippedMod(name, version, reason, SkipKind.NeedsNewerGameOrSmapi, Loc.T("core.skip_newer_game"));
         if (reason.StartsWith("it's no longer compatible", StringComparison.Ordinal) || reason.StartsWith("it's obsolete", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.Incompatible, "Look for a newer version of this mod, or remove it.");
+            return new SkippedMod(name, version, reason, SkipKind.Incompatible, Loc.T("core.skip_incompatible"));
         if (reason.StartsWith("you have multiple copies", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.Duplicate, "Delete the extra copy in your Mods folder.");
+            return new SkippedMod(name, version, reason, SkipKind.Duplicate, Loc.T("core.skip_duplicate"));
         if (reason.Contains("doesn't exist", StringComparison.Ordinal) || reason.StartsWith("its manifest", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.BrokenInstall, "The mod's files are incomplete. Reinstall it.");
+            return new SkippedMod(name, version, reason, SkipKind.BrokenInstall, Loc.T("core.skip_broken"));
         if (reason.StartsWith("its DLL", StringComparison.Ordinal) || reason.StartsWith("it needs to be updated", StringComparison.Ordinal)
             || reason.StartsWith("initialization failed", StringComparison.Ordinal))
-            return new SkippedMod(name, version, reason, SkipKind.FailedToLoad, "Update or reinstall this mod.");
-        return new SkippedMod(name, version, reason, SkipKind.Other, "Read the reason above, or ask the mod's author.");
+            return new SkippedMod(name, version, reason, SkipKind.FailedToLoad, Loc.T("core.skip_failed"));
+        return new SkippedMod(name, version, reason, SkipKind.Other, Loc.T("core.skip_other"));
     }
 
     [GeneratedRegex(@"^\[(?<time>\d\d:\d\d:\d\d) (?<lvl>[A-Z]+)\s+(?<src>[^\]]+)\] (?<msg>.*)$")]

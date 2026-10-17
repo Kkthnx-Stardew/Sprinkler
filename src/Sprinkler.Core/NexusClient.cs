@@ -63,7 +63,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
                 Version = targetVersion,
                 PageUrl = FilesPage(modId),
                 NexusModId = modId,
-                Note = "Nexus needs you to be logged in to download. The app opens the file page; you click Manual Download, and the app installs the file when it lands in your Downloads folder.",
+                Note = Loc.T("core.nx_login"),
             };
         }
 
@@ -101,7 +101,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
                 FileName = file.FileName,
                 NexusModId = modId,
                 NexusFileId = fileId,
-                Note = "Your Nexus Premium account lets the app download this directly.",
+                Note = Loc.T("core.nx_premium"),
             };
         }
 
@@ -116,7 +116,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
                 FileName = file.FileName,
                 NexusModId = modId,
                 NexusFileId = fileId,
-                Note = "The app opens the Nexus page. Click Mod Manager Download and the app does the rest.",
+                Note = Loc.T("core.nx_oneclick"),
             };
         }
 
@@ -129,20 +129,20 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             FileName = file?.FileName,
             NexusModId = modId,
             NexusFileId = fileId,
-            Note = "The app opens the Nexus page. Click Manual Download, then Slow Download, and the app installs the file when it lands in your Downloads folder.",
+            Note = Loc.T("core.nx_manual"),
         };
     }
 
     public async Task<string> GetDownloadUrlAsync(string modId, string fileId, string? nxmKey, string? expires, CancellationToken ct)
     {
-        var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, "No Nexus key is saved.");
+        var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_no_key"));
         var path = $"/games/{AppEnvironment.NexusGame}/mods/{modId}/files/{fileId}/download_link.json";
         if (!string.IsNullOrEmpty(nxmKey) && !string.IsNullOrEmpty(expires))
             path += $"?key={Uri.EscapeDataString(nxmKey)}&expires={Uri.EscapeDataString(expires)}";
 
         var links = await GetAsync<List<DownloadLink>>(path, key, ct);
         var url = links.FirstOrDefault(l => !string.IsNullOrEmpty(l.Uri))?.Uri;
-        return url ?? throw new NexusException(NexusError.Other, "Nexus returned no download link.");
+        return url ?? throw new NexusException(NexusError.Other, Loc.T("core.nx_no_link"));
     }
 
     /// <summary>Changelog lines for one version, or an empty list.</summary>
@@ -186,7 +186,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             return endorsed;
         var (status, body) = await SendRawAsync(HttpMethod.Get, "/user/endorsements.json", key, null, ct);
         if (status != HttpStatusCode.OK)
-            throw new NexusException(status == HttpStatusCode.TooManyRequests ? NexusError.RateLimited : NexusError.Other, $"Nexus answered {(int)status}.");
+            throw new NexusException(status == HttpStatusCode.TooManyRequests ? NexusError.RateLimited : NexusError.Other, Loc.T("core.nx_status", (int)status));
         try
         {
             using var doc = JsonDocument.Parse(body);
@@ -202,7 +202,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException)
         {
-            throw new NexusException(NexusError.Other, "Nexus sent an answer the app could not read.");
+            throw new NexusException(NexusError.Other, Loc.T("core.nx_unreadable"));
         }
         return endorsed;
     }
@@ -210,14 +210,14 @@ internal sealed class NexusClient(Func<string?> keyProvider)
     /// <summary>Endorses a mod, or takes the endorsement back. Nexus decides whether the person is allowed to.</summary>
     public async Task<EndorseOutcome> SetEndorsementAsync(long modId, bool endorse, string version, CancellationToken ct)
     {
-        var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, "No Nexus key is saved.");
+        var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_no_key"));
         var path = $"/games/{AppEnvironment.NexusGame}/mods/{modId}/{(endorse ? "endorse" : "abstain")}.json";
         var payload = JsonSerializer.Serialize(new { Version = string.IsNullOrWhiteSpace(version) ? "1.0.0" : version });
         var (status, body) = await SendRawAsync(HttpMethod.Post, path, key, payload, ct);
         if (status == HttpStatusCode.TooManyRequests)
-            throw new NexusException(NexusError.RateLimited, "Nexus is rate limiting this key for now.");
+            throw new NexusException(NexusError.RateLimited, Loc.T("core.nx_rate"));
         if (status == HttpStatusCode.Unauthorized)
-            throw new NexusException(NexusError.InvalidKey, "Nexus did not accept the key.");
+            throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_bad_key"));
 
         string? state = null, message = null;
         try
@@ -261,7 +261,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
         {
             if (ct.IsCancellationRequested)
                 throw;
-            throw new NexusException(NexusError.Network, "Nexus could not be reached.");
+            throw new NexusException(NexusError.Network, Loc.T("core.nx_unreachable"));
         }
     }
 
@@ -315,7 +315,7 @@ internal sealed class NexusClient(Func<string?> keyProvider)
         {
             if (ct.IsCancellationRequested)
                 throw;
-            throw new NexusException(NexusError.Network, "Nexus could not be reached.");
+            throw new NexusException(NexusError.Network, Loc.T("core.nx_unreachable"));
         }
 
         using (response)
@@ -323,25 +323,25 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             switch (response.StatusCode)
             {
                 case HttpStatusCode.Unauthorized:
-                    throw new NexusException(NexusError.InvalidKey, "Nexus did not accept the key.");
+                    throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_bad_key"));
                 case HttpStatusCode.Forbidden:
-                    throw new NexusException(NexusError.PremiumRequired, "Nexus only allows this for Premium accounts or with a one-time key from the website.");
+                    throw new NexusException(NexusError.PremiumRequired, Loc.T("core.nx_premium_only"));
                 case HttpStatusCode.NotFound:
-                    throw new NexusException(NexusError.NotFound, "Nexus has no such mod or file.");
+                    throw new NexusException(NexusError.NotFound, Loc.T("core.nx_not_found"));
                 case HttpStatusCode.TooManyRequests:
-                    throw new NexusException(NexusError.RateLimited, "Nexus is rate limiting this key for now.");
+                    throw new NexusException(NexusError.RateLimited, Loc.T("core.nx_rate"));
             }
             if (!response.IsSuccessStatusCode)
-                throw new NexusException(NexusError.Other, $"Nexus answered {(int)response.StatusCode}.");
+                throw new NexusException(NexusError.Other, Loc.T("core.nx_status", (int)response.StatusCode));
 
             try
             {
                 return await response.Content.ReadFromJsonAsync<T>(AppEnvironment.Json, timeout.Token)
-                    ?? throw new NexusException(NexusError.Other, "Nexus sent an empty answer.");
+                    ?? throw new NexusException(NexusError.Other, Loc.T("core.nx_empty"));
             }
             catch (JsonException)
             {
-                throw new NexusException(NexusError.Other, "Nexus sent an answer the app could not read.");
+                throw new NexusException(NexusError.Other, Loc.T("core.nx_unreadable"));
             }
         }
     }

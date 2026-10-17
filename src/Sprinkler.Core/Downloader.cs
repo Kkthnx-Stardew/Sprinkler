@@ -16,11 +16,11 @@ internal static class Downloader
         {
             using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
             if (!response.IsSuccessStatusCode)
-                throw new DownloadException($"The download server answered {(int)response.StatusCode}.");
+                throw new DownloadException(Loc.T("core.dl_status", (int)response.StatusCode));
 
             var type = response.Content.Headers.ContentType?.MediaType ?? "";
             if (type.Equals("text/html", StringComparison.OrdinalIgnoreCase))
-                throw new DownloadException("The link returned a web page instead of a file.");
+                throw new DownloadException(Loc.T("core.dl_html"));
 
             var name = response.Content.Headers.ContentDisposition?.FileNameStar
                 ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
@@ -32,7 +32,7 @@ internal static class Downloader
 
             var total = response.Content.Headers.ContentLength;
             if (total > ArchiveFile.MaxTotalBytes)
-                throw new DownloadException("The file is larger than 6 GB, which is not a normal mod.");
+                throw new DownloadException(Loc.T("core.dl_big"));
 
             var path = Path.Combine(dir, name);
             await using (var input = await response.Content.ReadAsStreamAsync(ct))
@@ -47,7 +47,7 @@ internal static class Downloader
                     await output.WriteAsync(buffer.AsMemory(0, n), ct);
                     read += n;
                     if (read > ArchiveFile.MaxTotalBytes)
-                        throw new DownloadException("The download is larger than 6 GB, so it was stopped.");
+                        throw new DownloadException(Loc.T("core.dl_big_stopped"));
                     if (total is > 0 && progress is not null)
                     {
                         var percent = (int)(read * 100 / total.Value);
@@ -64,7 +64,7 @@ internal static class Downloader
         catch (Exception ex) when (ex is HttpRequestException or IOException)
         {
             TryDelete(dir);
-            throw new DownloadException("The download failed: " + ex.Message);
+            throw new DownloadException(Loc.T("core.dl_failed", ex.Message));
         }
         catch
         {

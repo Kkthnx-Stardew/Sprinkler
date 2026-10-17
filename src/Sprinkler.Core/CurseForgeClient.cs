@@ -20,14 +20,14 @@ internal sealed class CurseForgeClient
         {
             using var response = await AppEnvironment.Http.GetAsync(url, timeout.Token);
             if (!response.IsSuccessStatusCode)
-                return PageOnly(projectId, $"CurseForge answered {(int)response.StatusCode}, so the app cannot read its file list.");
+                return PageOnly(projectId, Loc.T("core.cf_status", (int)response.StatusCode));
             list = await response.Content.ReadFromJsonAsync<FileList>(AppEnvironment.Json, timeout.Token);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
         {
             if (ct.IsCancellationRequested)
                 throw;
-            return PageOnly(projectId, "CurseForge could not be reached.");
+            return PageOnly(projectId, Loc.T("core.cf_unreachable"));
         }
 
         var files = (list?.Data ?? new())
@@ -35,7 +35,7 @@ internal sealed class CurseForgeClient
             .OrderByDescending(f => f.DateCreated)
             .ToList();
         if (files.Count == 0)
-            return PageOnly(projectId, "CurseForge lists no public files for this mod.");
+            return PageOnly(projectId, Loc.T("core.cf_no_files"));
 
         var target = ModVersion.Parse(targetVersion);
         foreach (var file in files)
@@ -52,7 +52,7 @@ internal sealed class CurseForgeClient
                     PageUrl = PageUrl(projectId),
                     DownloadUrl = $"{AppEnvironment.CurseForgeUrl}/api/v1/mods/{projectId}/files/{file.Id}/download",
                     FileName = file.FileName,
-                    Note = "CurseForge has this version and the app can download it without any clicks.",
+                    Note = Loc.T("core.cf_direct"),
                 };
             }
         }
@@ -66,8 +66,8 @@ internal sealed class CurseForgeClient
             PageUrl = PageUrl(projectId),
             Usable = false,
             Note = newest is null
-                ? "CurseForge has files, but none clearly show version " + targetVersion + "."
-                : $"CurseForge only has {newest}, which is older than {targetVersion}.",
+                ? Loc.T("core.cf_no_match", targetVersion)
+                : Loc.T("core.cf_older", newest, targetVersion),
         };
     }
 

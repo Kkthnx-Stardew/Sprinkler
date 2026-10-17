@@ -34,8 +34,9 @@ internal sealed partial class MainViewModel
     public bool HasActiveProfile => !string.IsNullOrEmpty(Snap?.Profiles.Active);
     public bool NoActiveProfile => HasProfiles && !HasActiveProfile;
     public bool ProfileModified => HasActiveProfile && Snap?.Profiles.Modified == true;
-    public string ProfileModifiedText => $"You changed which mods are switched on since you loaded \"{ActiveProfileName}\". Save the changes to keep them in the profile, or switch to another profile to leave them behind.";
-    public string ProfileChipText => HasActiveProfile ? "Profile: " + ActiveProfileName + (ProfileModified ? " (changed)" : "") : "";
+    public string ProfileModifiedText => Loc.T("prof.modified_text", ActiveProfileName);
+    public string ActiveProfileLine => Loc.T("prof.active_line", ActiveProfileName);
+    public string ProfileChipText => HasActiveProfile ? Loc.T(ProfileModified ? "prof.chip_changed" : "prof.chip", ActiveProfileName) : "";
     public bool CanCreateProfile => HasGame && !string.IsNullOrWhiteSpace(NewProfileName);
 
     [ObservableProperty]
@@ -82,7 +83,7 @@ internal sealed partial class MainViewModel
     {
         if (Ui is null)
             return;
-        var path = await Ui.PickOpenFileAsync("Open a Sprinkler profile", "Sprinkler profile", new[] { "*.json" });
+        var path = await Ui.PickOpenFileAsync(Loc.T("prof.open_title"), Loc.T("prof.file_type"), new[] { "*.json" });
         if (path is null)
             return;
 
@@ -91,14 +92,14 @@ internal sealed partial class MainViewModel
         {
             if (new FileInfo(path).Length > PortableProfile.MaxBytes)
             {
-                Toast("That file is too large to be a profile.", true);
+                Toast(Loc.T("prof.too_large"), true);
                 return;
             }
             text = await File.ReadAllTextAsync(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Toast("Could not read that file: " + ex.Message, true);
+            Toast(Loc.T("prof.read_failed", ex.Message), true);
             return;
         }
 
@@ -112,9 +113,9 @@ internal sealed partial class MainViewModel
         Toast(result.Message);
 
         var name = _svc.Profiles.All().OrderByDescending(p => p.Created).First().Name;
-        if (await AskAsync("Switch to it now?", $"\"{name}\" is saved. Switching turns its mods on and the rest off." +
-            (result.Missing.Count > 0 ? $" {Fmt.Plural(result.Missing.Count, "mod", "mods")} in it {(result.Missing.Count == 1 ? "is" : "are")} not installed here; they will appear under Updates as installs." : ""),
-            "Switch now", "gift"))
+        if (await AskAsync(Loc.T("prof.switch_now_title"),
+            Loc.T("prof.switch_now_text", name) + (result.Missing.Count > 0 ? " " + Loc.Count("prof.switch_now_missing", result.Missing.Count) : ""),
+            Loc.T("prof.switch_now_yes"), "gift"))
             await SwitchProfileAsync(name);
     }
 
@@ -123,9 +124,7 @@ internal sealed partial class MainViewModel
     {
         if (ProfileModified && !name.Equals(ActiveProfileName, StringComparison.OrdinalIgnoreCase))
         {
-            var go = await AskAsync("Switch without saving?",
-                $"You changed which mods are switched on since you loaded \"{ActiveProfileName}\". Those changes are not kept unless you save them first.",
-                "Switch anyway", "alert");
+            var go = await AskAsync(Loc.T("prof.unsaved_title"), Loc.T("prof.unsaved_text", ActiveProfileName), Loc.T("prof.unsaved_yes"), "alert");
             if (!go)
                 return;
         }
@@ -139,7 +138,7 @@ internal sealed partial class MainViewModel
 
     public async Task RenameProfileAsync(string name)
     {
-        var text = await PromptAsync("Rename profile", "tag", "New name", name, "Rename", ProfileStore.MaxNameLength);
+        var text = await PromptAsync(Loc.T("prof.rename_title"), "tag", Loc.T("prof.rename_prompt"), name, Loc.T("prof.rename_yes"), ProfileStore.MaxNameLength);
         if (text is null)
             return;
         var result = _svc.RenameProfile(name, text);
@@ -149,7 +148,7 @@ internal sealed partial class MainViewModel
 
     public async Task CopyProfileAsync(string name)
     {
-        var text = await PromptAsync("Copy profile", "package", "Name for the copy", name + " copy", "Copy", ProfileStore.MaxNameLength);
+        var text = await PromptAsync(Loc.T("prof.copy_title"), "package", Loc.T("prof.copy_prompt"), Loc.T("prof.copy_default", name), Loc.T("prof.copy_yes"), ProfileStore.MaxNameLength);
         if (text is null)
             return;
         var result = _svc.CopyProfile(name, text);
@@ -159,7 +158,7 @@ internal sealed partial class MainViewModel
 
     public async Task DeleteProfileAsync(string name)
     {
-        if (!await AskAsync($"Delete \"{name}\"?", "Only the saved list is deleted. Your mods and their settings stay exactly as they are.", "Delete profile", "alert"))
+        if (!await AskAsync(Loc.T("prof.delete_title", name), Loc.T("prof.delete_text"), Loc.T("prof.delete_yes"), "alert"))
             return;
         var result = _svc.DeleteProfile(name);
         Toast(result.Error ?? result.Message, result.Error is not null);
@@ -170,17 +169,17 @@ internal sealed partial class MainViewModel
     {
         if (Ui is null)
             return;
-        var path = await Ui.PickSaveFileAsync("Save the profile to share", name + ".sprinkler.json", "Sprinkler profile", new[] { "*.json" });
+        var path = await Ui.PickSaveFileAsync(Loc.T("prof.save_title"), name + ".sprinkler.json", Loc.T("prof.file_type"), new[] { "*.json" });
         if (path is null)
             return;
         try
         {
             await File.WriteAllTextAsync(path, _svc.ExportProfile(name));
-            Toast("Saved. Send that file to a friend; it lists mods, never your settings or folders.");
+            Toast(Loc.T("prof.saved_share"));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ProfileException)
         {
-            Toast("Could not save the file: " + ex.Message, true);
+            Toast(Loc.T("prof.save_failed", ex.Message), true);
         }
     }
 

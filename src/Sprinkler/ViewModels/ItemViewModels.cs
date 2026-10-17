@@ -31,7 +31,7 @@ internal sealed partial class OfferViewModel(ItemViewModel owner, int index, Off
 
     public bool IsAuto => Info.Usable && Info.Mode == DeliveryMode.Auto;
     public bool IsClick => Info.Usable && Info.Mode != DeliveryMode.Auto;
-    public string ModeText => Info.Mode switch { DeliveryMode.Auto => "Automatic", DeliveryMode.OneClick => "One click", _ => "You download" };
+    public string ModeText => Loc.T(Info.Mode switch { DeliveryMode.Auto => "mode.auto", DeliveryMode.OneClick => "mode.oneclick", _ => "mode.manual" });
     public bool IsChosen => owner.Info.Chosen == Index;
 
     public void Update(OfferInfo info)
@@ -73,7 +73,7 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
     public bool HasInstalled => Info.Installed is not null;
     public bool IsNew => Info.IsNew;
     public bool HasParts => Info.Parts > 1;
-    public string PartsText => $"{Info.Parts} parts";
+    public string PartsText => Loc.Count("n.part", Info.Parts);
     public string? Why => Info.Why;
     public bool HasWhy => !string.IsNullOrEmpty(Info.Why);
     public string Message => Info.Message;
@@ -81,7 +81,7 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
     public string? PageUrl => Info.PageUrl;
     public bool HasChangelog => Info.Changelog.Count > 0;
     public bool ShowPageLink => !HasChangelog && !string.IsNullOrEmpty(Info.PageUrl);
-    public string ChangelogTitle => "What changed in " + Info.Target;
+    public string ChangelogTitle => Loc.T("card.changed_in", Info.Target);
     public bool HasDetails => Info.Details.Count > 0;
     public bool HasHistory => !string.IsNullOrEmpty(Info.HistoryId);
 
@@ -95,7 +95,7 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
     public bool CanEdit => Info.Status is ItemStatus.Ready or ItemStatus.Failed or ItemStatus.Skipped;
     public bool ShowSources => CanEdit && Offers.Count > 0;
     public bool ShowLookingUp => CanEdit && Offers.Count == 0 && !IsFailed;
-    public string LookingUpText => string.IsNullOrEmpty(Info.Message) ? "Looking up where to download this..." : Info.Message;
+    public string LookingUpText => string.IsNullOrEmpty(Info.Message) ? Loc.T("card.looking_up") : Info.Message;
     public bool CanSelect => Info.Offers.Any(o => o.Usable);
     public bool ShowChosenNote => ShowSources && ChosenNote.Length > 0;
     public string ChosenNote => Info.Chosen >= 0 && Info.Chosen < Info.Offers.Count ? Info.Offers[Info.Chosen].Note : "";
@@ -222,7 +222,7 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public bool IsContentPack => Row.IsContentPack;
     public string Meta => (string.IsNullOrEmpty(Row.Author) ? "" : Row.Author + " · ") + Row.Note;
     public bool HasNeeds => Row.Needs is { Length: > 0 };
-    public string NeedsText => Row.Needs is { Length: > 0 } n ? "Needs " + string.Join(", ", n) + " (not installed)" : "";
+    public string NeedsText => Row.Needs is { Length: > 0 } n ? Loc.T("row.needs", string.Join(", ", n)) : "";
     public bool IsOff => Row.State == RowState.Disabled;
     public bool IsLocked => Row.State == RowState.Bundled;
     public bool IsOn => !IsOff;
@@ -237,25 +237,25 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public string Initial => Avatar.Initial(Row.Name);
     public IBrush AvatarBrush => Avatar.Brush(Row.UniqueId);
     public string? Summary => _main.Art.Peek(ArtKey)?.Summary;
-    public string SwitchTip => IsLocked ? "Part of SMAPI, always on" : IsOff ? "Turn this mod on" : "Turn this mod off";
+    public string SwitchTip => Loc.T(IsLocked ? "row.tip_locked" : IsOff ? "row.tip_on" : "row.tip_off");
 
     public string StatusText
     {
         get
         {
             if (Row.State == RowState.Update)
-                return "Update " + (Row.Note.Split(": ").ElementAtOrDefault(1) ?? "");
+                return Loc.T("row.update", Row.Target ?? "");
             if (!string.IsNullOrEmpty(Row.SkippedVersion))
-                return "Skipped " + Row.SkippedVersion;
+                return Loc.T("row.skipped", Row.SkippedVersion);
             return Row.State switch
             {
-                RowState.UpToDate => "Up to date",
-                RowState.NoInfo => "Cannot check",
-                RowState.Error => "Check failed",
-                RowState.Disabled => "Switched off",
+                RowState.UpToDate => Loc.T("row.state.uptodate"),
+                RowState.NoInfo => Loc.T("row.state.nocheck"),
+                RowState.Error => Loc.T("row.state.error"),
+                RowState.Disabled => Loc.T("row.state.disabled"),
                 RowState.Bundled => "Part of SMAPI",
-                RowState.Ignored => "Skipped by you",
-                RowState.Warning => "Warning",
+                RowState.Ignored => Loc.T("row.state.ignored"),
+                RowState.Warning => Loc.T("row.state.warning"),
                 _ => "",
             };
         }
@@ -270,13 +270,13 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public bool ChipWarn => Chip == ModChip.Warn;
     public bool ChipBad => Chip == ModChip.Bad;
     public bool HasUnofficial => !string.IsNullOrEmpty(Row.Unofficial);
-    public string UnofficialText => "Unofficial fix " + Row.Unofficial;
+    public string UnofficialText => Loc.T("row.unofficial", Row.Unofficial ?? "");
     public bool HasUrl => !string.IsNullOrEmpty(Row.Url);
     public bool HasSkipped => !string.IsNullOrEmpty(Row.SkippedVersion);
-    public string StopSkippingText => "Stop skipping " + Row.SkippedVersion;
+    public string StopSkippingText => Loc.T("row.stop_skipping", Row.SkippedVersion ?? "");
     public bool CanIgnore => Row.State is not (RowState.Bundled or RowState.Disabled);
     public bool IsIgnored => Row.State == RowState.Ignored;
-    public string IgnoreText => IsIgnored ? "Check this mod again" : "Never check this mod";
+    public string IgnoreText => Loc.T(IsIgnored ? "row.ignore_off" : "row.ignore_on");
 
     // grouping under a parent mod
     private bool _indented;
@@ -296,13 +296,13 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     // private note
     public string NoteText => _main.NoteFor(Row.UniqueId);
     public bool HasNote => NoteText.Length > 0;
-    public string NoteMenuText => HasNote ? "Edit the note" : "Add a note";
+    public string NoteMenuText => Loc.T(HasNote ? "row.note_edit" : "row.note_add");
 
     // Nexus
     public long? NexusId => ArtKey is { } k && k.StartsWith("nexus:", StringComparison.Ordinal) && long.TryParse(k[6..], out var id) ? id : null;
     public bool IsEndorsed => NexusId is { } id && _main.IsEndorsed(id);
     public bool CanEndorse => NexusId is not null && _main.NexusConnected;
-    public string EndorseText => IsEndorsed ? "Remove my endorsement" : "Endorse on Nexus";
+    public string EndorseText => Loc.T(IsEndorsed ? "row.endorse_off" : "row.endorse_on");
 
     public bool HasConfig => Row.HasConfig;
     public bool CanRemove => !IsLocked;
@@ -354,8 +354,8 @@ internal sealed partial class HistoryViewModel(MainViewModel main, HistoryInfo i
     public string Name => Info.Name;
     public string ArtKind => Info.Undone ? "skip" : Info.Removed ? "trash" : Info.From is not null ? "arrowup" : "gift";
     public string Detail => Info.Removed
-        ? "Removed" + (Info.From is not null ? " " + Info.From : "") + " · " + Fmt.Time(Info.When)
-        : (Info.From is not null ? $"{Info.From} → {Info.To}" : $"{Info.To} (new install)") + " · from " + Info.Source + " · " + Fmt.Time(Info.When);
+        ? (Info.From is not null ? Loc.T("hist.removed_ver", Info.From, Fmt.Time(Info.When)) : Loc.T("hist.removed", Fmt.Time(Info.When)))
+        : (Info.From is not null ? Loc.T("hist.update", Info.From, Info.To, Info.Source, Fmt.Time(Info.When)) : Loc.T("hist.new_install", Info.To, Info.Source, Fmt.Time(Info.When)));
     public bool Undone => Info.Undone;
     public bool CanUndo => !Info.Undone && Info.CanUndo;
     public bool BackupGone => !Info.Undone && !Info.CanUndo;
@@ -377,12 +377,12 @@ internal sealed partial class FoundViewModel(MainViewModel main, FoundInfo info)
 
     public ObservableCollection<string> Lines { get; } = new(info.Lines);
     public string Id => Info.Id;
-    public string Header => Info.File + " · from " + Info.Origin;
+    public string Header => Loc.T("found.header", Info.File, Info.Origin);
     public bool HasError => !string.IsNullOrEmpty(Info.Error);
     public string Error => Info.Error ?? "";
     public bool CanInstall => !(HasError && Info.Lines.Count == 0);
     public bool Busy => Info.Busy;
-    public string InstallText => Info.Busy ? "Installing..." : "Install it";
+    public string InstallText => Loc.T(Info.Busy ? "found.installing" : "found.install");
 
     public void Update(FoundInfo i)
     {

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets/icon-256.png" LogicalName="icon-256.png" />
+    <EmbeddedResource Include="Locales/*.json" LogicalName="Locales.%(Filename)%(Extension)" />
     <InternalsVisibleTo Include="Sprinkler" />
     <InternalsVisibleTo Include="Sprinkler.Tests" />
   </ItemGroup>

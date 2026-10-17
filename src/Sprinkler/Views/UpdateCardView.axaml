@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              xmlns:v="using:Sprinkler.Views"
@@ -20,7 +21,7 @@
         <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="3">
           <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <Border Classes="tag new" IsVisible="{Binding IsNew}"><TextBlock Text="New install" /></Border>
+            <Border Classes="tag new" IsVisible="{Binding IsNew}"><TextBlock Text="{loc:T ui.new_install}" /></Border>
             <Border Classes="tag" IsVisible="{Binding HasParts}"><TextBlock Text="{Binding PartsText}" /></Border>
           </StackPanel>
         </StackPanel>
@@ -46,13 +47,13 @@
                   <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                   <Border Classes="tag auto" IsVisible="{Binding IsAuto}"><TextBlock Text="{Binding ModeText}" /></Border>
                   <Border Classes="tag click" IsVisible="{Binding IsClick}"><TextBlock Text="{Binding ModeText}" /></Border>
-                  <Border Classes="tag" IsVisible="{Binding NotUsable}"><TextBlock Text="not available" /></Border>
+                  <Border Classes="tag" IsVisible="{Binding NotUsable}"><TextBlock Text="{loc:T ui.not_available}" /></Border>
                 </StackPanel>
               </Button>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <Button Classes="link" Command="{Binding LoadAlternativesCommand}" IsVisible="{Binding ShowOtherSources}"><TextBlock Classes="small" Text="Other sources" /></Button>
+        <Button Classes="link" Command="{Binding LoadAlternativesCommand}" IsVisible="{Binding ShowOtherSources}"><TextBlock Classes="small" Text="{loc:T ui.other_sources}" /></Button>
         <TextBlock Classes="muted small" Text="{Binding ChosenNote}" IsVisible="{Binding ShowChosenNote}" TextWrapping="Wrap" />
         <TextBlock Classes="muted small" Text="{Binding LookingUpText}" IsVisible="{Binding ShowLookingUp}" TextWrapping="Wrap" />
         <TextBlock Classes="bad strong" Text="{Binding Message}" IsVisible="{Binding IsFailed}" TextWrapping="Wrap" />
@@ -66,8 +67,8 @@
             <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Classes="small" Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Margin="0,1" /></DataTemplate></ItemsControl.ItemTemplate>
           </ItemsControl>
         </Expander>
-        <Button Classes="link" Command="{Binding OpenPageCommand}" IsVisible="{Binding ShowPageLink}"><TextBlock Classes="small" Text="Mod page and changelog" /></Button>
-        <Button Classes="link" Command="{Binding SkipVersionCommand}" IsVisible="{Binding ShowSkipVersion}" ToolTip.Tip="Hide this version. A newer one will show up again."><TextBlock Classes="small" Text="Skip this version" /></Button>
+        <Button Classes="link" Command="{Binding OpenPageCommand}" IsVisible="{Binding ShowPageLink}"><TextBlock Classes="small" Text="{loc:T ui.mod_page_and_changelog}" /></Button>
+        <Button Classes="link" Command="{Binding SkipVersionCommand}" IsVisible="{Binding ShowSkipVersion}" ToolTip.Tip="{loc:T ui.hide_this_version_a_newer_one_will_show_up_a}"><TextBlock Classes="small" Text="{loc:T ui.skip_this_version}" /></Button>
 
         <!-- queued and working -->
         <TextBlock Classes="muted small" Text="{Binding Message}" IsVisible="{Binding IsQueued}" TextWrapping="Wrap" />
@@ -81,16 +82,16 @@
           <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
             <ctl:IconView Kind="pointer" Size="24" Foreground="{DynamicResource WarnBrush}" VerticalAlignment="Top" />
             <StackPanel Grid.Column="1" Spacing="8">
-              <TextBlock TextWrapping="Wrap"><Run Text="Your turn: " FontWeight="SemiBold" /><Run Text="{Binding Message}" /></TextBlock>
+              <TextBlock TextWrapping="Wrap"><Run Text="{loc:T ui.your_turn}" FontWeight="SemiBold" /><Run Text="{Binding Message}" /></TextBlock>
               <WrapPanel Orientation="Horizontal">
-                <Button Classes="slim" Command="{Binding ReopenCommand}" Margin="0,0,8,6"><TextBlock Text="Open the page again" /></Button>
+                <Button Classes="slim" Command="{Binding ReopenCommand}" Margin="0,0,8,6"><TextBlock Text="{loc:T ui.open_the_page_again}" /></Button>
                 <ItemsControl ItemsSource="{Binding OtherOffers}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:OfferViewModel"><Button Classes="slim" Command="{Binding ChooseCommand}" ToolTip.Tip="{Binding Note}" Margin="0,0,8,6"><TextBlock Text="{Binding Label, StringFormat='Use {0} instead'}" /></Button></DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Button Classes="slim" Command="{Binding SkipThisCommand}" Margin="0,0,8,6"><TextBlock Text="Skip this one" /></Button>
+                <Button Classes="slim" Command="{Binding SkipThisCommand}" Margin="0,0,8,6"><TextBlock Text="{loc:T ui.skip_this_one}" /></Button>
               </WrapPanel>
             </StackPanel>
           </Grid>
@@ -99,7 +100,7 @@
         <!-- done -->
         <StackPanel IsVisible="{Binding IsDone}" Spacing="4">
           <TextBlock FontWeight="SemiBold" Text="{Binding Message}" TextWrapping="Wrap" />
-          <Button Classes="link" Command="{Binding UndoCommand}" IsVisible="{Binding HasHistory}"><TextBlock Classes="small" Text="Undo this update" /></Button>
+          <Button Classes="link" Command="{Binding UndoCommand}" IsVisible="{Binding HasHistory}"><TextBlock Classes="small" Text="{loc:T ui.undo_this_update}" /></Button>
         </StackPanel>
         <TextBlock Classes="muted small" Text="{Binding Message}" IsVisible="{Binding IsSkipped}" TextWrapping="Wrap" />
       </StackPanel>

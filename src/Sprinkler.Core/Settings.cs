@@ -28,6 +28,7 @@ internal sealed class SettingsData
     public bool AppWindow { get; set; } = true;
     public long LogDismissedTicks { get; set; }
     public string Theme { get; set; } = "auto";
+    public string Language { get; set; } = "auto";
     public bool TourSeen { get; set; }
     public bool GroupContentPacks { get; set; } = true;
 }

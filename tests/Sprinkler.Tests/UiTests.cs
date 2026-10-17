@@ -458,10 +458,10 @@ public class CollectionUiTests
         Assert.Equal("by curator1", preview.Curator);
         Assert.Contains("2 mods", preview.Counts);
         Assert.Contains("1 optional mod", preview.Counts);
-        Assert.Contains("2 mods will appear", preview.ToInstallText);
+        Assert.Contains("2 mods to install", preview.ToInstallText);
 
         preview.IncludeOptional = true;
-        Assert.Contains("3 mods will appear", preview.ToInstallText);
+        Assert.Contains("3 mods to install", preview.ToInstallText);
         preview.AddCommand.Execute(null);
         await lookup;
         await SettleAsync(vm, () => vm.ProfileList.Count == 1);
@@ -520,3 +520,4 @@ public class CollectionUiTests
         Assert.DoesNotContain("to install", vm.ProfileList[0].Detail);
     }
 }
+

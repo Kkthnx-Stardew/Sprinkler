@@ -29,6 +29,7 @@ public partial class App : Application
             if (options.ModsPath is not null)
                 settings.Data.ModsPath = options.ModsPath;
 
+            Loc.Instance.SetLanguage(options.Language ?? settings.Data.Language);
             _service = new UpdateService(settings, new HistoryStore(), url =>
             {
                 if (!UrlPolicy.Open(url))

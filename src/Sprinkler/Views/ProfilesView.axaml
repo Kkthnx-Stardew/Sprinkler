@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
              xmlns:vm="using:Sprinkler.ViewModels"
              xmlns:ctl="using:Sprinkler.Controls"
              x:Class="Sprinkler.Views.ProfilesView"
@@ -10,13 +11,13 @@
       <!-- what a profile is, and the current one -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="layers" Size="22" /><TextBlock Classes="h2" Text="Profiles" /></StackPanel>
-          <TextBlock Classes="muted" TextWrapping="Wrap" Text="A profile remembers which mods are switched on, so you can keep one setup for solo play, one for co-op and one for testing, and change between them in a click. Switching only adds or removes the leading dot on a mod's folder, the same rule SMAPI uses, so nothing is moved or deleted and switching back is exact." />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="layers" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.profiles}" /></StackPanel>
+          <TextBlock Classes="muted" TextWrapping="Wrap" Text="{loc:T ui.a_profile_remembers_which_mods_are_switched}" />
 
           <Border Classes="banner ok" IsVisible="{Binding HasActiveProfile}">
             <StackPanel Orientation="Horizontal" Spacing="12">
               <ctl:IconView Kind="check" Size="20" VerticalAlignment="Top" />
-              <TextBlock Classes="body" TextWrapping="Wrap"><Run Text="Active profile: " /><Run Text="{Binding ActiveProfileName}" FontWeight="SemiBold" /></TextBlock>
+              <TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding ActiveProfileLine}" />
             </StackPanel>
           </Border>
 
@@ -25,7 +26,7 @@
               <ctl:IconView Kind="alert" Size="20" VerticalAlignment="Top" />
               <TextBlock Grid.Column="1" Classes="body" TextWrapping="Wrap" Text="{Binding ProfileModifiedText}" />
               <Button Grid.Column="2" Classes="slim primary" Command="{Binding SaveProfileChangesCommand}" VerticalAlignment="Top">
-                <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="save" Size="14" /><TextBlock Text="Save changes" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="save" Size="14" /><TextBlock Text="{loc:T ui.save_changes}" /></StackPanel>
               </Button>
             </Grid>
           </Border>
@@ -33,7 +34,7 @@
           <Border Classes="banner info" IsVisible="{Binding NoActiveProfile}">
             <StackPanel Orientation="Horizontal" Spacing="12">
               <ctl:IconView Kind="help" Size="20" VerticalAlignment="Top" />
-              <TextBlock Classes="body" TextWrapping="Wrap" Text="No profile is active. The mods that are switched on now are not saved in any profile yet." />
+              <TextBlock Classes="body" TextWrapping="Wrap" Text="{loc:T ui.no_profile_is_active_the_mods_that_are_switc}" />
             </StackPanel>
           </Border>
         </StackPanel>
@@ -42,22 +43,22 @@
       <!-- new -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <TextBlock Classes="h3" Margin="0" Text="Save what is switched on now" />
+          <TextBlock Classes="h3" Margin="0" Text="{loc:T ui.save_what_is_switched_on_now}" />
           <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding NewProfileName}" MaxLength="60" PlaceholderText="A name, for example Co-op farm" AutomationProperties.Name="Profile name">
+            <TextBox Text="{Binding NewProfileName}" MaxLength="60" PlaceholderText="{loc:T ui.a_name_for_example_co_op_farm}" AutomationProperties.Name="{loc:T ui.profile_name}">
               <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding CreateProfileCommand}" /></TextBox.KeyBindings>
             </TextBox>
             <Button Grid.Column="1" Classes="primary" Command="{Binding CreateProfileCommand}" IsEnabled="{Binding CanCreateProfile}">
-              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="save" Size="16" /><TextBlock Text="Save as a profile" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="save" Size="16" /><TextBlock Text="{loc:T ui.save_as_a_profile}" /></StackPanel>
             </Button>
-            <Button Grid.Column="2" Command="{Binding ImportProfileCommand}" ToolTip.Tip="Open a profile a friend sent you">
-              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="upload" Size="16" /><TextBlock Text="Open a shared profile" /></StackPanel>
+            <Button Grid.Column="2" Command="{Binding ImportProfileCommand}" ToolTip.Tip="{loc:T ui.open_a_profile_a_friend_sent_you}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="upload" Size="16" /><TextBlock Text="{loc:T ui.open_a_shared_profile}" /></StackPanel>
             </Button>
           </Grid>
           <CheckBox IsChecked="{Binding KeepConfigs}">
             <StackPanel>
-              <TextBlock FontWeight="SemiBold" Text="Each profile keeps its own mod settings" />
-              <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Saves every mod's config.json with the profile and puts it back when you switch, so a harder difficulty in one profile does not leak into another. A copy of your current settings is kept before the first switch." />
+              <TextBlock FontWeight="SemiBold" Text="{loc:T ui.each_profile_keeps_its_own_mod_settings}" />
+              <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.saves_every_mod_s_config_json_with_the_profi}" />
             </StackPanel>
           </CheckBox>
         </StackPanel>
@@ -66,10 +67,10 @@
       <!-- a Nexus collection -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <TextBlock Classes="h3" Margin="0" Text="Add a Nexus collection" />
-          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Collections are lists of mods that other players put together on Nexus Mods. Paste a collection's address; it becomes a profile, and the mods you do not have appear under Updates as installs." />
+          <TextBlock Classes="h3" Margin="0" Text="{loc:T ui.add_a_nexus_collection}" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.collections_are_lists_of_mods_that_other_pla}" />
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding CollectionAddress}" PlaceholderText="https://www.nexusmods.com/games/stardewvalley/collections/..." AutomationProperties.Name="Collection address">
+            <TextBox Text="{Binding CollectionAddress}" PlaceholderText="https://www.nexusmods.com/games/stardewvalley/collections/..." AutomationProperties.Name="{loc:T ui.collection_address}">
               <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding LookUpCollectionCommand}" /></TextBox.KeyBindings>
             </TextBox>
             <Button Grid.Column="1" Command="{Binding LookUpCollectionCommand}" IsEnabled="{Binding CanLookUp}">
@@ -83,7 +84,7 @@
       <Border Classes="panel center" IsVisible="{Binding NoProfiles}">
         <StackPanel Spacing="10" HorizontalAlignment="Center">
           <ctl:IconView Kind="layers" Size="44" HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
-          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="520" Text="No profiles yet. Switch your mods on and off the way you like, give it a name above, and it is saved here." />
+          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="520" Text="{loc:T ui.no_profiles_yet_switch_your_mods_on_and_off}" />
         </StackPanel>
       </Border>
 
@@ -96,7 +97,7 @@
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                   <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
-                    <Border Classes="chip ok" IsVisible="{Binding IsActive}"><TextBlock Text="Active" /></Border>
+                    <Border Classes="chip ok" IsVisible="{Binding IsActive}"><TextBlock Text="{loc:T ui.active}" /></Border>
                   </StackPanel>
                   <TextBlock Classes="muted small" Text="{Binding Detail}" TextWrapping="Wrap" />
                   <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsCollection}">
@@ -105,16 +106,16 @@
                   </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <Button Classes="primary" Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="Switch to it" /></Button>
-                  <Button Classes="icon ghost" Width="34" Height="34" MinHeight="34" AutomationProperties.Name="More actions" ToolTip.Tip="More actions">
+                  <Button Classes="primary" Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="{loc:T ui.switch_to_it}" /></Button>
+                  <Button Classes="icon ghost" Width="34" Height="34" MinHeight="34" AutomationProperties.Name="{loc:T ui.more_actions}" ToolTip.Tip="{loc:T ui.more_actions}">
                     <ctl:IconView Kind="more" Size="20" />
                     <Button.Flyout>
                       <MenuFlyout Placement="BottomEdgeAlignedRight">
-                        <MenuItem Header="Stop installing the rest of this collection" Command="{Binding StopInstallingCommand}" IsVisible="{Binding Pending}" />
-                        <MenuItem Header="Rename" Command="{Binding RenameCommand}" />
-                        <MenuItem Header="Make a copy" Command="{Binding CopyCommand}" />
-                        <MenuItem Header="Save to share..." Command="{Binding ExportCommand}" />
-                        <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+                        <MenuItem Header="{loc:T ui.stop_installing_the_rest_of_this_collection}" Command="{Binding StopInstallingCommand}" IsVisible="{Binding Pending}" />
+                        <MenuItem Header="{loc:T ui.rename}" Command="{Binding RenameCommand}" />
+                        <MenuItem Header="{loc:T ui.make_a_copy}" Command="{Binding CopyCommand}" />
+                        <MenuItem Header="{loc:T ui.save_to_share}" Command="{Binding ExportCommand}" />
+                        <MenuItem Header="{loc:T ui.delete}" Command="{Binding DeleteCommand}" />
                       </MenuFlyout>
                     </Button.Flyout>
                   </Button>

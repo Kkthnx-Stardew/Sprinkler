@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sprinkler.Core;
+using Avalonia.Threading;
 
 namespace Sprinkler.ViewModels;
 
@@ -21,7 +22,7 @@ internal sealed partial class MainViewModel
 
     partial void OnNexusKeyErrorChanged(string value) => OnPropertyChanged(nameof(HasNexusKeyError));
 
-    public string ConnectButtonText => NexusKeyBusy ? "Checking..." : "Connect";
+    public string ConnectButtonText => Loc.T(NexusKeyBusy ? "set.checking" : "set.connect");
     public bool CanConnect => !NexusKeyBusy;
 
     partial void OnNexusKeyBusyChanged(bool value)
@@ -31,13 +32,13 @@ internal sealed partial class MainViewModel
     }
 
     public string NexusUser => Snap?.Nexus.User ?? "";
-    public string NexusAccountKind => Snap?.Nexus.Premium == true ? " (Premium)." : " (free account).";
+    public string NexusConnectedLine => Loc.T("set.connected_as", NexusUser, Loc.T(Snap?.Nexus.Premium == true ? "set.kind_premium" : "set.kind_free"));
     public string NexusAccountNote => Snap?.Nexus.Premium == true
-        ? "With Premium, the app downloads from Nexus by itself. No clicks needed."
-        : "With a free account, Nexus wants one click per mod on its website. The app makes that click quick and does everything else.";
+        ? Loc.T("set.premium_note")
+        : Loc.T("set.free_note");
     public bool HasNexusMessage => !string.IsNullOrEmpty(Snap?.Nexus.Message);
     public string NexusMessage => Snap?.Nexus.Message ?? "";
-    public string KeyStorageText => "The key stays on this computer (" + (Snap?.Nexus.KeyStorage ?? "stored privately") + ") and is only sent to Nexus. Nexus allows a personal key for your own use, so do not share it. You can skip this: the app still works, you just press Nexus download buttons yourself.";
+    public string KeyStorageText => Loc.T("set.key_storage", Snap?.Nexus.KeyStorage ?? Loc.T("set.key_private"));
 
     [RelayCommand]
     private async Task ConnectNexus()
@@ -51,7 +52,7 @@ internal sealed partial class MainViewModel
             if (error is null)
             {
                 NexusKeyInput = "";
-                Toast("Nexus connected.");
+                Toast(Loc.T("set.connected"));
             }
         }
         finally
@@ -145,7 +146,7 @@ internal sealed partial class MainViewModel
     {
         _svc.SetDownloadsFolder(DownloadsInput);
         _downloadsEdited = false;
-        Toast("Saved.");
+        Toast(Loc.T("set.saved"));
         Refresh();
     }
 
@@ -154,7 +155,7 @@ internal sealed partial class MainViewModel
     {
         if (Ui is null)
             return;
-        var picked = await Ui.PickFolderAsync("Choose the folder your browser saves downloads to");
+        var picked = await Ui.PickFolderAsync(Loc.T("set.pick_downloads"));
         if (picked is not null)
         {
             DownloadsInput = picked;
@@ -171,6 +172,47 @@ internal sealed partial class MainViewModel
     [RelayCommand]
     private void PickTheme(string theme) => SetTheme(theme);
 
+    // ---- language
+    public IReadOnlyList<LanguageChoice> LanguageChoices { get; private set; } = BuildLanguageChoices();
+
+    private static List<LanguageChoice> BuildLanguageChoices() =>
+        new[] { new LanguageChoice("auto", Loc.T("set.lang_auto")) }.Concat(Loc.All.Select(l => new LanguageChoice(l.Code, l.NativeName))).ToList();
+
+    public LanguageChoice? SelectedLanguage
+    {
+        get
+        {
+            var code = Snap?.Settings.Language ?? "auto";
+            return LanguageChoices.FirstOrDefault(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+        }
+        set
+        {
+            if (value is not null && !value.Code.Equals(Snap?.Settings.Language ?? "auto", StringComparison.OrdinalIgnoreCase))
+                _svc.SetLanguage(value.Code);
+        }
+    }
+
+    /// <summary>The words changed: everything built from text is built again, so no screen keeps the old language.</summary>
+    private void OnLanguageChanged()
+    {
+        if (_disposed)
+            return;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_disposed)
+                return;
+            _itemMap.Clear();
+            _rowMap.Clear();
+            _historyMap.Clear();
+            _foundMap.Clear();
+            _profileMap.Clear();
+            LanguageChoices = BuildLanguageChoices();
+            Refresh();
+            OnPropertyChanged(nameof(LanguageChoices));
+            OnPropertyChanged(nameof(SelectedLanguage));
+        });
+    }
+
     // ---- Linux application menu
     public bool ShowShortcut => Snap?.App.Shortcut is not null;
     public bool ShortcutInstalled => Snap?.App.Shortcut?.Installed == true;
@@ -182,11 +224,11 @@ internal sealed partial class MainViewModel
         try
         {
             LinuxShortcut.Install();
-            Toast("Added to your application menu.");
+            Toast(Loc.T("set.menu_added"));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            Toast("Could not change the menu shortcut: " + ex.Message, true);
+            Toast(Loc.T("set.menu_failed", ex.Message), true);
         }
         Refresh();
     }
@@ -195,7 +237,7 @@ internal sealed partial class MainViewModel
     private void RemoveShortcut()
     {
         LinuxShortcut.Remove();
-        Toast("Removed from the menu.");
+        Toast(Loc.T("set.menu_removed"));
         Refresh();
     }
 }

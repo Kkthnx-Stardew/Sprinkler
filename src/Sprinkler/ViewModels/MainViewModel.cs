@@ -64,12 +64,13 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
         ModChips = new ObservableCollection<FilterChipViewModel>
         {
-            new(this, "all", "All"), new(this, "update", "Updates"), new(this, "ok", "Up to date"),
-            new(this, "needs", "Missing requirements"), new(this, "nocheck", "Cannot check"), new(this, "off", "Off or skipped"), new(this, "config", "Has settings"),
+            new(this, "all", ChipLabel("all")), new(this, "update", ChipLabel("update")), new(this, "ok", ChipLabel("ok")),
+            new(this, "needs", ChipLabel("needs")), new(this, "nocheck", ChipLabel("nocheck")), new(this, "off", ChipLabel("off")), new(this, "config", ChipLabel("config")),
         };
         ModChips[0].IsOn = true;
 
         _svc.Changed += OnServiceChanged;
+        Loc.Instance.LanguageChanged += OnLanguageChanged;
         _svc.Art.Changed += () =>
         {
             _artDirty = true;
@@ -215,7 +216,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         SyncSettingsFields(s);
 
         if (_previousPhase is { } before && before != s.Phase && s.Phase == Phase.Finished)
-            Toast("Finished: " + (s.Summary ?? ""), s.Summary?.Contains("failed", StringComparison.OrdinalIgnoreCase) == true);
+            Toast(Loc.T("vm.finished_toast", s.Summary ?? ""), s.Items.Any(i => i.Status == ItemStatus.Failed));
         _previousPhase = s.Phase;
 
         MaybeShowTour(s);
@@ -345,7 +346,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void SyncSteps(StateSnapshot s)
     {
-        var names = new[] { "Find your game", "Check mods", "Choose", "Update" };
+        var names = new[] { Loc.T("step.find"), Loc.T("step.check"), Loc.T("step.choose"), Loc.T("step.update") };
         var active = s.Phase switch
         {
             Phase.Starting or Phase.ChooseGame => 0,
@@ -408,7 +409,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public Task<bool> AskAsync(string title, string text, string yes, string icon = "help")
     {
-        var d = new ConfirmDialogViewModel(title, icon, yes, "Cancel", new[] { new DialogLine("", text) });
+        var d = new ConfirmDialogViewModel(title, icon, yes, Loc.T("ui.cancel"), new[] { new DialogLine("", text) });
         ShowDialog(d);
         return d.Result;
     }
@@ -437,7 +438,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Log.Write("Unexpected failure: " + ex);
-            Dispatcher.UIThread.Post(() => Toast("Something went wrong: " + ex.Message, true));
+            Dispatcher.UIThread.Post(() => Toast(Loc.T("vm.went_wrong", ex.Message), true));
         }
     }
 
@@ -447,5 +448,6 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _debounce.Stop();
         _poll.Stop();
         _svc.Changed -= OnServiceChanged;
+        Loc.Instance.LanguageChanged -= OnLanguageChanged;
     }
 }

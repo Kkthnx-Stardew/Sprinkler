@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using Sprinkler.Controls;
+using Sprinkler.Core;
 using Sprinkler.ViewModels;
 using Xunit;
 
@@ -134,8 +135,8 @@ public class AppLogicTests
     [Fact]
     public void FormattingReadsInPlainLanguage()
     {
-        Assert.Equal("1 mod", Fmt.Plural(1, "mod", "mods"));
-        Assert.Equal("3 mods", Fmt.Plural(3, "mod", "mods"));
+        Assert.Equal("1 mod", Loc.Count("n.mod", 1));
+        Assert.Equal("3 mods", Loc.Count("n.mod", 3));
         Assert.Equal("12 MB", Fmt.Bytes(12_400_000));
         Assert.Equal("1 KB", Fmt.Bytes(10));
         Assert.Equal("just now", Fmt.Ago(DateTime.UtcNow));

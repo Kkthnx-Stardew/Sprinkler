@@ -61,19 +61,19 @@ internal sealed class ArchiveFile : IDisposable
         catch (Exception ex) when (ex is InvalidDataException or SharpCompress.Common.ArchiveException or NotSupportedException or IOException)
         {
             Dispose();
-            throw new ArchiveException("The file is not a readable zip, 7z or rar archive (" + ex.Message + ").");
+            throw new ArchiveException(Loc.T("core.archive_unreadable", ex.Message));
         }
 
         if (Entries.Count > MaxEntries)
         {
             Dispose();
-            throw new ArchiveException($"The archive holds {Entries.Count} files, which is far more than a mod normally has.");
+            throw new ArchiveException(Loc.T("core.archive_too_many", Entries.Count));
         }
         TotalBytes = Entries.Sum(e => e.Size);
         if (TotalBytes > MaxTotalBytes)
         {
             Dispose();
-            throw new ArchiveException("The archive would unpack to more than 6 GB, which is not a normal mod.");
+            throw new ArchiveException(Loc.T("core.archive_too_big"));
         }
     }
 
@@ -99,7 +99,7 @@ internal sealed class ArchiveFile : IDisposable
     private void Add(string name, long size, Func<Stream> open)
     {
         if (_openers.ContainsKey(name))
-            throw new ArchiveException("The archive lists the same file twice (" + name + "), so it cannot be trusted.");
+            throw new ArchiveException(Loc.T("core.archive_duplicate", name));
         _openers[name] = open;
         Entries.Add(new ArchiveEntryInfo(name, size));
     }
@@ -113,15 +113,15 @@ internal sealed class ArchiveFile : IDisposable
         if (p.Length == 0)
             return null;
         if (p.StartsWith('/') || (p.Length > 1 && p[1] == ':'))
-            throw new ArchiveException("The archive contains an absolute path (" + raw + "), so it was rejected.");
+            throw new ArchiveException(Loc.T("core.archive_absolute", raw));
 
         var segments = p.Split('/');
         foreach (var seg in segments)
         {
             if (seg == "..")
-                throw new ArchiveException("The archive tries to write outside its folder (" + raw + "), so it was rejected.");
+                throw new ArchiveException(Loc.T("core.archive_outside", raw));
             if (seg.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 && seg.Length > 0)
-                throw new ArchiveException("The archive contains an invalid file name (" + raw + "), so it was rejected.");
+                throw new ArchiveException(Loc.T("core.archive_bad_name", raw));
         }
         if (segments[0].Equals("__MACOSX", StringComparison.OrdinalIgnoreCase))
             return null;

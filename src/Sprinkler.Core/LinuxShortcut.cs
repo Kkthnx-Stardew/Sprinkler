@@ -50,7 +50,7 @@ internal static class LinuxShortcut
     public static byte[] EmbeddedIcon()
     {
         using var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("icon-256.png")
-            ?? throw new InvalidOperationException("The icon is missing from the program.");
+            ?? throw new InvalidOperationException(Loc.T("core.icon_missing"));
         using var ms = new MemoryStream();
         s.CopyTo(ms);
         return ms.ToArray();
@@ -59,13 +59,13 @@ internal static class LinuxShortcut
     /// <summary>Writes the shortcut for the running program. Returns a plain sentence about what was done.</summary>
     public static string Install()
     {
-        var exe = Environment.ProcessPath ?? throw new InvalidOperationException("The program path is unknown.");
+        var exe = Environment.ProcessPath ?? throw new InvalidOperationException(Loc.T("core.app_path_unknown"));
         var dataHome = DataHome();
         Install(dataHome, exe, EmbeddedIcon());
         // best effort: make menus and icon themes notice the change without logging out
         Platform.Capture("update-desktop-database", new[] { Path.Combine(dataHome, "applications") });
         Platform.Capture("gtk-update-icon-cache", new[] { "-f", "-t", Path.Combine(dataHome, "icons", "hicolor") });
-        return $"Added Sprinkler to your application menu. It starts {exe}, so move the program first if you want it elsewhere, then add it again.";
+        return Loc.T("core.menu_added", exe);
     }
 
     internal static void Install(string dataHome, string exe, byte[] icon)

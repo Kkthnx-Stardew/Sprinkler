@@ -1,25 +1,26 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
+using Sprinkler.Core;
 
 namespace Sprinkler.ViewModels;
 
-/// <summary>Plain-language formatting shared by the screens.</summary>
+/// <summary>Formatting shared by the screens. Every word comes from the language files.</summary>
 internal static class Fmt
 {
-    public static string Plural(int n, string one, string many) => $"{n} {(n == 1 ? one : many)}";
-
     public static string Bytes(long n) =>
         n > 1_000_000_000 ? $"{n / 1e9:0.0} GB"
         : n > 1_000_000 ? $"{n / 1e6:0} MB"
         : $"{Math.Max(1, (long)Math.Round(n / 1e3))} KB";
 
-    public static string Time(DateTime when) => when.ToLocalTime().ToString("MMM d, yyyy h:mm tt");
+    /// <summary>A date and time in the pattern of the current language. Month names are avoided on purpose: the app ships without culture data to stay small.</summary>
+    public static string Time(DateTime when) => when.ToLocalTime().ToString(Loc.T("fmt.datetime"), CultureInfo.InvariantCulture);
 
     public static string Ago(DateTime when)
     {
         var minutes = (int)Math.Round((DateTime.UtcNow - when.ToUniversalTime()).TotalMinutes);
-        return minutes < 1 ? "just now"
-            : minutes < 60 ? $"{minutes} min ago"
-            : minutes < 1440 ? $"{(int)Math.Round(minutes / 60.0)} h ago"
+        return minutes < 1 ? Loc.T("time.just_now")
+            : minutes < 60 ? Loc.T("time.minutes_ago", minutes)
+            : minutes < 1440 ? Loc.T("time.hours_ago", (int)Math.Round(minutes / 60.0))
             : Time(when);
     }
 

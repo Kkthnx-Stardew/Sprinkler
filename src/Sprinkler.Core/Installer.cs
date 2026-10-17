@@ -38,7 +38,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
     {
         var mods = ArchiveInspector.FindMods(archive);
         if (mods.Count == 0)
-            throw new WrongFileException("This archive has no manifest.json, so it is not a SMAPI mod or content pack.");
+            throw new WrongFileException(Loc.T("core.no_manifest_pack"));
 
         var plan = new InstallPlan { ArchivePath = archivePath };
         var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -85,7 +85,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
     public InstallResult Apply(InstallPlan plan, string modsPath, string sourceLabel)
     {
         if (GameLocator.IsGameRunning(fresh: true))
-            throw new InstallException("Stardew Valley or SMAPI is running. Close it first so no file is in use.");
+            throw new InstallException(Loc.T("core.close_game_files"));
 
         var id = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6];
         var stagingRoot = Path.Combine(AppEnvironment.StagingDir, id);
@@ -132,7 +132,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 if (written is null
                     || !written.UniqueId.Equals(folder.Source.Manifest.UniqueId, StringComparison.OrdinalIgnoreCase)
                     || written.Version != folder.Source.Manifest.Version)
-                    throw new InstallException($"After copying, {folder.Source.Manifest.Name} did not read back correctly, so the change was undone.");
+                    throw new InstallException(Loc.T("core.verify_failed", folder.Source.Manifest.Name));
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -145,7 +145,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 throw;
             throw ex is IOException or UnauthorizedAccessException
                 ? new InstallException("A file could not be written (" + ex.Message + "). Close the game and any program showing the Mods folder, then try again. Nothing was changed.")
-                : new InstallException("The download could not be unpacked (" + ex.Message + "). The file may be damaged. Nothing was changed.");
+                : new InstallException(Loc.T("core.unpack_failed", ex.Message));
         }
 
         TryDeleteDirectory(stagingRoot);
@@ -178,12 +178,12 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
     public InstallResult Remove(string folderPath, string modsPath, string uniqueId, string name, string? version)
     {
         if (GameLocator.IsGameRunning(fresh: true))
-            throw new InstallException("Stardew Valley or SMAPI is running. Close it first so no file is in use.");
+            throw new InstallException(Loc.T("core.close_game_files"));
 
         var folder = Path.GetFullPath(folderPath).TrimEnd('\\', '/');
         var root = Path.GetFullPath(modsPath).TrimEnd('\\', '/');
         if (!folder.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || !Directory.Exists(folder))
-            throw new InstallException("That mod folder was not found inside your Mods folder, so nothing was removed.");
+            throw new InstallException(Loc.T("core.remove_not_found"));
 
         var id = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..6];
         var backupFile = id + ".zip";
@@ -197,12 +197,12 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 AddFolderToZip(zip, folder, relative);
             using (var check = ZipFile.OpenRead(backupPath))
                 if (check.Entries.Count == 0)
-                    throw new InstallException("The backup came out empty, so nothing was removed.");
+                    throw new InstallException(Loc.T("core.backup_empty"));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             TryDeleteFile(backupPath);
-            throw new InstallException("The backup could not be written (" + ex.Message + "), so nothing was removed.");
+            throw new InstallException(Loc.T("core.backup_write_failed", ex.Message));
         }
 
         try
@@ -227,7 +227,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 Log.Write("Could not restore after a failed removal: " + restore.Message);
             }
             TryDeleteFile(backupPath);
-            throw new InstallException("The folder could not be removed (" + ex.Message + "). Close the game and any program showing it, then try again. It was left as it was.");
+            throw new InstallException(Loc.T("core.remove_failed", ex.Message));
         }
 
         history.Add(new HistoryEntry
@@ -248,16 +248,16 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
     /// <summary>Puts a previous install back: restores the backup, or removes the folders it added.</summary>
     public void Undo(string historyId, string modsPath)
     {
-        var entry = history.Find(historyId) ?? throw new InstallException("That change is not in the history.");
+        var entry = history.Find(historyId) ?? throw new InstallException(Loc.T("core.undo_unknown"));
         if (entry.Undone)
-            throw new InstallException("That change was already undone.");
+            throw new InstallException(Loc.T("core.undo_done"));
         if (GameLocator.IsGameRunning(fresh: true))
-            throw new InstallException("Stardew Valley or SMAPI is running. Close it first.");
+            throw new InstallException(Loc.T("core.close_game"));
 
         var backupPath = entry.BackupFile is null ? null : Path.Combine(history.BackupsDir, entry.BackupFile);
         var needsBackup = entry.Folders.Any(f => !f.WasNew);
         if (needsBackup && (backupPath is null || !File.Exists(backupPath)))
-            throw new InstallException("The backup for this change was removed to save space, so it cannot be undone.");
+            throw new InstallException(Loc.T("core.backup_gone"));
 
         // Unpack the backup somewhere safe first. Only when that worked is anything in the Mods folder touched,
         // so a damaged backup or a full disk cannot leave a mod half restored.
@@ -281,7 +281,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             foreach (var f in entry.Folders.Where(f => !f.WasNew))
             {
                 if (!Directory.Exists(SafeJoin(temp, f.RelativePath)))
-                    throw new InstallException("The backup does not contain " + f.RelativePath + ", so nothing was changed.");
+                    throw new InstallException(Loc.T("core.backup_missing_file", f.RelativePath));
             }
 
             foreach (var f in entry.Folders)
@@ -295,7 +295,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         }
         catch (Exception ex) when (ex is InvalidDataException or NotSupportedException)
         {
-            throw new InstallException("The backup is damaged, so nothing was changed. (" + ex.Message + ")");
+            throw new InstallException(Loc.T("core.backup_damaged", ex.Message));
         }
         finally
         {
@@ -350,7 +350,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             var wanted = bytes + bytes / 20 + 50L * 1024 * 1024;
             var free = freeBytes(root);
             if (free < wanted)
-                throw new InstallException($"There is not enough free space on drive {root.TrimEnd('\\')}. About {wanted / (1024 * 1024)} MB is needed and {free / (1024 * 1024)} MB is free. Nothing was changed.");
+                throw new InstallException(Loc.T("core.no_space", root.TrimEnd('\\'), wanted / (1024 * 1024), free / (1024 * 1024)));
         }
     }
 
@@ -387,7 +387,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             File.Copy(Path.Combine(stagedDir, rel), dest, overwrite: true);
         }
         if (keptConfig)
-            messages.Add("Kept your existing config.json.");
+            messages.Add(Loc.T("core.kept_config"));
 
         if (replacing)
         {
@@ -404,7 +404,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                 }
             }
             if (removed > 0)
-                messages.Add($"Removed {removed} old code file{(removed == 1 ? "" : "s")} the new version no longer uses.");
+                messages.Add(Loc.Count("core.removed_code", removed));
         }
         return messages;
     }
@@ -426,7 +426,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
 
             var dest = Path.GetFullPath(Path.Combine(destDir, rel.Replace('/', Path.DirectorySeparatorChar)));
             if (!dest.StartsWith(fullDest, StringComparison.OrdinalIgnoreCase))
-                throw new ArchiveException("The archive tried to write outside its folder (" + entry.Path + ").");
+                throw new ArchiveException(Loc.T("core.archive_outside_stop", entry.Path));
 
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
             using var input = archive.OpenEntry(entry.Path);
@@ -439,7 +439,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             {
                 written += n;
                 if (written > ArchiveFile.MaxTotalBytes)
-                    throw new ArchiveException("The archive unpacks to far more data than it declares, so it was stopped.");
+                    throw new ArchiveException(Loc.T("core.archive_lies"));
                 output.Write(buffer, 0, n);
             }
         }

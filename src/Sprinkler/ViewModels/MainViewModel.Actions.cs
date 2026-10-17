@@ -17,7 +17,7 @@ internal sealed partial class MainViewModel
     {
         var error = _svc.LaunchGame();
         if (error is null)
-            Toast("Starting Stardew Valley with SMAPI...");
+            Toast(Loc.T("act.starting_game"));
         else
             Toast(error, true);
     }
@@ -33,7 +33,7 @@ internal sealed partial class MainViewModel
     {
         var current = Snap?.Settings.Theme ?? "auto";
         SetTheme(current == "auto" ? "light" : current == "light" ? "dark" : "auto");
-        Toast("Look: " + (Snap?.Settings.Theme ?? "auto") switch { "light" => "light", "dark" => "dark", _ => "follows your system" });
+        Toast(Loc.T("act.theme_" + (Snap?.Settings.Theme ?? "auto")));
     }
 
     public void SetTheme(string theme)
@@ -61,7 +61,7 @@ internal sealed partial class MainViewModel
     public void OpenUrl(string? url)
     {
         if (!UrlPolicy.Open(url))
-            Toast("That address is not one the app opens.", true);
+            Toast(Loc.T("act.bad_address"), true);
     }
 
     [RelayCommand]
@@ -81,7 +81,7 @@ internal sealed partial class MainViewModel
                 Log.Write("Could not copy the report: " + ex.Message);
             }
         }
-        Toast(copied ? "Details copied. Paste them into the new issue." : "Opening the issue page.");
+        Toast(Loc.T(copied ? "act.report_copied" : "act.report_opening"));
         OpenUrl(RepoUrl + "/issues/new");
     }
 
@@ -99,7 +99,7 @@ internal sealed partial class MainViewModel
         if (path is not null && Directory.Exists(path))
             Platform.OpenFolder(path);
         else
-            Toast("That folder does not exist yet.", true);
+            Toast(Loc.T("act.no_folder"), true);
     }
 
     public void RevealMod(string uniqueId)
@@ -136,7 +136,7 @@ internal sealed partial class MainViewModel
     {
         if (Ui is null)
             return;
-        var picked = await Ui.PickFolderAsync("Choose your Stardew Valley folder");
+        var picked = await Ui.PickFolderAsync(Loc.T("act.pick_game"));
         if (picked is not null)
             await SetGameFolderAsync(picked);
     }
@@ -185,20 +185,20 @@ internal sealed partial class MainViewModel
         var lines = new List<DialogLine>();
         if (auto.Count > 0)
             lines.Add(new DialogLine(
-                Fmt.Plural(auto.Count, "mod", "mods") + " will download and install by themselves:",
-                string.Join(", ", auto.Select(i => $"{i.Name} (from {OfferOf(i).Label})"))));
+                Loc.T("act.update_auto", Loc.Count("n.mod", auto.Count)),
+                string.Join(", ", auto.Select(i => Loc.T("act.update_from", i.Name, OfferOf(i).Label)))));
         if (hand.Count > 0)
             lines.Add(new DialogLine(
-                Fmt.Plural(hand.Count, "mod", "mods") + " need a click on a website. I open the pages three at a time and install each file the moment it lands in your Downloads folder:",
+                Loc.T("act.update_hand", Loc.Count("n.mod", hand.Count)),
                 string.Join(", ", hand.Select(i => $"{i.Name} ({OfferOf(i).Label})"))));
 
         var dialog = new ConfirmDialogViewModel(
-            $"Update {Fmt.Plural(chosen.Count, "mod", "mods")}?", "arrowup", "Yes, update", "Not yet", lines,
+            Loc.T("act.update_title", Loc.Count("n.mod", chosen.Count)), "arrowup", Loc.T("act.yes_update"), Loc.T("act.not_yet"), lines,
             new[]
             {
-                "Each mod folder is backed up first. Your config.json files are kept.",
-                "If anything goes wrong while copying, that mod is put back exactly as it was.",
-                "Make sure Stardew Valley is closed.",
+                Loc.T("act.update_b1"),
+                Loc.T("act.update_b2"),
+                Loc.T("act.update_b3"),
             });
         ShowDialog(dialog);
         if (!await dialog.Result)
@@ -210,11 +210,11 @@ internal sealed partial class MainViewModel
 
     public async Task UndoAsync(string historyId)
     {
-        if (!await AskAsync("Put the previous version back?", "Your current version of this mod will be replaced by the backup.", "Yes, undo it", "shield"))
+        if (!await AskAsync(Loc.T("act.undo_title"), Loc.T("act.undo_text"), Loc.T("act.undo_yes"), "shield"))
             return;
         var error = await _svc.UndoAsync(historyId);
         if (error is null)
-            Toast("Undone. The old version is back.");
+            Toast(Loc.T("act.undone"));
         else
             Toast(error, true);
     }
@@ -231,10 +231,10 @@ internal sealed partial class MainViewModel
             var name = Path.GetFileName(path);
             if (!new[] { ".zip", ".7z", ".rar" }.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase))
             {
-                Toast(name + " is not a .zip, .7z or .rar file.", true);
+                Toast(Loc.T("act.not_archive", name), true);
                 continue;
             }
-            Toast("Reading " + name + "...");
+            Toast(Loc.T("act.reading", name));
             try
             {
                 // work on a copy, so the file the person dropped is never moved or deleted
@@ -245,7 +245,7 @@ internal sealed partial class MainViewModel
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Toast("Could not read " + name + ": " + ex.Message, true);
+                Toast(Loc.T("act.read_failed", name, ex.Message), true);
             }
         }
         Tab = AppTab.Updates;
@@ -368,7 +368,7 @@ internal sealed partial class MainViewModel
 
     public async Task EditNoteAsync(ModRowViewModel row)
     {
-        var text = await PromptAsync("Note about " + row.Name, "book", "Only you see this. Leave it empty to remove it.", NoteFor(row.UniqueId), "Save note", 300);
+        var text = await PromptAsync(Loc.T("act.note_title", row.Name), "book", Loc.T("act.note_prompt"), NoteFor(row.UniqueId), Loc.T("act.note_save"), 300);
         if (text is null)
             return;
         _svc.SetModNote(row.UniqueId, text);
@@ -381,7 +381,7 @@ internal sealed partial class MainViewModel
         var file = folder is null ? null : Path.Combine(folder, "config.json");
         if (file is null || !File.Exists(file))
         {
-            Toast("This mod has no settings file.", true);
+            Toast(Loc.T("act.no_settings_file"), true);
             return;
         }
         try
@@ -390,15 +390,15 @@ internal sealed partial class MainViewModel
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            Toast("Could not open the settings file: " + ex.Message, true);
+            Toast(Loc.T("act.settings_file_failed", ex.Message), true);
         }
     }
 
     public async Task RemoveModAsync(ModRowViewModel row, bool force = false)
     {
-        if (!force && !await AskAsync($"Remove {row.Name}?",
-            "The mod folder is backed up first and the removal appears in History with an Undo button, so you can bring it back with its settings.",
-            "Remove it", "alert"))
+        if (!force && !await AskAsync(Loc.T("act.remove_title", row.Name),
+            Loc.T("act.remove_text"),
+            Loc.T("act.remove_yes"), "alert"))
             return;
 
         var (error, dependents) = await _svc.RemoveModAsync(row.UniqueId, force);
@@ -410,11 +410,11 @@ internal sealed partial class MainViewModel
         }
         if (dependents is { Length: > 0 })
         {
-            if (await AskAsync($"Remove {row.Name} anyway?", "These mods need it and will stop loading: " + string.Join(", ", dependents) + ".", "Remove anyway", "alert"))
+            if (await AskAsync(Loc.T("act.remove_anyway_title", row.Name), Loc.T("act.needed_by", string.Join(", ", dependents)), Loc.T("act.remove_anyway"), "alert"))
                 await RemoveModAsync(row, force: true);
             return;
         }
-        Toast($"{row.Name} was removed. Undo it from History if you change your mind.");
+        Toast(Loc.T("act.removed", row.Name));
     }
 
     public async Task ToggleEndorsementAsync(ModRowViewModel row)
@@ -426,16 +426,7 @@ internal sealed partial class MainViewModel
         Toast(message, !ok);
     }
 
-    private static string ChipLabel(string key) => key switch
-    {
-        "update" => "Updates",
-        "ok" => "Up to date",
-        "needs" => "Missing requirements",
-        "nocheck" => "Cannot check",
-        "off" => "Off or skipped",
-        "config" => "Has settings",
-        _ => "All",
-    };
+    private static string ChipLabel(string key) => Loc.T("chip." + key);
 
     [RelayCommand]
     private void ShowFilter(string key)
@@ -455,12 +446,12 @@ internal sealed partial class MainViewModel
         }
         if (dependents is { Length: > 0 })
         {
-            var ok = await AskAsync("Turn off " + row.Name + "?", "These mods need it and will stop loading: " + string.Join(", ", dependents) + ".", "Turn it off anyway", "alert");
+            var ok = await AskAsync(Loc.T("act.off_title", row.Name), Loc.T("act.needed_by", string.Join(", ", dependents)), Loc.T("act.off_anyway"), "alert");
             if (ok)
                 await ToggleModAsync(row, enable, force: true);
             return;
         }
-        Toast(enable ? row.Name + " is on again." : row.Name + " is off. SMAPI skips it next time you play.");
+        Toast(Loc.T(enable ? "act.is_on" : "act.is_off", row.Name));
     }
 
     public void SetIgnored(string uniqueId, bool ignore) => _svc.SetIgnored(uniqueId, ignore);

@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
         xmlns:vm="using:Sprinkler.ViewModels"
         xmlns:ctl="using:Sprinkler.Controls"
         xmlns:v="using:Sprinkler.Views"
@@ -35,9 +36,9 @@
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{Binding NexusChip}" /></StackPanel>
                 </Border>
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
-                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="Connect Nexus" /></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{loc:T ui.connect_nexus}" /></StackPanel>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="Your active profile">
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{loc:T ui.your_active_profile}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Text="{Binding ProfileChipText}" /></StackPanel>
                 </Button>
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" Command="{Binding OpenAppUpdateCommand}">
@@ -48,17 +49,17 @@
           </StackPanel>
 
           <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-            <Border Classes="chip warn" IsVisible="{Binding GameRunning}"><TextBlock Text="Game is running" /></Border>
+            <Border Classes="chip warn" IsVisible="{Binding GameRunning}"><TextBlock Text="{loc:T ui.game_is_running}" /></Border>
             <Button Command="{Binding CheckCommand}" IsEnabled="{Binding CanCheck}" IsVisible="{Binding HasGame}">
-              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="Check again" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="{loc:T ui.check_again}" /></StackPanel>
             </Button>
-            <Button Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}" ToolTip.Tip="Start Stardew Valley through SMAPI">
-              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="Play" /></StackPanel>
+            <Button Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}" ToolTip.Tip="{loc:T ui.start_stardew_valley_through_smapi}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="{loc:T ui.play}" /></StackPanel>
             </Button>
-            <Button Classes="icon" Command="{Binding ShowTourFromStartCommand}" ToolTip.Tip="Quick tour and help" AutomationProperties.Name="Quick tour">
+            <Button Classes="icon" Command="{Binding ShowTourFromStartCommand}" ToolTip.Tip="{loc:T ui.quick_tour_and_help}" AutomationProperties.Name="{loc:T ui.quick_tour}">
               <ctl:IconView Kind="help" Size="18" />
             </Button>
-            <Button Classes="icon" Command="{Binding CycleThemeCommand}" ToolTip.Tip="Switch light or dark" AutomationProperties.Name="Switch theme">
+            <Button Classes="icon" Command="{Binding CycleThemeCommand}" ToolTip.Tip="{loc:T ui.switch_light_or_dark}" AutomationProperties.Name="{loc:T ui.switch_theme}">
               <ctl:IconView Kind="{Binding ThemeIcon}" Size="18" />
             </Button>
           </StackPanel>
@@ -67,20 +68,20 @@
 
       <!-- ===== tabs ===== -->
       <Border Grid.Row="1" Padding="20,6,20,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
-        <ListBox Classes="tabs" SelectedIndex="{Binding TabIndex}" HorizontalAlignment="Left" AutomationProperties.Name="Sections">
+        <ListBox Classes="tabs" SelectedIndex="{Binding TabIndex}" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T ui.sections}">
           <ListBoxItem>
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <ctl:IconView Kind="arrowup" Size="17" /><TextBlock Text="Updates" />
+              <ctl:IconView Kind="arrowup" Size="17" /><TextBlock Text="{loc:T ui.updates}" />
               <Border Background="{DynamicResource AccentBrush}" CornerRadius="99" MinWidth="20" Padding="6,0" IsVisible="{Binding HasUpdateCount}" VerticalAlignment="Center">
                 <TextBlock Text="{Binding UpdateCount}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" HorizontalAlignment="Center" />
               </Border>
             </StackPanel>
           </ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="package" Size="17" /><TextBlock Text="All mods" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="layers" Size="17" /><TextBlock Text="Profiles" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="clock" Size="17" /><TextBlock Text="History" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="Nexus and settings" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="Help" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="package" Size="17" /><TextBlock Text="{loc:T ui.all_mods}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="layers" Size="17" /><TextBlock Text="{loc:T ui.profiles}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="clock" Size="17" /><TextBlock Text="{loc:T ui.history}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="{loc:T ui.nexus_and_settings}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="{loc:T ui.help}" /></StackPanel></ListBoxItem>
         </ListBox>
       </Border>
 
@@ -124,7 +125,7 @@
     <Border x:Name="DropOverlay" IsVisible="False" Background="#E6E8A93D" IsHitTestVisible="False">
       <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
         <ctl:IconView Kind="upload" Size="56" Foreground="{DynamicResource AccentInkBrush}" HorizontalAlignment="Center" />
-        <TextBlock Text="Drop a mod .zip, .7z or .rar to install it" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" />
+        <TextBlock Text="{loc:T ui.drop_a_mod_zip_7z_or_rar_to_install_it}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" />
       </StackPanel>
     </Border>
   </Grid>

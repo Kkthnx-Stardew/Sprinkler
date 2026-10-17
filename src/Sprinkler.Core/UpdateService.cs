@@ -73,7 +73,7 @@ internal sealed class UpdateItem
 
 internal sealed record WaitResult(bool Installed, int? SwitchTo);
 
-internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null, string? ParentId = null, bool HasConfig = false);
+internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null, string? ParentId = null, bool HasConfig = false, string? Target = null);
 
 internal sealed record Problem(string Level, string Title, string Detail, string? Url = null, string? UrlLabel = null);
 
@@ -179,7 +179,7 @@ internal sealed partial class UpdateService : IDisposable
             Update(() =>
             {
                 _phase = Phase.ChooseGame;
-                _fatal = "Something went wrong while starting up: " + ex.Message;
+                _fatal = Loc.T("core.startup_failed", ex.Message);
             });
         }
     }
@@ -220,9 +220,9 @@ internal sealed partial class UpdateService : IDisposable
             if (Directory.Exists(Path.Combine(folder, "Mods")) && GameLocator.Inspect(Path.GetDirectoryName(folder.TrimEnd('\\', '/')) ?? "") is { } parent)
                 inspect = parent;
             else if (GameLocator.IsLegacyInstall(folder))
-                return "This looks like Stardew Valley from before version 1.6. Current SMAPI and mods need game version 1.6 or newer, so update the game first.";
+                return Loc.T("core.old_game");
             else
-                return "That folder does not look like a Stardew Valley install. It should contain \"Stardew Valley.dll\" (the game's main file).";
+                return Loc.T("core.not_game");
         }
         await UseGameAsync(inspect, remember: true);
         return null;
@@ -290,7 +290,7 @@ internal sealed partial class UpdateService : IDisposable
             Update(() =>
             {
                 _phase = Phase.Scanning;
-                _status = "Reading your Mods folder";
+                _status = Loc.T("core.status_reading");
                 _fatal = null;
                 _items = new();
                 _problems = new();
@@ -304,7 +304,7 @@ internal sealed partial class UpdateService : IDisposable
                 _mods = mods;
                 _gameLog = gameLog;
                 _phase = Phase.Checking;
-                _status = $"Found {mods.Count} mods. Asking SMAPI which ones have updates";
+                _status = Loc.T("core.status_found", Loc.Count("n.mod", mods.Count));
             });
 
             SyncCollectionProfiles(mods);
@@ -322,8 +322,8 @@ internal sealed partial class UpdateService : IDisposable
             {
                 _phase = Phase.Idle;
                 _fatal = timedOut
-                    ? "The update check took too long and was stopped. Check your internet connection and try again."
-                    : "The update check failed: " + ex.Message;
+                    ? Loc.T("core.check_timeout")
+                    : Loc.T("core.check_failed", ex.Message);
             });
         }
         finally
@@ -366,7 +366,7 @@ internal sealed partial class UpdateService : IDisposable
             Update(() =>
             {
                 _phase = Phase.Idle;
-                _fatal = "Could not reach smapi.io, the service SMAPI itself uses to find updates (" + ex.Message + "). Check your internet connection and try again.";
+                _fatal = Loc.T("core.smapi_unreachable", ex.Message);
             });
             return;
         }
@@ -379,17 +379,17 @@ internal sealed partial class UpdateService : IDisposable
         {
             if (m.Bundled)
             {
-                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Bundled, "Comes with SMAPI. It updates when SMAPI does.", m.FolderName));
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Bundled, Loc.T("core.row_bundled"), m.FolderName));
                 continue;
             }
             if (m.Disabled)
             {
-                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Disabled, "Switched off (the folder name starts with a dot). Not checked.", m.FolderName));
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Disabled, Loc.T("core.row_off"), m.FolderName));
                 continue;
             }
             if (ignored.Contains(m.UniqueId))
             {
-                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Ignored, "You told the app to skip this mod.", m.FolderName));
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Ignored, Loc.T("core.row_ignored"), m.FolderName));
                 continue;
             }
 
@@ -402,7 +402,7 @@ internal sealed partial class UpdateService : IDisposable
             if (r?.SuggestedVersion is { } skippedTarget && settings.SkippedVersions.TryGetValue(m.UniqueId, out var skippedValue)
                 && ModVersion.Parse(skippedTarget) is { } sv && ModVersion.Parse(skippedValue) is { } kv && sv == kv)
             {
-                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.UpToDate, $"You chose to skip version {skippedTarget}.", m.FolderName, SkippedVersion: skippedTarget));
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.UpToDate, Loc.T("core.row_skipped", skippedTarget), m.FolderName, SkippedVersion: skippedTarget));
             }
             else if (r?.SuggestedVersion is { } target)
             {
@@ -433,33 +433,33 @@ internal sealed partial class UpdateService : IDisposable
                         item.Target = target;
                 }
                 item.UniqueIds.Add(m.UniqueId);
-                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Update, $"Update available: {target}", m.FolderName));
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Update, Loc.T("core.row_update", target), m.FolderName, Target: target));
             }
             else if (r is not null && (r.MainVersion is not null || r.Errors.Length == 0))
             {
-                var note = "Up to date.";
+                var note = Loc.T("core.row_ok");
                 var state = RowState.UpToDate;
                 if (r.UnofficialVersion is not null && compat is null && r.UnofficialUrl is not null)
                 {
-                    note = $"Up to date. A community-patched version ({r.UnofficialVersion}) also exists.";
+                    note = Loc.T("core.row_ok_unofficial", r.UnofficialVersion);
                 }
                 rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, state, note, m.FolderName));
             }
             else if (m.UpdateKeys.Length == 0 && (r is null || r.NexusId is null))
             {
                 rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.NoInfo,
-                    "The author did not add update information, so no site can be checked for this mod.", m.FolderName));
+                    Loc.T("core.row_noinfo"), m.FolderName));
             }
             else
             {
-                var why = r?.Errors.FirstOrDefault() ?? "The mod's page could not be read.";
+                var why = r?.Errors.FirstOrDefault() ?? Loc.T("core.row_unreadable");
                 var authorProblem = why.Contains("valid", StringComparison.OrdinalIgnoreCase)
                     || why.Contains("Found no", StringComparison.OrdinalIgnoreCase);
                 if (authorProblem)
                     rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.NoInfo,
-                        "Its update key points nowhere (a placeholder or a deleted page). Common for the extra pieces of a big mod; the main mod is checked on its own.", m.FolderName));
+                        Loc.T("core.row_badkey"), m.FolderName));
                 else
-                    rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Error, "Could not check: " + why, m.FolderName));
+                    rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Error, Loc.T("core.row_error", why), m.FolderName));
             }
         }
 
@@ -494,9 +494,9 @@ internal sealed partial class UpdateService : IDisposable
             var target = r?.MainVersion ?? r?.SuggestedVersion;
             if (r is null || ident.Key is null || target is null)
             {
-                problems.Add(new Problem("error", $"Missing required mod: {r?.Name ?? depId}",
-                    $"{who} needs {depId}, but SMAPI's list has no download page for it. Search for it on Nexus Mods and install it by hand, or SMAPI will skip {who}.",
-                    $"{AppEnvironment.NexusSiteUrl}/{AppEnvironment.NexusGame}/search/?gsearch={Uri.EscapeDataString(depId)}&gsearchtype=mods", "Search Nexus"));
+                problems.Add(new Problem("error", Loc.T("core.prob_missing_title", r?.Name ?? depId),
+                    Loc.T("core.prob_missing_text", who, depId),
+                    $"{AppEnvironment.NexusSiteUrl}/{AppEnvironment.NexusGame}/search/?gsearch={Uri.EscapeDataString(depId)}&gsearchtype=mods", Loc.T("core.prob_search")));
                 continue;
             }
             var item = new UpdateItem
@@ -507,8 +507,8 @@ internal sealed partial class UpdateService : IDisposable
                 Target = target,
                 IsNew = true,
                 Why = needs.All(n => n.UniqueId == "profile")
-                    ? $"Part of {who}, but not installed here."
-                    : $"Required by {who}. SMAPI skips those mods until this is installed.",
+                    ? Loc.T("core.why_part_of", who)
+                    : Loc.T("core.why_required", who),
                 NexusId = ident.Nexus,
                 CurseForgeId = ident.CurseForge,
                 GitHubRepo = ident.GitHub,
@@ -552,7 +552,7 @@ internal sealed partial class UpdateService : IDisposable
             _problems = problems;
             _items = items;
             _smapiUpdate = smapiUpdate;
-            _status = items.Count == 0 ? "Everything is up to date" : "Looking up download options";
+            _status = Loc.T(items.Count == 0 ? "core.status_current" : "core.status_offers");
         });
 
         // work out where each update can come from
@@ -571,7 +571,7 @@ internal sealed partial class UpdateService : IDisposable
             catch (Exception ex)
             {
                 Log.Write($"Offers failed for {item.Name}: {ex.Message}");
-                Update(() => item.Message = "Could not look up download options: " + ex.Message);
+                Update(() => item.Message = Loc.T("core.offers_failed", ex.Message));
             }
             finally
             {
@@ -660,12 +660,12 @@ internal sealed partial class UpdateService : IDisposable
         var summary = string.IsNullOrWhiteSpace(r!.CompatibilitySummary) ? "" : " " + r.CompatibilitySummary;
         return status switch
         {
-            "Unofficial" => new Problem("warn", $"{m.Name} needs a community fix",
-                "The official version does not work with your game version, but an unofficial patch exists." + summary, r.UnofficialUrl, r.UnofficialUrl is null ? null : "Open the fix"),
-            "Workaround" => new Problem("warn", $"{m.Name} has a known workaround", summary.Trim()),
-            "Broken" => new Problem("error", $"{m.Name} is broken in this game version", "SMAPI's compatibility list marks it broken." + summary),
-            "Obsolete" => new Problem("warn", $"{m.Name} is obsolete", "The mod is no longer needed or was replaced." + summary),
-            "Abandoned" => new Problem("warn", $"{m.Name} looks abandoned", "The author stopped maintaining it." + summary),
+            "Unofficial" => new Problem("warn", Loc.T("core.compat_unofficial_title", m.Name),
+                Loc.T("core.compat_unofficial_text") + summary, r.UnofficialUrl, r.UnofficialUrl is null ? null : Loc.T("core.compat_open_fix")),
+            "Workaround" => new Problem("warn", Loc.T("core.compat_workaround_title", m.Name), summary.Trim()),
+            "Broken" => new Problem("error", Loc.T("core.compat_broken_title", m.Name), Loc.T("core.compat_broken_text") + summary),
+            "Obsolete" => new Problem("warn", Loc.T("core.compat_obsolete_title", m.Name), Loc.T("core.compat_obsolete_text") + summary),
+            "Abandoned" => new Problem("warn", Loc.T("core.compat_abandoned_title", m.Name), Loc.T("core.compat_abandoned_text") + summary),
             _ => null,
         };
     }
@@ -708,7 +708,7 @@ internal sealed partial class UpdateService : IDisposable
             item.Chosen = Math.Max(0, item.Offers.FindIndex(o => o.Usable));
             if (item.Offers.Count == 0 || !item.Offers.Any(o => o.Usable))
             {
-                item.Message = "No download source could be found. Open the mod page and install it by hand, or drop the file into this window.";
+                item.Message = Loc.T("core.no_source");
                 item.Selected = false;
             }
         });
@@ -739,7 +739,7 @@ internal sealed partial class UpdateService : IDisposable
         Kind = SourceKind.ModDrop,
         Mode = DeliveryMode.Manual,
         PageUrl = $"https://www.moddrop.com/stardew-valley/mods/{id}",
-        Note = "ModDrop does not allow automatic downloads. The app opens the page and installs the file when it lands in your Downloads folder.",
+        Note = Loc.T("core.moddrop_note"),
     };
 
     private List<SourceOffer> Order(List<SourceOffer> offers)
@@ -839,7 +839,7 @@ internal sealed partial class UpdateService : IDisposable
     {
         key = key.Trim();
         if (key.Length < 20)
-            return "That does not look like a Nexus key. It is a long string of letters and numbers from your Nexus account page.";
+            return Loc.T("core.key_shape");
         try
         {
             var user = await _nexus.ValidateAsync(key, CancellationToken.None);
@@ -856,7 +856,7 @@ internal sealed partial class UpdateService : IDisposable
         catch (NexusException ex)
         {
             return ex.Error == NexusError.InvalidKey
-                ? "Nexus did not accept that key. Copy it again from nexusmods.com/settings/api-keys (the \"Personal API Key\" at the bottom)."
+                ? Loc.T("core.key_rejected")
                 : ex.Message;
         }
     }
@@ -878,8 +878,8 @@ internal sealed partial class UpdateService : IDisposable
         catch (NexusException ex)
         {
             Update(() => _nexusMessage = ex.Error == NexusError.InvalidKey
-                ? "Your saved Nexus key was rejected. Add it again to get automatic downloads."
-                : "Could not check your Nexus key right now: " + ex.Message);
+                ? Loc.T("core.key_saved_rejected")
+                : Loc.T("core.key_check_failed", ex.Message));
         }
     }
 
@@ -899,7 +899,7 @@ internal sealed partial class UpdateService : IDisposable
             Settings.Data.NxmPreviousHandler = previous;
         Settings.Save();
         _ = RefreshOffersAsync();
-        return previous is null ? "Done." : "Done. The app that handled Nexus links before (probably Vortex or Mod Organizer) can be put back from this page.";
+        return Loc.T(previous is null ? "core.nxm_done" : "core.nxm_done_previous");
     }
 
     public void UnregisterNxm()
@@ -935,7 +935,7 @@ internal sealed partial class UpdateService : IDisposable
         var ids = itemIds.ToHashSet();
         if (GameLocator.IsGameRunning(fresh: true))
         {
-            Update(() => _fatal = "Stardew Valley or SMAPI is running. Close it completely, then press Update again. Mods cannot be swapped safely while the game has them open.");
+            Update(() => _fatal = Loc.T("core.close_game_update"));
             return;
         }
 
@@ -959,7 +959,7 @@ internal sealed partial class UpdateService : IDisposable
                 foreach (var i in chosen)
                 {
                     i.Status = ItemStatus.Queued;
-                    i.Message = "Waiting its turn";
+                    i.Message = Loc.T("core.msg_waiting");
                     i.Progress = 0;
                     i.Details.Clear();
                 }
@@ -977,7 +977,7 @@ internal sealed partial class UpdateService : IDisposable
                     foreach (var i in chosen.Where(i => i.Status is ItemStatus.Working or ItemStatus.Queued or ItemStatus.WaitingForYou))
                     {
                         i.Status = ItemStatus.Failed;
-                        i.Message = "Something unexpected went wrong. Nothing was changed. The log has details.";
+                        i.Message = Loc.T("core.msg_unexpected");
                     }
                 });
             }
@@ -990,7 +990,12 @@ internal sealed partial class UpdateService : IDisposable
                 var done = chosen.Count(i => i.Status == ItemStatus.Done);
                 var failed = chosen.Count(i => i.Status == ItemStatus.Failed);
                 var skipped = chosen.Count(i => i.Status == ItemStatus.Skipped);
-                _lastSummary = $"{done} done" + (failed > 0 ? $", {failed} failed" : "") + (skipped > 0 ? $", {skipped} skipped" : "") + ".";
+                var parts = new List<string> { Loc.T("core.sum_done", done) };
+                if (failed > 0)
+                    parts.Add(Loc.T("core.sum_failed", failed));
+                if (skipped > 0)
+                    parts.Add(Loc.T("core.sum_skipped", skipped));
+                _lastSummary = string.Join(Loc.T("core.sum_join"), parts) + Loc.T("core.sum_end");
             });
         }
         finally
@@ -1037,7 +1042,7 @@ internal sealed partial class UpdateService : IDisposable
                 Update(() =>
                 {
                     item.Status = ItemStatus.Skipped;
-                    item.Message = "Skipped. Nothing was changed.";
+                    item.Message = Loc.T("core.msg_skipped");
                 });
                 return;
             }
@@ -1062,7 +1067,7 @@ internal sealed partial class UpdateService : IDisposable
             {
                 // anything unexpected must end this item, never leave it spinning
                 Log.Write($"{item.Name} via {offer.Label} crashed: {ex}");
-                Update(() => { item.Status = ItemStatus.Failed; item.Message = "Something unexpected went wrong (" + ex.Message + "). Nothing was changed. The log has details."; });
+                Update(() => { item.Status = ItemStatus.Failed; item.Message = Loc.T("core.msg_unexpected_ex", ex.Message); });
                 return;
             }
         }
@@ -1094,8 +1099,8 @@ internal sealed partial class UpdateService : IDisposable
         {
             item.Status = ItemStatus.Failed;
             item.Message = failures.Count > 0
-                ? "No source worked. " + failures.Last()
-                : "No source could supply this update.";
+                ? Loc.T("core.msg_no_source_worked", failures.Last())
+                : Loc.T("core.msg_no_source_update");
         });
     }
 
@@ -1104,7 +1109,7 @@ internal sealed partial class UpdateService : IDisposable
         Update(() =>
         {
             item.Status = ItemStatus.Working;
-            item.Message = $"Downloading from {offer.Label}";
+            item.Message = Loc.T("core.msg_downloading", offer.Label);
             item.Progress = 0;
         });
 
@@ -1116,7 +1121,7 @@ internal sealed partial class UpdateService : IDisposable
             if (url is null && offer.Kind == SourceKind.Nexus)
                 url = await _nexus.GetDownloadUrlAsync(offer.NexusModId!, offer.NexusFileId!, null, null, ct);
             if (url is null)
-                throw new DownloadException("There is no download link.");
+                throw new DownloadException(Loc.T("core.no_link"));
             archive = await Downloader.FetchAsync(url, offer.FileName, p => Update(() => item.Progress = p), ct);
         }
         finally
@@ -1143,7 +1148,7 @@ internal sealed partial class UpdateService : IDisposable
             item.Waiter = tcs;
             item.Status = ItemStatus.WaitingForYou;
             item.PageOpened = false;
-            item.Message = "Queued. The page opens after the ones before it are done.";
+            item.Message = Loc.T("core.msg_queued");
         });
         PumpPages();
         try
@@ -1182,9 +1187,9 @@ internal sealed partial class UpdateService : IDisposable
 
     private static string HowTo(SourceOffer offer) => offer.Mode switch
     {
-        DeliveryMode.OneClick => "Your browser opened the Nexus page. Click \"Mod Manager Download\" and the app does the rest.",
-        _ when offer.Kind == SourceKind.Nexus => "Your browser opened the Nexus page. Log in if asked, click \"Manual Download\" then \"Slow Download\". The app installs the file when it lands in your Downloads folder.",
-        _ => $"Your browser opened the {offer.Label} page. Download the file; the app installs it when it lands in your Downloads folder.",
+        DeliveryMode.OneClick => Loc.T("core.howto_oneclick"),
+        _ when offer.Kind == SourceKind.Nexus => Loc.T("core.howto_nexus"),
+        _ => Loc.T("core.howto_other", offer.Label),
     };
 
     public void SkipWaiting(string itemId) =>
@@ -1231,7 +1236,7 @@ internal sealed partial class UpdateService : IDisposable
         if (mods.Count == 0)
         {
             if (explicitFile)
-                AddFound(path, origin, error: "This archive has no manifest.json, so it is not a SMAPI mod.");
+                AddFound(path, origin, error: Loc.T("core.no_manifest"));
             return;
         }
 
@@ -1326,7 +1331,7 @@ internal sealed partial class UpdateService : IDisposable
         {
             if (ex is not (InstallException or ArchiveException or IOException))
                 Log.Write("Installing a found file crashed: " + ex);
-            Update(() => { f.Busy = false; f.Error = ex is InstallException or ArchiveException or IOException ? ex.Message : "The file could not be installed (" + ex.Message + "). Nothing was changed."; });
+            Update(() => { f.Busy = false; f.Error = ex is InstallException or ArchiveException or IOException ? ex.Message : Loc.T("core.install_failed", ex.Message); });
         }
     }
 
@@ -1352,7 +1357,7 @@ internal sealed partial class UpdateService : IDisposable
                 }
             });
 
-            var game = _game ?? throw new InstallException("No game folder is set.");
+            var game = _game ?? throw new InstallException(Loc.T("core.no_game"));
             using var archive = ArchiveFile.Open(archivePath);
             var plan = Installer.Plan(archivePath, archive, game.ModsPath, _mods);
 
@@ -1361,7 +1366,7 @@ internal sealed partial class UpdateService : IDisposable
                 : items.SelectMany(i => i.UniqueIds).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var matching = plan.Folders.Where(f => wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
             if (matching.Count == 0)
-                throw new WrongFileException("The file is for a different mod than expected, so it was not installed.");
+                throw new WrongFileException(Loc.T("core.wrong_mod"));
 
             if (requireNewer)
             {
@@ -1370,7 +1375,7 @@ internal sealed partial class UpdateService : IDisposable
                     var a = ModVersion.Parse(f.Source.Manifest.Version);
                     var b = ModVersion.Parse(f.Replaces!.Version);
                     if (a is not null && b is not null && a <= b)
-                        throw new WrongFileException($"The file holds {f.Source.Manifest.Name} {f.Source.Manifest.Version}, which is not newer than the installed {f.Replaces.Version}.");
+                        throw new WrongFileException(Loc.T("core.not_newer", f.Source.Manifest.Name, f.Source.Manifest.Version, f.Replaces.Version));
                 }
             }
 
@@ -1382,7 +1387,7 @@ internal sealed partial class UpdateService : IDisposable
                 {
                     i.Status = ItemStatus.Done;
                     i.HistoryId = result.HistoryId;
-                    i.Message = $"Installed from {origin}.";
+                    i.Message = Loc.T("core.msg_installed", origin);
                     if (i.AcceptAnyMod)
                         foreach (var id in wanted.Where(id => !i.UniqueIds.Contains(id, StringComparer.OrdinalIgnoreCase)))
                             i.UniqueIds.Add(id);
@@ -1390,7 +1395,7 @@ internal sealed partial class UpdateService : IDisposable
                     i.Details.AddRange(plan.Folders.SelectMany(f => f.Warnings));
                     var extras = plan.Folders.Where(f => !wanted.Contains(f.Source.Manifest.UniqueId)).ToList();
                     if (extras.Count > 0)
-                        i.Details.Add("The download also contained " + string.Join(", ", extras.Select(e => e.Source.Manifest.Name)) + ", which are now installed too.");
+                        i.Details.Add(Loc.T("core.also_installed", string.Join(", ", extras.Select(e => e.Source.Manifest.Name))));
                 }
             });
         }
@@ -1404,7 +1409,7 @@ internal sealed partial class UpdateService : IDisposable
             if (ex is InstallException or ArchiveException)
                 throw;
             Log.Write("Install crashed: " + ex);
-            throw new InstallException("The file could not be installed (" + ex.Message + "). Nothing was changed.");
+            throw new InstallException(Loc.T("core.install_failed", ex.Message));
         }
         finally
         {
@@ -1423,7 +1428,7 @@ internal sealed partial class UpdateService : IDisposable
                 continue;
             var old = rows.FirstOrDefault(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
             rows.RemoveAll(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
-            rows.Add(new ModRow(mod.Name, mod.UniqueId, mod.Version, RowState.UpToDate, "Updated just now.", mod.FolderName, old?.Url, mod.Author, mod.ContentPackFor is not null, ParentId: mod.ContentPackFor, HasConfig: File.Exists(Path.Combine(mod.FolderPath, "config.json"))));
+            rows.Add(new ModRow(mod.Name, mod.UniqueId, mod.Version, RowState.UpToDate, Loc.T("core.row_updated"), mod.FolderName, old?.Url, mod.Author, mod.ContentPackFor is not null, ParentId: mod.ContentPackFor, HasConfig: File.Exists(Path.Combine(mod.FolderPath, "config.json"))));
         }
         _rows = rows.OrderBy(r => r.State == RowState.Bundled).ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -1445,12 +1450,12 @@ internal sealed partial class UpdateService : IDisposable
         var link = NxmLink.Parse(raw);
         if (link is null)
         {
-            Update(() => _fatal = "The app received a Nexus link it could not read.");
+            Update(() => _fatal = Loc.T("core.nxm_unreadable"));
             return;
         }
         if (!link.Game.Equals(AppEnvironment.NexusGame, StringComparison.OrdinalIgnoreCase))
         {
-            Update(() => _fatal = "That Nexus link is for a different game than Stardew Valley, so it was ignored.");
+            Update(() => _fatal = Loc.T("core.nxm_other_game"));
             return;
         }
         if (string.IsNullOrEmpty(Settings.NexusKey))
@@ -1466,7 +1471,7 @@ internal sealed partial class UpdateService : IDisposable
         try
         {
             if (item is not null)
-                Update(() => { item.Status = ItemStatus.Working; item.Message = "Downloading from Nexus"; item.Progress = 0; });
+                Update(() => { item.Status = ItemStatus.Working; item.Message = Loc.T("core.msg_downloading", "Nexus"); item.Progress = 0; });
 
             var url = await _nexus.GetDownloadUrlAsync(link.ModId, link.FileId, link.Key, link.Expires, CancellationToken.None);
             var path = await Downloader.FetchAsync(url, null, p => { if (item is not null) Update(() => item.Progress = p); }, CancellationToken.None);
@@ -1511,7 +1516,7 @@ internal sealed partial class UpdateService : IDisposable
     {
         var game = _game;
         if (game is null)
-            return "No game folder is set.";
+            return Loc.T("core.no_game");
         await _installGate.WaitAsync();
         try
         {
@@ -1600,7 +1605,7 @@ internal sealed partial class UpdateService : IDisposable
     public async Task<(string? Error, string[]? Dependents)> SetModEnabledAsync(string uniqueId, bool enable, bool force)
     {
         if (GameLocator.IsGameRunning(fresh: true))
-            return ("Close Stardew Valley first. It keeps its mod files open while it runs.", null);
+            return (Loc.T("core.close_game_first"), null);
 
         ModInfo? mod;
         List<ModInfo> all;
@@ -1611,7 +1616,7 @@ internal sealed partial class UpdateService : IDisposable
                 ?? all.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
         }
         if (mod is null || mod.Bundled)
-            return ("That mod was not found, or it is part of SMAPI.", null);
+            return (Loc.T("core.mod_not_found"), null);
 
         var folder = mod.FolderPath.TrimEnd('\\', '/');
         var parent = Path.GetDirectoryName(folder)!;
@@ -1631,7 +1636,7 @@ internal sealed partial class UpdateService : IDisposable
         }
         else if (!name.StartsWith('.'))
         {
-            return ("This mod is switched off by a parent folder whose name starts with a dot. Rename that folder in your file manager.", null);
+            return (Loc.T("core.parent_off"), null);
         }
 
         var renameError = RenameMod(mod, enable);
@@ -1656,6 +1661,27 @@ internal sealed partial class UpdateService : IDisposable
         }
     }
 
+    /// <summary>Saves the language ("auto" follows the system) and switches the words of the app to it.</summary>
+    public void SetLanguage(string code)
+    {
+        var known = code.Equals("auto", StringComparison.OrdinalIgnoreCase) || Loc.All.Any(l => l.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
+        if (!known)
+            return;
+        lock (_gate)
+        {
+            Settings.Data.Language = code.Equals("auto", StringComparison.OrdinalIgnoreCase) ? "auto" : Loc.All.First(l => l.Code.Equals(code, StringComparison.OrdinalIgnoreCase)).Code;
+            Settings.Save();
+        }
+        Loc.Instance.SetLanguage(Settings.Data.Language);
+        Update(() => { });
+        // notes the last check wrote down (row notes, offers, problems) are in the old language; read them again
+        Phase phase;
+        lock (_gate)
+            phase = _phase;
+        if (phase is Phase.Idle or Phase.Review)
+            _ = CheckAsync();
+    }
+
     /// <summary>Hides one specific version of a mod's update. A later version shows up again.</summary>
     public void SkipVersion(string itemId)
     {
@@ -1670,7 +1696,7 @@ internal sealed partial class UpdateService : IDisposable
             _items = _items.Where(i => i.Id != itemId).ToList();
             var ids = new HashSet<string>(item.UniqueIds, StringComparer.OrdinalIgnoreCase);
             _rows = _rows.Select(r => ids.Contains(r.UniqueId) && r.State == RowState.Update
-                ? r with { State = RowState.UpToDate, Note = $"You chose to skip version {item.Target}.", SkippedVersion = item.Target }
+                ? r with { State = RowState.UpToDate, Note = Loc.T("core.row_skipped", item.Target), SkippedVersion = item.Target }
                 : r).ToList();
             Update(() => { });
         }
@@ -1702,7 +1728,7 @@ internal sealed partial class UpdateService : IDisposable
     public string? LaunchGame()
     {
         var game = _game;
-        return game is null ? "No game folder is set." : GameProcess.Launch(game);
+        return game is null ? Loc.T("core.no_game") : GameProcess.Launch(game);
     }
 
     public string? ModFolder(string uniqueId)
@@ -1777,7 +1803,7 @@ internal sealed partial class UpdateService : IDisposable
                     Settings.Data.NxmRegistered && nxmStatus.Ours, nxmStatus.Other, NxmRegistration.Supported, Settings.KeyStorage),
                 Settings: new SettingsInfo(
                     Settings.Data.Policy, Settings.Data.AppWindow, Settings.Data.Theme, Settings.Data.TourSeen, Settings.DownloadsPath,
-                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks),
+                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks, Settings.Data.Language),
                 Items: _items.Select(i => new ItemInfo(
                     i.Id, i.Name, i.Installed, i.Target, i.PartCount, i.IsNew, i.Why, i.Status, i.Message, i.Progress, i.Selected, i.Chosen,
                     i.AlternativesLoaded, i.Changelog.ToList(), i.ModPageUrl, i.Details.ToList(), i.HistoryId,

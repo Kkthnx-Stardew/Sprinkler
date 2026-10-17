@@ -33,7 +33,7 @@ internal static class SecretStores
 [SupportedOSPlatform("windows")]
 internal sealed class DpapiSecretStore(SettingsData data, Action save) : ISecretStore
 {
-    public string Description => "encrypted so only your Windows account can read it";
+    public string Description => Loc.T("core.key_win");
 
     public string? Read()
     {
@@ -63,7 +63,7 @@ internal sealed class DpapiSecretStore(SettingsData data, Action save) : ISecret
 /// <summary>Linux and macOS fallback: a file only the current user can read (mode 600), like most command-line tools use.</summary>
 internal sealed class FileSecretStore(string path) : ISecretStore
 {
-    public string Description => "kept in a file only your user account can read";
+    public string Description => Loc.T("core.key_file");
 
     public string? Read()
     {
@@ -103,7 +103,7 @@ internal sealed class KeyringSecretStore(FileSecretStore fallback) : ISecretStor
 
     private bool _fileInUse;
 
-    public string Description => _fileInUse ? fallback.Description : "stored in your desktop keyring";
+    public string Description => _fileInUse ? fallback.Description : Loc.T("core.key_keyring");
 
     public string? Read()
     {

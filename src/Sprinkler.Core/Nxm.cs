@@ -96,14 +96,14 @@ internal static class NxmRegistration
     /// <summary>Registers this app. Returns the handler that was replaced so it can be restored later.</summary>
     public static string? Register()
     {
-        var exe = Environment.ProcessPath ?? throw new InvalidOperationException("The app path is unknown.");
+        var exe = Environment.ProcessPath ?? throw new InvalidOperationException(Loc.T("core.app_path_unknown"));
         string? previous;
         if (OperatingSystem.IsWindows())
             previous = WindowsRegister(exe);
         else if (Platform.IsLinux)
             previous = LinuxRegister(exe);
         else
-            throw new InvalidOperationException("This system does not let an app take over Nexus links. Use the Manual download button on Nexus instead.");
+            throw new InvalidOperationException(Loc.T("core.nxm_unsupported"));
         ForgetStatus();
         return previous;
     }
@@ -212,7 +212,7 @@ internal static class NxmRegistration
     private static string? LinuxRegister(string exe)
     {
         if (Platform.Which("xdg-mime") is null)
-            throw new InvalidOperationException("The xdg-mime tool is missing, so Linux cannot hand Nexus links to this app. Install xdg-utils, or use the Manual download button on Nexus.");
+            throw new InvalidOperationException(Loc.T("core.nxm_xdg"));
 
         var previous = LinuxDefaultHandler();
         if (previous == DesktopFileName)

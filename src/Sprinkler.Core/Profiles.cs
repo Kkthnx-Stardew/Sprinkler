@@ -116,11 +116,11 @@ internal sealed class ProfileStore
     {
         var clean = string.Join(' ', (name ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         if (clean.Length == 0)
-            throw new ProfileException("Give the profile a name.");
+            throw new ProfileException(Loc.T("core.prof_name_empty"));
         if (clean.Length > MaxNameLength)
-            throw new ProfileException($"Keep the name under {MaxNameLength} characters.");
+            throw new ProfileException(Loc.T("core.prof_name_long", MaxNameLength));
         if (clean.Any(char.IsControl))
-            throw new ProfileException("The name cannot contain control characters.");
+            throw new ProfileException(Loc.T("core.prof_name_bad"));
         if (Find(clean) is not null && !clean.Equals(allowSameAs, StringComparison.OrdinalIgnoreCase))
             throw new ProfileException($"A profile called \"{clean}\" already exists.");
         return clean;
@@ -145,7 +145,7 @@ internal sealed class ProfileStore
     {
         lock (_gate)
         {
-            var p = Find(name) ?? throw new ProfileException("That profile no longer exists.");
+            var p = Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
             change(p);
             p.Updated = DateTime.Now;
             Save();
@@ -156,7 +156,7 @@ internal sealed class ProfileStore
     {
         lock (_gate)
         {
-            var p = Find(name) ?? throw new ProfileException("That profile no longer exists.");
+            var p = Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
             var clean = CleanName(newName, allowSameAs: p.Name);
             var wasActive = _data.Active?.Equals(p.Name, StringComparison.OrdinalIgnoreCase) == true;
             p.Name = clean;
@@ -170,7 +170,7 @@ internal sealed class ProfileStore
     {
         lock (_gate)
         {
-            var p = Find(name) ?? throw new ProfileException("That profile no longer exists.");
+            var p = Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
             _data.Profiles.Remove(p);
             if (_data.Active?.Equals(p.Name, StringComparison.OrdinalIgnoreCase) == true)
                 _data.Active = null;
@@ -236,7 +236,7 @@ internal sealed record PortableProfile(string Format, int Version, string Name, 
     public static PortableProfile Parse(string json)
     {
         if (json.Length > MaxBytes)
-            throw new ProfileException("That file is too large to be a profile.");
+            throw new ProfileException(Loc.T("core.prof_big"));
         PortableProfile? p;
         try
         {
@@ -244,14 +244,14 @@ internal sealed record PortableProfile(string Format, int Version, string Name, 
         }
         catch (JsonException)
         {
-            throw new ProfileException("That file is not a Sprinkler profile.");
+            throw new ProfileException(Loc.T("core.prof_not"));
         }
         if (p is null || p.Format != FormatName)
-            throw new ProfileException("That file is not a Sprinkler profile.");
+            throw new ProfileException(Loc.T("core.prof_not"));
         if (p.Version > 1)
-            throw new ProfileException("That profile was made by a newer version of Sprinkler. Update Sprinkler to open it.");
+            throw new ProfileException(Loc.T("core.prof_newer"));
         if (p.Mods is null || p.Mods.Count > MaxMods)
-            throw new ProfileException("That profile has no usable mod list.");
+            throw new ProfileException(Loc.T("core.prof_empty"));
 
         var clean = p.Mods
             .Where(m => !string.IsNullOrWhiteSpace(m.UniqueId) && m.UniqueId.Length <= 200 && !m.UniqueId.Any(char.IsControl))

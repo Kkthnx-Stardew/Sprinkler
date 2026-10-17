@@ -14,21 +14,21 @@ internal sealed partial class ProfileViewModel(MainViewModel main, ProfileSummar
     public bool IsActive => Info.IsActive;
     public bool CanSwitch => !Info.IsActive;
     public bool IsCollection => Info.CollectionName is not null;
-    public string CollectionText => Info.Curator is null ? "Nexus collection" : "Nexus collection by " + Info.Curator;
+    public string CollectionText => Info.Curator is null ? Loc.T("prof.collection") : Loc.T("prof.collection_by", Info.Curator);
     public bool Pending => Info.Pending && Info.ToInstall > 0;
 
     public string Detail
     {
         get
         {
-            var parts = new List<string> { Fmt.Plural(Info.ModCount, "mod", "mods") };
+            var parts = new List<string> { Loc.Count("n.mod", Info.ModCount) };
             if (Info.MissingCount > 0)
-                parts.Add($"{Info.MissingCount} not installed here");
+                parts.Add(Loc.T("prof.detail_missing", Info.MissingCount));
             if (Info.ConfigCount > 0)
-                parts.Add($"keeps settings for {Info.ConfigCount}");
+                parts.Add(Loc.T("prof.detail_configs", Info.ConfigCount));
             if (Info.ToInstall > 0 && Info.Pending)
-                parts.Add($"{Info.ToInstall} to install under Updates");
-            parts.Add("saved " + Fmt.Ago(Info.Updated));
+                parts.Add(Loc.T("prof.detail_to_install", Info.ToInstall));
+            parts.Add(Loc.T("prof.detail_saved", Fmt.Ago(Info.Updated)));
             return string.Join(" · ", parts);
         }
     }

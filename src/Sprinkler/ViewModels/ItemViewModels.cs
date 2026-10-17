@@ -230,15 +230,21 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     /// <summary>The "content pack" tag is only needed on a pack that is not already shown under its mod.</summary>
     public bool ShowPackTag => Row.IsContentPack && !_indented;
     // The status chip already says "update available" and "up to date"; the line under the name keeps only what the chip cannot.
-    public string Meta
+    public string Meta => Compose(hideNoteOfGroupedPack: true);
+
+    /// <summary>The same line without the shortcut, for the tooltip.</summary>
+    public string MetaFull => Compose(hideNoteOfGroupedPack: false);
+
+    private string Compose(bool hideNoteOfGroupedPack)
     {
-        get
-        {
-            var note = Row.State == RowState.Update || Row.Note == Loc.T("core.row_ok") ? "" : Row.Note;
-            if (string.IsNullOrEmpty(Row.Author))
-                return note;
-            return note.Length == 0 ? Row.Author : Row.Author + " · " + note;
-        }
+        var note = Row.State == RowState.Update || Row.Note == Loc.T("core.row_ok") ? "" : Row.Note;
+        // A pack shown under its mod usually has a placeholder update key (the main mod is the one that is checked), and the same
+        // long sentence on every row hides the author. The status chip still says it, and the tooltip has the full text.
+        if (hideNoteOfGroupedPack && _indented && Row.State == RowState.NoInfo)
+            note = "";
+        if (string.IsNullOrEmpty(Row.Author))
+            return note;
+        return note.Length == 0 ? Row.Author : Row.Author + " · " + note;
     }
     public bool HasNeeds => Row.Needs is { Length: > 0 };
     public string NeedsText => Row.Needs is { Length: > 0 } n ? Loc.T("row.needs", string.Join(", ", n)) : "";
@@ -313,6 +319,7 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
                 OnPropertyChanged(nameof(IconSize));
                 OnPropertyChanged(nameof(RowPadding));
                 OnPropertyChanged(nameof(ShowPackTag));
+                OnPropertyChanged(nameof(Meta));
             }
         }
     }

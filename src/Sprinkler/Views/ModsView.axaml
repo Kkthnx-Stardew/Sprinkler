@@ -73,7 +73,7 @@
                             <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsEndorsed}"><StackPanel Orientation="Horizontal" Spacing="4"><ctl:IconView Kind="heart" Size="11" /><TextBlock Text="{loc:T ui.endorsed}" /></StackPanel></Border>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                           </DockPanel>
-                          <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Meta}" />
+                          <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding MetaFull}" />
                           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasNote}">
                             <ctl:IconView Kind="edit" Size="12" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" />
                             <TextBlock Classes="small accent" FontStyle="Italic" Text="{Binding NoteText}" TextTrimming="CharacterEllipsis" />

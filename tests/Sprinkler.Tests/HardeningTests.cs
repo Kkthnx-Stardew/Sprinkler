@@ -125,6 +125,18 @@ public class HardeningTests
         new(null!, new ModRow(name, id, "1.0.0", RowState.UpToDate, "", name, ParentId: parent, IsContentPack: parent is not null));
 
     [Fact]
+    public void AGroupedPackKeepsTheAuthorButNotTheLongUpdateKeyNote()
+    {
+        var pack = new Sprinkler.ViewModels.ModRowViewModel(null!, new ModRow("East Scarp", "pack.e", "1.0.0", RowState.NoInfo,
+            "Its update key points nowhere (a placeholder or a deleted page).", "East Scarp", Author: "LemurKat", ParentId: "Pathoschild.ContentPatcher", IsContentPack: true));
+
+        Assert.Contains("points nowhere", pack.Meta);
+        pack.Indented = true;
+        Assert.Equal("LemurKat", pack.Meta);
+        Assert.Contains("points nowhere", pack.MetaFull);
+    }
+
+    [Fact]
     public void ContentPacksSitUnderTheirModAndCanBeFolded()
     {
         var cp = Row("Pathoschild.ContentPatcher", "Content Patcher");

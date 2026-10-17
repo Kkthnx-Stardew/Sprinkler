@@ -17,6 +17,9 @@ First public build.
 - First-run tour, built-in help and FAQ, light and dark looks that follow your system, and a Report a problem button that copies details for an issue.
 - Reads SMAPI's log from your last game session and lists the mods it skipped, with SMAPI's reason and what to do about it.
 - Switch a mod off or on from the All mods tab. A warning lists any mods that need it.
+- Profiles: save which mods are switched on, switch between profiles in a click, share a profile as a small file, and optionally keep each profile's own mod settings. Mods a shared profile lists but you do not have appear under Updates as installs.
+- Remove a mod with a backup and an Undo button in History. Keep private notes on mods, open a mod's settings file, and endorse mods on Nexus.
+- Content packs are shown under the mod they belong to, and a Has settings filter finds mods with a config.json.
 - On Linux, adds itself to the application menu with an icon (`--install-shortcut` or a button in settings), and finds mods whose manifest is spelled `Manifest.json`, as SMAPI does there.
 - Every text and background colour pair meets the WCAG AA contrast ratio of 4.5 to 1 in both themes, and a test keeps it that way.
 - About 24 MB to download and about 145 MB of memory in use.

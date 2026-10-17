@@ -10,6 +10,7 @@ Please do not open a public issue for a security problem. Use GitHub's private v
 - **Archives.** Downloaded `.zip`, `.7z` and `.rar` files are treated as untrusted. Entries with absolute paths, `..` segments, invalid names or duplicate names are rejected, file counts and sizes are capped, and the mod ID inside must match the mod being updated.
 - **Your Nexus key.** It is stored with the best place each system offers (Windows DPAPI for the current user, or the desktop keyring or a mode-600 file on Linux), sent only to the Nexus API, and left out of the problem report.
 - **Your network.** The app opens no listening port. A second copy of the app talks to the first through a local pipe that only the current user can open. Web links are opened only on a short allow-list of sites over https.
+- **Shared profiles.** A profile file lists mod IDs, names, versions and where to get them. It is size limited, its entries are checked, and opening one only creates a saved list: nothing is installed or switched until you choose to.
 - **Mod pictures.** Downloaded pictures are stored only when the bytes really are an image, under 2 MB, from an allowed site (also after redirects).
 
 ## Out of scope

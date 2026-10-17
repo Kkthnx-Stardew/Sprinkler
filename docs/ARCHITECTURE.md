@@ -43,6 +43,10 @@ The other options were ruled out on evidence:
 
 The palette (loam, harvest gold, parchment, sprout, barn red) has a light and a dark variant in `Theme/Palette.axaml`. `ContrastTests` reads that file and checks that every text and background pair used by the app meets WCAG AA (4.5 : 1) in both themes, so a colour change that breaks readability fails the build. Icons are drawn as vector paths and take the colour of the text around them.
 
+## Profiles
+
+A profile is a list of mod IDs. Switching renames mod folders by adding or removing the leading dot, which is the rule SMAPI itself uses to skip a mod. That choice has three effects: nothing is moved out of the Mods folder, nothing needs special permissions (no links, no elevated rights), and switching back is exact. Before a switch it turns on whatever the chosen mods require, and anything a profile lists but is not installed is fed into the same missing-mod flow that the update check already uses, so it appears under Updates as an install. With "keep each profile's settings" on, every mod's `config.json` is saved into the profile when leaving it and written back when entering, and a copy of the current settings is saved first so the first switch cannot lose anything. A shared profile file contains IDs, names, versions and update keys only, is size limited, and every entry is checked when it is read.
+
 ## Mod pictures
 
 `ModArtStore` fetches each mod's picture once and keeps it on disk for two weeks (three days when a mod has none). Nexus mod pages expose a `picture_url` through the API the person's own key already uses, GitHub mods use the owner's avatar, and everything else shows a steady coloured initial. Only bytes that start like a PNG, JPEG, GIF or WebP are stored, files over 2 MB are refused, the final address after redirects must still be on an allowed site, and a rate limit pauses fetching for half an hour. Nothing about updating depends on pictures.
@@ -73,6 +77,7 @@ Other decisions taken from SMAPI's behavior, not guessed:
 - Unit and integration tests run the whole update flow against fake local servers for SMAPI, Nexus, CurseForge and GitHub, including the mod picture cache.
 - The Linux and macOS path logic takes the home folder and operating system as parameters, so tests run it on any system with fake folders.
 - The .NET platform-compatibility analyzer is on, so calling a Windows-only API outside a guard fails the build.
+- The window is tested without a screen: Avalonia's headless support (which needs xunit v3) opens the real window on every tab and drives the real view models through the same commands the buttons use, including dialogs, file pickers and profile switching.
 - CI runs the tests on Windows and Ubuntu, publishes both builds, and on Ubuntu runs the published binary's `--check` against a fake game folder.
 
 ## What is not verified

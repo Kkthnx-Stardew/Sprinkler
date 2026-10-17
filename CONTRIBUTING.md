@@ -36,7 +36,7 @@ Set `SPRINKLER_DATA` to a temporary folder to keep settings, history, backups an
 | --- | --- |
 | `src/Sprinkler.Core` | Everything that is not UI: scanning mods, version rules, the SMAPI, Nexus, CurseForge and GitHub clients, the installer with backup and undo, mod pictures, and `UpdateService`, which ties them together and produces a typed `StateSnapshot`. |
 | `src/Sprinkler` | The Avalonia app. `ViewModels` turn snapshots into what the screens show, `Views` are the screens, `Theme` holds the palette and control styles, `Controls` has the icon control. |
-| `tests/Sprinkler.Tests` | Unit tests, app logic tests, a contrast check of the palette, and integration tests that run the whole update flow against a fake local server. |
+| `tests/Sprinkler.Tests` | Unit tests, app logic tests, a contrast check of the palette, integration tests that run the whole update flow against a fake local server, and headless UI tests that open the real window and press the real commands (xunit v3). |
 
 A new value on screen needs three small steps: add it to `UpdateService.Snapshot()` (and `Snapshot.cs`), expose it on the right view model, and bind it in the XAML. Compiled bindings are on, so a typo fails the build instead of showing a blank.
 

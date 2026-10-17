@@ -53,6 +53,16 @@ You can also drag any mod `.zip`, `.7z` or `.rar` onto the window. Sprinkler sho
 
 It also finds required mods that are missing (the ones SMAPI skips without a clear message) and offers to install them. After you play, it reads SMAPI's own log and tells you which mods failed to load and why, in plain words. You can switch any mod off or on from the All mods tab using SMAPI's folder-name rule (a folder starting with a dot is skipped), and the app warns you first if other mods need it.
 
+## Profiles, notes and more
+
+- **Profiles.** Save which mods are switched on as a named profile (solo, co-op, testing) and switch between them in a click. Switching only adds or removes the leading dot on a mod's folder, the rule SMAPI itself uses, so nothing is moved or deleted and switching back is exact. It also turns on whatever the chosen mods need. An optional setting keeps each profile's own `config.json` files, with a copy of your current settings saved before the first switch.
+- **Share a profile.** Save a profile as a small file that lists mods, versions and where to get them (never your settings or folders). When a friend opens it, the mods they do not have show up under Updates as installs.
+- **Remove with undo.** Removing a mod backs up its folder first and shows it in History with an Undo button that brings it back with its settings.
+- **Notes and endorsing.** Keep a private note on any mod, open its settings file, and endorse mods on Nexus from the app (through your own key).
+- **A tidier list.** Content packs sit under the mod they belong to, and a filter finds the mods that have settings.
+
+![Profiles](docs/screenshots/profiles-light.png)
+
 ## Speed
 
 Measured on a Windows 11 machine with a real 36-mod folder, using the published single file: the download is about 24 MB (Windows and Linux alike), memory is about 145 MB while the window is open, idle CPU is effectively zero, and the full update check finishes in about 1 second. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains why Sprinkler is built this way and what the alternatives cost.

@@ -78,6 +78,50 @@ public class HardeningTests
     }
 
     [Fact]
+    public void OldLeftoversInAScratchFolderAreRemovedAndRecentOnesStay()
+    {
+        using var d = new TempDir();
+        var old = d.Write("staging/old.zip", "x");
+        var fresh = d.Write("staging/fresh.zip", "x");
+        d.Write("staging/dl-1234/inner.zip", "x");
+        var oldTime = DateTime.UtcNow.AddDays(-2);
+        foreach (var path in new[] { old, d.Combine("staging", "dl-1234", "inner.zip") })
+        {
+            File.SetCreationTimeUtc(path, oldTime);
+            File.SetLastWriteTimeUtc(path, oldTime);
+        }
+        Directory.SetCreationTimeUtc(d.Combine("staging", "dl-1234"), oldTime);
+        Directory.SetLastWriteTimeUtc(d.Combine("staging", "dl-1234"), oldTime);
+
+        var removed = Cleanup.PurgeOlderThan(d.Combine("staging"), TimeSpan.FromHours(6));
+
+        Assert.Equal(2, removed);
+        Assert.False(File.Exists(old));
+        Assert.False(Directory.Exists(d.Combine("staging", "dl-1234")));
+        Assert.True(File.Exists(fresh));
+        Assert.Equal(0, Cleanup.PurgeOlderThan(d.Combine("nothing-here"), TimeSpan.Zero));
+    }
+
+    [Fact]
+    public async Task ASecondCopyOfTheAppHandsAnNxmLinkToTheRunningOne()
+    {
+        var name = "Sprinkler-test-" + Guid.NewGuid().ToString("N")[..8];
+        var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var channel = new Sprinkler.InstanceChannel(name);
+        channel.MessageReceived += m => received.TrySetResult(m);
+        channel.Start();
+
+        const string link = "nxm://stardewvalley/mods/17272/files/123?key=abc&expires=1&user_id=5";
+        var sent = false;
+        for (var i = 0; i < 20 && !sent; i++)
+            sent = await Sprinkler.InstanceChannel.SendAsync("nxm " + link, 500, name);
+
+        Assert.True(sent);
+        Assert.Equal("nxm " + link, await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.False(await Sprinkler.InstanceChannel.SendAsync("activate", 200, name + "-nobody-listens"));
+    }
+
+    [Fact]
     public void ModsThatNeedAnotherModAreListedByName()
     {
         var core = new ModInfo { UniqueId = "me.Core", Name = "Core" };

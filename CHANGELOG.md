@@ -17,6 +17,8 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 - A settings or history file that cannot be read is kept as `.unreadable` beside the new one, so the saved Nexus key and notes are not lost to the next save.
 - The Xbox app folder is only looked for on drives that are connected, so a disconnected network drive can no longer slow the search for the game.
 - On Linux the Nexus key is read from the keyring once, not for every request, and the window no longer waits on a scan of running programs while other work is going on.
+- Copies of dropped files and downloads that were never installed are now removed: when their card is dismissed, and at the next start for anything older than six hours. They used to stay in the data folder for good.
+- Turning on Nexus links on a PC that refuses the registry change now says so instead of failing. Every Nexus link the app receives is written to the log, which makes a click that seems to do nothing easy to trace.
 - Mod pictures that a newer picture replaces are deleted from the cache, and two pictures finishing at the same moment can no longer collide while saving the index.
 
 ## 1.0.0 (2026-10-17)

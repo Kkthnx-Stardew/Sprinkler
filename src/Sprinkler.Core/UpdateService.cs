@@ -188,6 +188,8 @@ internal sealed partial class UpdateService : IDisposable
 
     private async Task InitializeCoreAsync()
     {
+        // copies of dropped files and downloads that were never installed; recent ones may belong to another copy of the app
+        _ = Task.Run(() => Cleanup.PurgeOlderThan(AppEnvironment.StagingDir, TimeSpan.FromHours(6)));
         _ = CheckAppUpdateAsync();
         var key = Settings.NexusKey;
         var nexusCheck = string.IsNullOrEmpty(key) ? Task.CompletedTask : ValidateNexusAsync(key);
@@ -888,7 +890,7 @@ internal sealed partial class UpdateService : IDisposable
         {
             previous = NxmRegistration.Register();
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or IOException or System.Security.SecurityException)
         {
             return ex.Message;
         }
@@ -1339,7 +1341,19 @@ internal sealed partial class UpdateService : IDisposable
         }
     }
 
-    public void DismissFound(string id) => Update(() => _found.RemoveAll(x => x.Id == id));
+    public void DismissFound(string id)
+    {
+        string? staged = null;
+        lock (_gate)
+            staged = _found.FirstOrDefault(x => x.Id == id)?.Path;
+        Update(() => _found.RemoveAll(x => x.Id == id));
+        // a file the app copied or downloaded itself goes with the card, one the person keeps elsewhere is left alone
+        if (staged is not null && staged.StartsWith(AppEnvironment.StagingDir, StringComparison.OrdinalIgnoreCase))
+        {
+            Downloader.Cleanup(staged);
+            Cleanup.TryDeleteFile(staged);
+        }
+    }
 
     /// <summary>Saves an uploaded (dragged in) file to staging and offers it for install.</summary>
     public async Task AddUploadedFileAsync(string stagedPath, string originalName) =>
@@ -1489,19 +1503,23 @@ internal sealed partial class UpdateService : IDisposable
         var link = NxmLink.Parse(raw);
         if (link is null)
         {
+            Log.Write("Received a Nexus link that could not be read.");
             Update(() => _fatal = Loc.T("core.nxm_unreadable"));
             return;
         }
         if (!link.Game.Equals(AppEnvironment.NexusGame, StringComparison.OrdinalIgnoreCase))
         {
+            Log.Write($"Ignored a Nexus link for another game ({link.Game}).");
             Update(() => _fatal = Loc.T("core.nxm_other_game"));
             return;
         }
         if (string.IsNullOrEmpty(Settings.NexusKey))
         {
+            Log.Write("Received a Nexus link but no Nexus key is saved.");
             Update(() => _fatal = Loc.T("core.nxm_no_key"));
             return;
         }
+        Log.Write($"Received a Nexus link for mod {link.ModId}, file {link.FileId}.");
 
         UpdateItem? item;
         lock (_gate)

@@ -68,7 +68,7 @@ A collection is read from Nexus's public GraphQL API (its schema is open, and re
 - It opens no network port. Second copies talk through a pipe that only the current user can open.
 - Links the app opens are limited to an allow-list of known mod and documentation sites over https.
 - The Nexus key is stored with the best place each system offers: DPAPI on Windows, the desktop keyring through `secret-tool` on Linux when available, otherwise a file with mode 600.
-- Archives are treated as hostile: paths, duplicate names and sizes are checked, and the manifest ID must match.
+- Archives are treated as hostile: paths, duplicate names and sizes are checked (a manifest over 1 MB is skipped), and the manifest ID must match. The one exception is a mod whose Nexus page moved to a new owner with a new ID: the new manifest must name the same Nexus page as the mod it replaces, and exactly one installed mod of that page may be left over.
 
 ## How the Linux paths were chosen
 

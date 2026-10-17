@@ -12,10 +12,13 @@ namespace Sprinkler;
 internal sealed class InstanceChannel : IDisposable
 {
     private readonly CancellationTokenSource _stop = new();
+    private readonly string _pipeName;
+
+    public InstanceChannel(string? pipeName = null) => _pipeName = pipeName ?? DefaultPipeName;
 
     public event Action<string>? MessageReceived;
 
-    private static string PipeName
+    private static string DefaultPipeName
     {
         get
         {
@@ -33,7 +36,7 @@ internal sealed class InstanceChannel : IDisposable
             try
             {
                 await using var server = new NamedPipeServerStream(
-                    PipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                    _pipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(_stop.Token);
                 using var reader = new StreamReader(server, Encoding.UTF8);
                 var line = await reader.ReadLineAsync(_stop.Token);
@@ -53,11 +56,11 @@ internal sealed class InstanceChannel : IDisposable
     }
 
     /// <summary>Sends a message to the running copy. False when nobody answers.</summary>
-    public static async Task<bool> SendAsync(string message, int timeoutMs = 1500)
+    public static async Task<bool> SendAsync(string message, int timeoutMs = 1500, string? pipeName = null)
     {
         try
         {
-            await using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+            await using var client = new NamedPipeClientStream(".", pipeName ?? DefaultPipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
             await client.ConnectAsync(timeoutMs);
             await using var writer = new StreamWriter(client, new UTF8Encoding(false)) { AutoFlush = true };
             await writer.WriteLineAsync(message);

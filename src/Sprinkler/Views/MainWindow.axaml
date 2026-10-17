@@ -12,6 +12,7 @@
   <Window.DataTemplates>
     <DataTemplate DataType="vm:ConfirmDialogViewModel"><v:ConfirmDialogView /></DataTemplate>
     <DataTemplate DataType="vm:TourDialogViewModel"><v:TourDialogView /></DataTemplate>
+    <DataTemplate DataType="vm:TextPromptDialogViewModel"><v:TextPromptDialogView /></DataTemplate>
   </Window.DataTemplates>
 
   <Grid>
@@ -34,6 +35,9 @@
                 </Border>
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="Connect Nexus" /></StackPanel>
+                </Button>
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="Your active profile">
+                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Text="{Binding ProfileChipText}" /></StackPanel>
                 </Button>
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" Command="{Binding OpenAppUpdateCommand}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Text="{Binding AppUpdateText}" /></StackPanel>
@@ -72,6 +76,7 @@
             </StackPanel>
           </ListBoxItem>
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="package" Size="17" /><TextBlock Text="All mods" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="layers" Size="17" /><TextBlock Text="Profiles" /></StackPanel></ListBoxItem>
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="clock" Size="17" /><TextBlock Text="History" /></StackPanel></ListBoxItem>
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="Nexus and settings" /></StackPanel></ListBoxItem>
           <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="Help" /></StackPanel></ListBoxItem>
@@ -87,6 +92,7 @@
       <Panel Grid.Row="3">
         <v:UpdatesView IsVisible="{Binding ShowUpdatesTab}" />
         <v:ModsView IsVisible="{Binding ShowModsTab}" />
+        <v:ProfilesView IsVisible="{Binding ShowProfilesTab}" />
         <v:HistoryView IsVisible="{Binding ShowHistoryTab}" />
         <v:SettingsView IsVisible="{Binding ShowSettingsTab}" />
         <v:HelpView IsVisible="{Binding ShowHelpTab}" />

@@ -10,6 +10,7 @@ internal enum AppTab
 {
     Updates,
     Mods,
+    Profiles,
     History,
     Settings,
     Help,
@@ -21,6 +22,10 @@ internal interface IUiServices
     Task CopyTextAsync(string text);
 
     Task<string?> PickFolderAsync(string title);
+
+    Task<string?> PickOpenFileAsync(string title, string typeName, IReadOnlyList<string> patterns);
+
+    Task<string?> PickSaveFileAsync(string title, string suggestedName, string typeName, IReadOnlyList<string> patterns);
 }
 
 /// <summary>
@@ -60,7 +65,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         ModChips = new ObservableCollection<FilterChipViewModel>
         {
             new(this, "all", "All"), new(this, "update", "Updates"), new(this, "ok", "Up to date"),
-            new(this, "needs", "Missing requirements"), new(this, "nocheck", "Cannot check"), new(this, "off", "Off or skipped"),
+            new(this, "needs", "Missing requirements"), new(this, "nocheck", "Cannot check"), new(this, "off", "Off or skipped"), new(this, "config", "Has settings"),
         };
         ModChips[0].IsOn = true;
 
@@ -157,6 +162,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(TabIndex));
         OnPropertyChanged(nameof(ShowUpdatesTab));
         OnPropertyChanged(nameof(ShowModsTab));
+        OnPropertyChanged(nameof(ShowProfilesTab));
         OnPropertyChanged(nameof(ShowHistoryTab));
         OnPropertyChanged(nameof(ShowSettingsTab));
         OnPropertyChanged(nameof(ShowHelpTab));
@@ -164,6 +170,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool ShowUpdatesTab => Tab == AppTab.Updates;
     public bool ShowModsTab => Tab == AppTab.Mods;
+    public bool ShowProfilesTab => Tab == AppTab.Profiles;
     public bool ShowHistoryTab => Tab == AppTab.History;
     public bool ShowSettingsTab => Tab == AppTab.Settings;
     public bool ShowHelpTab => Tab == AppTab.Help;
@@ -198,6 +205,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             foreach (var item in _itemMap.Values)
                 item.NotifyArt();
         }
+        SyncProfiles(s);
         SyncHistory(s);
         SyncFound(s);
         SyncProblems(s);
@@ -384,6 +392,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void ShowDialog(DialogViewModel dialog)
     {
+        if (Dialog is TextPromptDialogViewModel askingText)
+            askingText.Cancel();
         if (Dialog is ConfirmDialogViewModel previous)
             previous.No();
         dialog.Closed = d =>

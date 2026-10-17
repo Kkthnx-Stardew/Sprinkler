@@ -340,7 +340,7 @@ public class ProfileServiceTests
             items = rig.Snapshot().GetProperty("items");
             if (items.GetArrayLength() > 0)
                 break;
-            await Task.Delay(100);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
         }
         var item = Assert.Single(items.EnumerateArray());
         Assert.True(item.GetProperty("isNew").GetBoolean());

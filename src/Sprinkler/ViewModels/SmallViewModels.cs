@@ -174,3 +174,43 @@ internal sealed partial class TourDialogViewModel : DialogViewModel
         Close();
     }
 }
+
+/// <summary>Asks for one line of text, such as a profile name or a note about a mod.</summary>
+internal sealed partial class TextPromptDialogViewModel : DialogViewModel
+{
+    private readonly TaskCompletionSource<string?> _result = new();
+
+    public TextPromptDialogViewModel(string title, string icon, string prompt, string initial, string yesText, int maxLength)
+    {
+        Title = title;
+        Icon = icon;
+        Prompt = prompt;
+        YesText = yesText;
+        MaxLength = maxLength;
+        _text = initial;
+    }
+
+    public string Title { get; }
+    public string Icon { get; }
+    public string Prompt { get; }
+    public string YesText { get; }
+    public int MaxLength { get; }
+    public Task<string?> Result => _result.Task;
+
+    [ObservableProperty]
+    private string _text;
+
+    [RelayCommand]
+    private void Ok()
+    {
+        _result.TrySetResult(Text);
+        Close();
+    }
+
+    [RelayCommand]
+    public void Cancel()
+    {
+        _result.TrySetResult(null);
+        Close();
+    }
+}

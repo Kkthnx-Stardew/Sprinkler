@@ -126,6 +126,15 @@ internal static class Platform
             Run(IsMac ? "open" : "xdg-open", url);
     }
 
+    /// <summary>Opens a file with the program the system uses for it, for example a settings file in the person's text editor.</summary>
+    public static void OpenFile(string path)
+    {
+        if (IsWindows)
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })?.Dispose();
+        else
+            Run(IsMac ? "open" : "xdg-open", path);
+    }
+
     /// <summary>Shows a folder in the system file manager.</summary>
     public static void OpenFolder(string path)
     {

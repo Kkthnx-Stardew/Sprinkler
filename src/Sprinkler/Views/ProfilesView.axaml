@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.ProfilesView"
+             x:DataType="vm:MainViewModel">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel MaxWidth="980" Margin="20,8,20,24">
+
+      <!-- what a profile is, and the current one -->
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="layers" Size="22" /><TextBlock Classes="h2" Text="Profiles" /></StackPanel>
+          <TextBlock Classes="muted" TextWrapping="Wrap" Text="A profile remembers which mods are switched on, so you can keep one setup for solo play, one for co-op and one for testing, and change between them in a click. Switching only adds or removes the leading dot on a mod's folder, the same rule SMAPI uses, so nothing is moved or deleted and switching back is exact." />
+
+          <Border Classes="banner ok" IsVisible="{Binding HasActiveProfile}">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <ctl:IconView Kind="check" Size="20" VerticalAlignment="Top" />
+              <TextBlock Classes="body" TextWrapping="Wrap"><Run Text="Active profile: " /><Run Text="{Binding ActiveProfileName}" FontWeight="SemiBold" /></TextBlock>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="banner warn" IsVisible="{Binding ProfileModified}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+              <ctl:IconView Kind="alert" Size="20" VerticalAlignment="Top" />
+              <TextBlock Grid.Column="1" Classes="body" TextWrapping="Wrap" Text="{Binding ProfileModifiedText}" />
+              <Button Grid.Column="2" Classes="slim primary" Command="{Binding SaveProfileChangesCommand}" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="save" Size="14" /><TextBlock Text="Save changes" /></StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+
+          <Border Classes="banner info" IsVisible="{Binding NoActiveProfile}">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <ctl:IconView Kind="help" Size="20" VerticalAlignment="Top" />
+              <TextBlock Classes="body" TextWrapping="Wrap" Text="No profile is active. The mods that are switched on now are not saved in any profile yet." />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <!-- new -->
+      <Border Classes="panel">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="h3" Margin="0" Text="Save what is switched on now" />
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding NewProfileName}" MaxLength="60" PlaceholderText="A name, for example Co-op farm" AutomationProperties.Name="Profile name">
+              <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding CreateProfileCommand}" /></TextBox.KeyBindings>
+            </TextBox>
+            <Button Grid.Column="1" Classes="primary" Command="{Binding CreateProfileCommand}" IsEnabled="{Binding CanCreateProfile}">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="save" Size="16" /><TextBlock Text="Save as a profile" /></StackPanel>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding ImportProfileCommand}" ToolTip.Tip="Open a profile a friend sent you">
+              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="upload" Size="16" /><TextBlock Text="Open a shared profile" /></StackPanel>
+            </Button>
+          </Grid>
+          <CheckBox IsChecked="{Binding KeepConfigs}">
+            <StackPanel>
+              <TextBlock FontWeight="SemiBold" Text="Each profile keeps its own mod settings" />
+              <TextBlock Classes="muted small" TextWrapping="Wrap" Text="Saves every mod's config.json with the profile and puts it back when you switch, so a harder difficulty in one profile does not leak into another. A copy of your current settings is kept before the first switch." />
+            </StackPanel>
+          </CheckBox>
+        </StackPanel>
+      </Border>
+
+      <!-- the list -->
+      <Border Classes="panel center" IsVisible="{Binding NoProfiles}">
+        <StackPanel Spacing="10" HorizontalAlignment="Center">
+          <ctl:IconView Kind="layers" Size="44" HorizontalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
+          <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="520" Text="No profiles yet. Switch your mods on and off the way you like, give it a name above, and it is saved here." />
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding ProfileList}" IsVisible="{Binding HasProfiles}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ProfileViewModel">
+            <Border Classes="card" Classes.done="{Binding IsActive}">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" Margin="16,14">
+                <Border Classes="art"><ctl:IconView Kind="layers" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
+                    <Border Classes="chip ok" IsVisible="{Binding IsActive}"><TextBlock Text="Active" /></Border>
+                  </StackPanel>
+                  <TextBlock Classes="muted small" Text="{Binding Detail}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                  <Button Classes="primary" Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="Switch to it" /></Button>
+                  <Button Classes="icon ghost" Width="34" Height="34" MinHeight="34" AutomationProperties.Name="More actions" ToolTip.Tip="More actions">
+                    <ctl:IconView Kind="more" Size="20" />
+                    <Button.Flyout>
+                      <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuItem Header="Rename" Command="{Binding RenameCommand}" />
+                        <MenuItem Header="Make a copy" Command="{Binding CopyCommand}" />
+                        <MenuItem Header="Save to share..." Command="{Binding ExportCommand}" />
+                        <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+                      </MenuFlyout>
+                    </Button.Flyout>
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

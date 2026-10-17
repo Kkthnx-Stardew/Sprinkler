@@ -106,7 +106,7 @@ public class ModNoteTests
 
         rig.Service.SetModNote("ME.A", "replaced"); // same mod, different capitalization
         notes = rig.Snapshot().GetProperty("modNotes");
-        Assert.Equal(1, notes.EnumerateObject().Count());
+        Assert.Single(notes.EnumerateObject());
         Assert.Equal("replaced", notes.EnumerateObject().Single().Value.GetString());
 
         rig.Service.SetModNote("me.A", "   ");

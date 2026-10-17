@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.TextPromptDialogView"
+             x:DataType="vm:TextPromptDialogViewModel">
+  <Border Classes="dialog" Width="480">
+    <StackPanel Spacing="10">
+      <StackPanel Orientation="Horizontal" Spacing="10">
+        <ctl:IconView Kind="{Binding Icon}" Size="24" Foreground="{DynamicResource AccentTextBrush}" />
+        <TextBlock Classes="h2" Text="{Binding Title}" TextWrapping="Wrap" />
+      </StackPanel>
+      <TextBlock Classes="muted" Text="{Binding Prompt}" TextWrapping="Wrap" />
+      <TextBox x:Name="Input" Text="{Binding Text}" MaxLength="{Binding MaxLength}" AutomationProperties.Name="{Binding Prompt}">
+        <TextBox.KeyBindings><KeyBinding Gesture="Enter" Command="{Binding OkCommand}" /></TextBox.KeyBindings>
+      </TextBox>
+      <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+        <Button Command="{Binding CancelCommand}"><TextBlock Text="Cancel" /></Button>
+        <Button Classes="primary" Command="{Binding OkCommand}"><TextBlock Text="{Binding YesText}" /></Button>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

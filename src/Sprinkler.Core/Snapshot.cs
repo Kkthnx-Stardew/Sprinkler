@@ -15,7 +15,7 @@ internal sealed record CandidateInfo(string Path, string Store, string? Smapi);
 
 internal sealed record NexusInfo(bool Connected, string? User, bool Premium, string? Message, bool Nxm, bool OtherHandler, bool NxmSupported, string KeyStorage);
 
-internal sealed record SettingsInfo(SourcePolicy Policy, bool AppWindow, string Theme, bool TourSeen, string Downloads, bool Watching, int BackupsPerMod, List<string> Ignored);
+internal sealed record SettingsInfo(SourcePolicy Policy, bool AppWindow, string Theme, bool TourSeen, string Downloads, bool Watching, int BackupsPerMod, List<string> Ignored, bool GroupContentPacks);
 
 internal sealed record OfferInfo(SourceKind Source, string Label, DeliveryMode Mode, string? Version, bool Usable, string Note);
 

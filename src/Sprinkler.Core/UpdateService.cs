@@ -70,7 +70,7 @@ internal sealed class UpdateItem
 
 internal sealed record WaitResult(bool Installed, int? SwitchTo);
 
-internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null);
+internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null, string? ParentId = null, bool HasConfig = false);
 
 internal sealed record Problem(string Level, string Title, string Detail, string? Url = null, string? UrlLabel = null);
 
@@ -478,7 +478,7 @@ internal sealed partial class UpdateService : IDisposable
                     needs = lacking;
             }
             var unofficial = res?.UnofficialVersion is not null && res.UnofficialUrl is not null ? res.UnofficialVersion : null;
-            return r with { Url = url, Author = mod?.Author, IsContentPack = mod?.ContentPackFor is not null, Needs = needs, Unofficial = unofficial, UnofficialUrl = unofficial is null ? null : res!.UnofficialUrl };
+            return r with { Url = url, Author = mod?.Author, IsContentPack = mod?.ContentPackFor is not null, ParentId = mod?.ContentPackFor, HasConfig = mod is not null && File.Exists(Path.Combine(mod.FolderPath, "config.json")), Needs = needs, Unofficial = unofficial, UnofficialUrl = unofficial is null ? null : res!.UnofficialUrl };
         }).ToList();
 
         // missing required mods become "install" items
@@ -1408,7 +1408,7 @@ internal sealed partial class UpdateService : IDisposable
                 continue;
             var old = rows.FirstOrDefault(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
             rows.RemoveAll(r => r.UniqueId.Equals(uid, StringComparison.OrdinalIgnoreCase));
-            rows.Add(new ModRow(mod.Name, mod.UniqueId, mod.Version, RowState.UpToDate, "Updated just now.", mod.FolderName, old?.Url, mod.Author, mod.ContentPackFor is not null));
+            rows.Add(new ModRow(mod.Name, mod.UniqueId, mod.Version, RowState.UpToDate, "Updated just now.", mod.FolderName, old?.Url, mod.Author, mod.ContentPackFor is not null, ParentId: mod.ContentPackFor, HasConfig: File.Exists(Path.Combine(mod.FolderPath, "config.json"))));
         }
         _rows = rows.OrderBy(r => r.State == RowState.Bundled).ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -1761,7 +1761,7 @@ internal sealed partial class UpdateService : IDisposable
                     Settings.Data.NxmRegistered && nxmStatus.Ours, nxmStatus.Other, NxmRegistration.Supported, Settings.KeyStorage),
                 Settings: new SettingsInfo(
                     Settings.Data.Policy, Settings.Data.AppWindow, Settings.Data.Theme, Settings.Data.TourSeen, Settings.DownloadsPath,
-                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList()),
+                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks),
                 Items: _items.Select(i => new ItemInfo(
                     i.Id, i.Name, i.Installed, i.Target, i.PartCount, i.IsNew, i.Why, i.Status, i.Message, i.Progress, i.Selected, i.Chosen,
                     i.AlternativesLoaded, i.Changelog.ToList(), i.ModPageUrl, i.Details.ToList(), i.HistoryId,

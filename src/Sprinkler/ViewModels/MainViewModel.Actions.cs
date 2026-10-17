@@ -286,6 +286,7 @@ internal sealed partial class MainViewModel
         "needs" => r.Needs is { Length: > 0 },
         "nocheck" => r.State is RowState.NoInfo or RowState.Error,
         "off" => r.State is RowState.Disabled or RowState.Ignored,
+        "config" => r.HasConfig,
         _ => true,
     };
 
@@ -310,8 +311,119 @@ internal sealed partial class MainViewModel
             1 => shown.OrderBy(v => v.Name, StringComparer.CurrentCultureIgnoreCase),
             _ => shown.OrderBy(v => StateRank.GetValueOrDefault(v.Row.State, 9)).ThenBy(v => v.Name, StringComparer.CurrentCultureIgnoreCase),
         };
-        SyncList(Mods, ordered.ToList());
+        var list = ordered.ToList();
+        if (GroupPacks)
+            list = GroupUnderParents(list);
+        else
+            foreach (var v in list)
+                v.Indented = false;
+        SyncList(Mods, list);
         OnPropertyChanged(nameof(NoModMatches));
+    }
+
+    /// <summary>
+    /// Puts each content pack right under the mod it belongs to, indented, when that mod is also in the list.
+    /// A pack whose mod is missing, filtered out or itself a pack stays where the sort put it.
+    /// </summary>
+    internal static List<ModRowViewModel> GroupUnderParents(List<ModRowViewModel> sorted)
+    {
+        var shownIds = sorted.Select(v => v.UniqueId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        bool UnderParent(ModRowViewModel v) =>
+            v.Row.ParentId is { } parent && !parent.Equals(v.UniqueId, StringComparison.OrdinalIgnoreCase) && shownIds.Contains(parent)
+            && sorted.Any(p => p.UniqueId.Equals(parent, StringComparison.OrdinalIgnoreCase) && p.Row.ParentId is null);
+
+        var packsByParent = sorted.Where(UnderParent).ToLookup(v => v.Row.ParentId!, StringComparer.OrdinalIgnoreCase);
+        var result = new List<ModRowViewModel>();
+        foreach (var v in sorted)
+        {
+            if (UnderParent(v))
+                continue;
+            v.Indented = false;
+            result.Add(v);
+            foreach (var pack in packsByParent[v.UniqueId])
+            {
+                pack.Indented = true;
+                result.Add(pack);
+            }
+        }
+        return result;
+    }
+
+    public bool GroupPacks
+    {
+        get => Snap?.Settings.GroupContentPacks ?? true;
+        set
+        {
+            if (value == GroupPacks)
+                return;
+            _svc.SetGroupContentPacks(value);
+            Refresh();
+        }
+    }
+
+    // ---- actions on one mod
+    public string NoteFor(string uniqueId) => Snap?.ModNotes.TryGetValue(uniqueId, out var note) == true ? note : "";
+
+    public bool IsEndorsed(long nexusId) => Snap?.Endorsed.Contains(nexusId) == true;
+
+    public async Task EditNoteAsync(ModRowViewModel row)
+    {
+        var text = await PromptAsync("Note about " + row.Name, "book", "Only you see this. Leave it empty to remove it.", NoteFor(row.UniqueId), "Save note", 300);
+        if (text is null)
+            return;
+        _svc.SetModNote(row.UniqueId, text);
+        Refresh();
+    }
+
+    public void OpenConfig(ModRowViewModel row)
+    {
+        var folder = _svc.ModFolder(row.UniqueId);
+        var file = folder is null ? null : Path.Combine(folder, "config.json");
+        if (file is null || !File.Exists(file))
+        {
+            Toast("This mod has no settings file.", true);
+            return;
+        }
+        try
+        {
+            Platform.OpenFile(file);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            Toast("Could not open the settings file: " + ex.Message, true);
+        }
+    }
+
+    public async Task RemoveModAsync(ModRowViewModel row, bool force = false)
+    {
+        if (!force && !await AskAsync($"Remove {row.Name}?",
+            "The mod folder is backed up first and the removal appears in History with an Undo button, so you can bring it back with its settings.",
+            "Remove it", "alert"))
+            return;
+
+        var (error, dependents) = await _svc.RemoveModAsync(row.UniqueId, force);
+        Refresh();
+        if (error is not null)
+        {
+            Toast(error, true);
+            return;
+        }
+        if (dependents is { Length: > 0 })
+        {
+            if (await AskAsync($"Remove {row.Name} anyway?", "These mods need it and will stop loading: " + string.Join(", ", dependents) + ".", "Remove anyway", "alert"))
+                await RemoveModAsync(row, force: true);
+            return;
+        }
+        Toast($"{row.Name} was removed. Undo it from History if you change your mind.");
+    }
+
+    public async Task ToggleEndorsementAsync(ModRowViewModel row)
+    {
+        if (row.NexusId is not { } id)
+            return;
+        var (ok, message) = await _svc.SetEndorsementAsync(id, !IsEndorsed(id), row.Version);
+        Refresh();
+        Toast(message, !ok);
     }
 
     private static string ChipLabel(string key) => key switch
@@ -321,6 +433,7 @@ internal sealed partial class MainViewModel
         "needs" => "Missing requirements",
         "nocheck" => "Cannot check",
         "off" => "Off or skipped",
+        "config" => "Has settings",
         _ => "All",
     };
 

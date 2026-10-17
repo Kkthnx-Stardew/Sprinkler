@@ -41,6 +41,29 @@ public partial class MainWindow : Window, IUiServices
         return folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
     }
 
+    public async Task<string?> PickOpenFileAsync(string title, string typeName, IReadOnlyList<string> patterns)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter = new[] { new FilePickerFileType(typeName) { Patterns = patterns } },
+        });
+        return files.Count > 0 ? files[0].TryGetLocalPath() : null;
+    }
+
+    public async Task<string?> PickSaveFileAsync(string title, string suggestedName, string typeName, IReadOnlyList<string> patterns)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = title,
+            SuggestedFileName = suggestedName,
+            DefaultExtension = "json",
+            FileTypeChoices = new[] { new FilePickerFileType(typeName) { Patterns = patterns } },
+        });
+        return file?.TryGetLocalPath();
+    }
+
     // ---- keyboard: Escape closes a dialog
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
@@ -54,6 +77,10 @@ public partial class MainWindow : Window, IUiServices
                 break;
             case TourDialogViewModel tour:
                 tour.Finish();
+                e.Handled = true;
+                break;
+            case TextPromptDialogViewModel prompt:
+                prompt.Cancel();
                 e.Handled = true;
                 break;
         }

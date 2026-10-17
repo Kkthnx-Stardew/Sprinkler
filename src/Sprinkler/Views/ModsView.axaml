@@ -18,9 +18,10 @@
       <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
         <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{Binding ModsTitle}" /></StackPanel>
         <TextBlock Grid.Row="1" Classes="muted small" TextWrapping="Wrap" Text="Use the switch to turn a mod off or on. SMAPI skips a mod that is switched off. &quot;Cannot check&quot; means the author left update info out of the manifest. You can still update such a mod by dropping its downloaded file onto this window." />
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="14">
           <TextBox Text="{Binding ModSearch}" PlaceholderText="Search mods or authors" AutomationProperties.Name="Search mods" />
-          <ComboBox Grid.Column="1" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="Sort mods">
+          <CheckBox Grid.Column="1" IsChecked="{Binding GroupPacks}" Content="Group content packs under their mod" VerticalAlignment="Center" />
+          <ComboBox Grid.Column="2" SelectedIndex="{Binding ModSortIndex}" MinWidth="210" AutomationProperties.Name="Sort mods">
             <ComboBoxItem Content="Needs attention first" />
             <ComboBoxItem Content="Name" />
             <ComboBoxItem Content="Author" />
@@ -51,14 +52,19 @@
                     <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="4,10" Opacity="{Binding RowOpacity}">
                       <Grid ColumnDefinitions="52,*,96,1.1*,36" ColumnSpacing="12">
                         <ToggleSwitch IsChecked="{Binding IsOn, Mode=OneWay}" Command="{Binding ToggleCommand}" IsEnabled="{Binding CanToggle}" ToolTip.Tip="{Binding SwitchTip}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
-                        <Grid Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center" ToolTip.Tip="{Binding Summary}">
+                        <Grid Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" VerticalAlignment="Center" Margin="{Binding Indent}" ToolTip.Tip="{Binding Summary}">
                         <v:ModIconView DataContext="{Binding}" Width="38" Height="38" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                           <DockPanel LastChildFill="True">
                             <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsContentPack}"><TextBlock Text="content pack" /></Border>
+                            <Border DockPanel.Dock="Right" Classes="tag" Margin="8,0,0,0" IsVisible="{Binding IsEndorsed}"><StackPanel Orientation="Horizontal" Spacing="4"><ctl:IconView Kind="heart" Size="11" /><TextBlock Text="endorsed" /></StackPanel></Border>
                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                           </DockPanel>
                           <TextBlock Classes="muted small" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasNote}">
+                            <ctl:IconView Kind="edit" Size="12" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" />
+                            <TextBlock Classes="small accent" FontStyle="Italic" Text="{Binding NoteText}" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
                           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasNeeds}">
                             <ctl:IconView Kind="alert" Size="14" Foreground="{DynamicResource WarnBrush}" />
                             <TextBlock Classes="warn small strong" Text="{Binding NeedsText}" TextTrimming="CharacterEllipsis" />
@@ -76,8 +82,12 @@
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                               <MenuItem Header="Open the mod page" Command="{Binding OpenPageCommand}" IsVisible="{Binding HasUrl}" />
                               <MenuItem Header="Show the folder" Command="{Binding ShowFolderCommand}" />
+                              <MenuItem Header="Open its settings file" Command="{Binding OpenConfigCommand}" IsVisible="{Binding HasConfig}" />
+                              <MenuItem Header="{Binding NoteMenuText}" Command="{Binding EditNoteCommand}" />
+                              <MenuItem Header="{Binding EndorseText}" Command="{Binding ToggleEndorsementCommand}" IsVisible="{Binding CanEndorse}" />
                               <MenuItem Header="{Binding StopSkippingText}" Command="{Binding StopSkippingCommand}" IsVisible="{Binding HasSkipped}" />
                               <MenuItem Header="{Binding IgnoreText}" Command="{Binding ToggleIgnoreCommand}" IsVisible="{Binding CanIgnore}" />
+                              <MenuItem Header="Remove this mod..." Command="{Binding RemoveCommand}" IsVisible="{Binding CanRemove}" />
                             </MenuFlyout>
                           </Button.Flyout>
                         </Button>

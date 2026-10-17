@@ -44,7 +44,8 @@ internal sealed class TempDir : IDisposable
 /// <summary>For a test that needs Windows file locking, which Linux and macOS do not enforce.</summary>
 public sealed class WindowsFactAttribute : FactAttribute
 {
-    public WindowsFactAttribute()
+    public WindowsFactAttribute([System.Runtime.CompilerServices.CallerFilePath] string? sourceFilePath = null, [System.Runtime.CompilerServices.CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         if (!OperatingSystem.IsWindows())
             Skip = "Needs Windows file locking.";

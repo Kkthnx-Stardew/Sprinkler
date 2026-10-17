@@ -29,6 +29,7 @@ internal sealed class SettingsData
     public long LogDismissedTicks { get; set; }
     public string Theme { get; set; } = "auto";
     public bool TourSeen { get; set; }
+    public bool GroupContentPacks { get; set; } = true;
 }
 
 /// <summary>Settings stored as JSON. The Nexus key goes to the safest place the system offers (see SecretStores).</summary>

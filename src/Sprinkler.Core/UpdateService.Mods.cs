@@ -58,6 +58,15 @@ internal sealed partial class UpdateService
         return (null, null);
     }
 
+    /// <summary>Whether content packs are listed under the mod they belong to in the All mods list.</summary>
+    public void SetGroupContentPacks(bool on)
+    {
+        lock (_gate)
+            Settings.Data.GroupContentPacks = on;
+        Settings.Save();
+        Update(() => { });
+    }
+
     // ---------------------------------------------------------------- notes
 
     /// <summary>Keeps a short private note about a mod ("needs patch X", "do not update before the festival"). An empty note removes it.</summary>

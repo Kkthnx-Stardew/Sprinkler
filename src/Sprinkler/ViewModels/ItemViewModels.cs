@@ -278,6 +278,47 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public bool IsIgnored => Row.State == RowState.Ignored;
     public string IgnoreText => IsIgnored ? "Check this mod again" : "Never check this mod";
 
+    // grouping under a parent mod
+    private bool _indented;
+
+    public bool Indented
+    {
+        get => _indented;
+        set
+        {
+            if (SetProperty(ref _indented, value))
+                OnPropertyChanged(nameof(Indent));
+        }
+    }
+
+    public Avalonia.Thickness Indent => new(_indented ? 30 : 0, 0, 0, 0);
+
+    // private note
+    public string NoteText => _main.NoteFor(Row.UniqueId);
+    public bool HasNote => NoteText.Length > 0;
+    public string NoteMenuText => HasNote ? "Edit the note" : "Add a note";
+
+    // Nexus
+    public long? NexusId => ArtKey is { } k && k.StartsWith("nexus:", StringComparison.Ordinal) && long.TryParse(k[6..], out var id) ? id : null;
+    public bool IsEndorsed => NexusId is { } id && _main.IsEndorsed(id);
+    public bool CanEndorse => NexusId is not null && _main.NexusConnected;
+    public string EndorseText => IsEndorsed ? "Remove my endorsement" : "Endorse on Nexus";
+
+    public bool HasConfig => Row.HasConfig;
+    public bool CanRemove => !IsLocked;
+
+    [RelayCommand]
+    private Task EditNote() => _main.EditNoteAsync(this);
+
+    [RelayCommand]
+    private Task Remove() => _main.RemoveModAsync(this);
+
+    [RelayCommand]
+    private Task ToggleEndorsement() => _main.ToggleEndorsementAsync(this);
+
+    [RelayCommand]
+    private void OpenConfig() => _main.OpenConfig(this);
+
     public void NotifyArt() => OnPropertyChanged(string.Empty);
 
     public void Update(ModRow row)
@@ -311,8 +352,10 @@ internal sealed partial class HistoryViewModel(MainViewModel main, HistoryInfo i
     private HistoryInfo _info = info;
 
     public string Name => Info.Name;
-    public string ArtKind => Info.Undone ? "skip" : Info.From is not null ? "arrowup" : "gift";
-    public string Detail => (Info.From is not null ? $"{Info.From} → {Info.To}" : $"{Info.To} (new install)") + " · from " + Info.Source + " · " + Fmt.Time(Info.When);
+    public string ArtKind => Info.Undone ? "skip" : Info.Removed ? "trash" : Info.From is not null ? "arrowup" : "gift";
+    public string Detail => Info.Removed
+        ? "Removed" + (Info.From is not null ? " " + Info.From : "") + " · " + Fmt.Time(Info.When)
+        : (Info.From is not null ? $"{Info.From} → {Info.To}" : $"{Info.To} (new install)") + " · from " + Info.Source + " · " + Fmt.Time(Info.When);
     public bool Undone => Info.Undone;
     public bool CanUndo => !Info.Undone && Info.CanUndo;
     public bool BackupGone => !Info.Undone && !Info.CanUndo;

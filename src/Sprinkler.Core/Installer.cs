@@ -429,20 +429,17 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         Directory.CreateDirectory(destDir);
         long written = 0;
 
-        foreach (var entry in archive.Entries)
+        archive.ReadEntries(prefix, (entryPath, input) =>
         {
-            if (!entry.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                continue;
-            var rel = entry.Path[prefix.Length..];
+            var rel = entryPath[prefix.Length..];
             if (rel.Length == 0)
-                continue;
+                return;
 
             var dest = Path.GetFullPath(Path.Combine(destDir, rel.Replace('/', Path.DirectorySeparatorChar)));
             if (!dest.StartsWith(fullDest, StringComparison.OrdinalIgnoreCase))
-                throw new ArchiveException(Loc.T("core.archive_outside_stop", entry.Path));
+                throw new ArchiveException(Loc.T("core.archive_outside_stop", entryPath));
 
             Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-            using var input = archive.OpenEntry(entry.Path);
             using var output = File.Create(dest);
 
             // header sizes can be falsified, so count what is really written
@@ -455,7 +452,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
                     throw new ArchiveException(Loc.T("core.archive_lies"));
                 output.Write(buffer, 0, n);
             }
-        }
+        });
     }
 
     /// <summary>Writes the files of a backup under <paramref name="root"/>, refusing any entry that would land outside it.</summary>

@@ -24,6 +24,7 @@ internal sealed class ArchiveFile : IDisposable
     private IArchive? _other;
     private readonly Dictionary<string, Func<Stream>> _openers = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<ArchiveFile> _inner = new();
+    private readonly Dictionary<string, ArchiveFile> _innerByPrefix = new(StringComparer.OrdinalIgnoreCase);
     private string? _innerDir;
 
     public List<ArchiveEntryInfo> Entries { get; } = new();
@@ -103,7 +104,7 @@ internal sealed class ArchiveFile : IDisposable
 
     private void LoadOther(string path)
     {
-        _other = ArchiveFactory.Open(path);
+        _other = ArchiveFactory.OpenArchive(path);
         foreach (var e in _other.Entries)
         {
             if (e.IsDirectory || e.Key is null)
@@ -157,6 +158,7 @@ internal sealed class ArchiveFile : IDisposable
                     continue;
                 }
                 _inner.Add(inner);
+                _innerByPrefix[$"{NestedMarker}{i}/"] = inner;
                 foreach (var e in inner.Entries)
                 {
                     var innerPath = e.Path;
@@ -186,6 +188,45 @@ internal sealed class ArchiveFile : IDisposable
 
     public Stream OpenEntry(string path) =>
         _openers.TryGetValue(path, out var open) ? open() : throw new FileNotFoundException(path);
+
+    /// <summary>
+    /// Hands every file under <paramref name="prefix"/> to <paramref name="handle"/> in the order the archive stores them. A solid 7z or rar
+    /// has to be decoded from its start to reach any one file, so asking for the files one by one takes longer and longer
+    /// (a pack of 1,500 small files took a minute). Reading front to back decodes it once.
+    /// </summary>
+    public void ReadEntries(string prefix, Action<string, Stream> handle)
+    {
+        foreach (var (innerPrefix, inner) in _innerByPrefix)
+        {
+            if (prefix.StartsWith(innerPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                inner.ReadEntries(prefix[innerPrefix.Length..], (path, stream) => handle(innerPrefix + path, stream));
+                return;
+            }
+        }
+
+        if (_other is null)
+        {
+            foreach (var entry in Entries.Where(e => e.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                using var stream = OpenEntry(entry.Path);
+                handle(entry.Path, stream);
+            }
+            return;
+        }
+
+        using var reader = _other.ExtractAllEntries();
+        while (reader.MoveToNextEntry())
+        {
+            if (reader.Entry.IsDirectory || reader.Entry.Key is null)
+                continue;
+            var name = Normalize(reader.Entry.Key);
+            if (name is null || name.EndsWith('/') || IsJunk(name) || !name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            using var stream = reader.OpenEntryStream();
+            handle(name, stream);
+        }
+    }
 
     public byte[] ReadAll(string path, long maxBytes = long.MaxValue)
     {

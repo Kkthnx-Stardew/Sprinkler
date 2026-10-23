@@ -2,7 +2,7 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 1.0.2 (2026-10-22)
 
 ### Fixed
 
@@ -13,6 +13,8 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 - A file whose version number cannot be compared (such as `1.2a`) was ignored when it turned up in Downloads. It is now offered whenever its version differs from the installed one.
 - A file that holds the same mod twice (a main and an alternative folder) wrote both to the same place. The newer copy is used and a note says which copy was left out.
 - A GitHub release without an attached file hid a later release that has one. A release tagged `latest` is now judged by the version in its file name.
+- Installing from a solid `.7z` or `.rar` with many small files could take a minute or more, because the archive reader decoded the whole block again for every file. The reader library is now a version that does not (1,500 files in a quarter of a second), and it also has no known security advisory.
+- Backups of changes you have undone, and of history entries that fell off the end of the list, were never deleted and used disk space for good. They are now removed.
 
 ### Improved
 

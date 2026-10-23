@@ -143,6 +143,71 @@ public class ReliabilityTests
         Assert.Contains("Old", folder.Warnings[0]);
     }
 
+    [Fact]
+    public void ASolid7zWithManySmallFilesInstallsInSeconds()
+    {
+        // an older reader library decoded the whole block again for every file, so 1,500 small files took a minute
+        string? seven = null;
+        foreach (var name in new[] { "7z", "7za", "7zz" })
+        {
+            try
+            {
+                using var probe = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(name) { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true });
+                probe!.StandardOutput.ReadToEnd();
+                probe.WaitForExit();
+                seven = name;
+                break;
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+            }
+        }
+        if (seven is null)
+        {
+            Assert.Skip("No 7z program on this machine to build the test archive.");
+            return;
+        }
+
+        using var d = new TempDir();
+        d.Write("src/Big/manifest.json", Zips.Manifest("me.Big", "1.0.0", "Big"));
+        for (var i = 0; i < 1500; i++)
+            d.Write($"src/Big/data/file{i}.json", "{\"value\":\"" + Guid.NewGuid().ToString("N") + new string('x', 1200) + i + "\"}");
+        var archive = d.Combine("Big.7z");
+        using (var build = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(seven, $"a -mx=1 -ms=on \"{archive}\" \"{d.Combine("src", "Big")}\"") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true })!)
+        {
+            build.StandardOutput.ReadToEnd();
+            build.WaitForExit();
+        }
+
+        var mods = d.Combine("Mods");
+        Directory.CreateDirectory(mods);
+        var installer = new Installer(new HistoryStore(d.Combine("history.json"), d.Combine("backups")), new SettingsStore(d.Combine("settings.json")));
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        using (var a = ArchiveFile.Open(archive))
+            installer.Apply(Installer.Plan(archive, a, mods, ModScanner.Scan(mods)), mods, "test");
+
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(25), "took " + clock.Elapsed);
+        Assert.Equal(1501, Directory.GetFiles(Path.Combine(mods, "Big"), "*", SearchOption.AllDirectories).Length);
+    }
+
+    [Fact]
+    public void TheBackupOfAnUndoneChangeIsDeleted()
+    {
+        using var d = new TempDir();
+        var backups = d.Combine("backups");
+        Directory.CreateDirectory(backups);
+        var history = new HistoryStore(d.Combine("history.json"), backups);
+        File.WriteAllText(Path.Combine(backups, "one.zip"), "x");
+        File.WriteAllText(Path.Combine(backups, "two.zip"), "x");
+        history.Add(new HistoryEntry { Id = "one", When = DateTime.Now.AddMinutes(-2), Name = "A", ToVersion = "1", BackupFile = "one.zip", Folders = { new HistoryFolder { UniqueId = "a.a", RelativePath = "A" } } }, 5);
+        history.MarkUndone("one");
+        history.Add(new HistoryEntry { Id = "two", When = DateTime.Now, Name = "B", ToVersion = "1", BackupFile = "two.zip", Folders = { new HistoryFolder { UniqueId = "b.b", RelativePath = "B" } } }, 5);
+
+        Assert.False(File.Exists(Path.Combine(backups, "one.zip")));
+        Assert.True(File.Exists(Path.Combine(backups, "two.zip")));
+        Assert.Null(history.Find("one")!.BackupFile);
+    }
+
     // ------------------------------------------------------------ downloads
 
     private sealed class FastRetries : IDisposable

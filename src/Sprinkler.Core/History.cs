@@ -100,28 +100,47 @@ internal sealed class HistoryStore
         }
     }
 
+    private void DeleteBackup(HistoryEntry entry)
+    {
+        if (entry.BackupFile is null)
+            return;
+        try
+        {
+            var path = Path.Combine(_backupsDir, entry.BackupFile);
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
     private void Prune(int keepPerMod)
     {
+        // an undone change can never be undone again, so its backup only takes up room
+        foreach (var undone in _entries.Where(e => e.Undone && e.BackupFile is not null))
+        {
+            DeleteBackup(undone);
+            undone.BackupFile = null;
+        }
+
         var withBackup = _entries.Where(e => e.BackupFile is not null && !e.Undone).ToList();
         foreach (var group in withBackup.GroupBy(e => e.Folders.FirstOrDefault()?.UniqueId ?? e.Name))
         {
             foreach (var old in group.OrderByDescending(e => e.When).Skip(Math.Max(1, keepPerMod)))
             {
-                try
-                {
-                    var path = Path.Combine(_backupsDir, old.BackupFile!);
-                    if (File.Exists(path))
-                        File.Delete(path);
-                }
-                catch (IOException)
-                {
-                }
+                DeleteBackup(old);
                 old.BackupFile = null;
             }
         }
 
         if (_entries.Count > 500)
-            _entries = _entries.OrderByDescending(e => e.When).Take(500).ToList();
+        {
+            var ordered = _entries.OrderByDescending(e => e.When).ToList();
+            foreach (var dropped in ordered.Skip(500))
+                DeleteBackup(dropped);
+            _entries = ordered.Take(500).ToList();
+        }
     }
 
     private void Load()

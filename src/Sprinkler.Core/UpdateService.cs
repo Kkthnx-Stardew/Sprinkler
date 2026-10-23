@@ -255,16 +255,31 @@ internal sealed partial class UpdateService : IDisposable
         Update(() => { });
     }
 
+    private Timer? _poll;
+
     private void StartWatcher()
     {
         try
         {
             _watcher.Start(Settings.DownloadsPath);
+            _poll ??= new Timer(_ => PollDownloads(), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
         }
         catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException)
         {
             Log.Write("Watcher could not start: " + ex.Message);
         }
+    }
+
+    /// <summary>While an update waits for a download, the folder is read now and then in case the watcher missed the file.</summary>
+    private void PollDownloads()
+    {
+        if (_disposed)
+            return;
+        bool waiting;
+        lock (_gate)
+            waiting = _items.Any(i => i.Status == ItemStatus.WaitingForYou && i.Waiter is not null);
+        if (waiting)
+            _watcher.ScanRecent(TimeSpan.FromMinutes(20));
     }
 
     public void SetDownloadsFolder(string path)
@@ -1122,12 +1137,13 @@ internal sealed partial class UpdateService : IDisposable
         await _downloadGate.WaitAsync(ct);
         try
         {
-            var url = offer.DownloadUrl;
-            if (url is null && offer.Kind == SourceKind.Nexus)
-                url = await _nexus.GetDownloadUrlAsync(offer.NexusModId!, offer.NexusFileId!, null, null, ct);
-            if (url is null)
+            IReadOnlyList<string> urls = offer.DownloadUrl is { } direct ? new[] { direct } : Array.Empty<string>();
+            if (urls.Count == 0 && offer.Kind == SourceKind.Nexus)
+                urls = await _nexus.GetDownloadUrlsAsync(offer.NexusModId!, offer.NexusFileId!, null, null, ct);
+            if (urls.Count == 0)
                 throw new DownloadException(Loc.T("core.no_link"));
-            archive = await Downloader.FetchAsync(url, offer.FileName, p => Update(() => item.Progress = p), ct);
+            Log.Write($"Downloading {item.Name} from {offer.Label}.");
+            archive = await Downloader.FetchAsync(urls, offer.FileName, p => Update(() => item.Progress = p), ct);
         }
         finally
         {
@@ -1267,11 +1283,15 @@ internal sealed partial class UpdateService : IDisposable
             }
             catch (Exception ex) when (ex is InstallException or ArchiveException)
             {
+                Log.Write($"{Path.GetFileName(path)} was not installed for {string.Join(", ", waiting.Select(w => w.Name))}: {ex.Message}");
                 Update(() =>
                 {
                     foreach (var w in waiting)
                         w.Message = ex.Message + " The app keeps waiting for the right file.";
                 });
+                // the right mod but not a newer one (an author who forgot to raise the version) can still be installed by hand
+                if (ex is WrongFileException)
+                    AddFound(path, origin, error: null, mods);
             }
             return;
         }
@@ -1283,14 +1303,25 @@ internal sealed partial class UpdateService : IDisposable
                 ?? MovedFromInstalled(m, mods);
             if (have is null)
                 return explicitFile;
+            if (explicitFile)
+                return true;
             var a = ModVersion.Parse(m.Manifest.Version);
             var b = ModVersion.Parse(have.Version);
-            return explicitFile || (a is not null && b is not null && a > b);
+            // a version that cannot be compared (say "1.2a") still counts when its text differs
+            if (a is null || b is null)
+                return !string.Equals(m.Manifest.Version, have.Version, StringComparison.OrdinalIgnoreCase);
+            return a > b;
         });
+        var held = string.Join(", ", mods.Select(m => m.Manifest.Name + " " + m.Manifest.Version));
         if (interesting)
+        {
+            Log.Write($"{Path.GetFileName(path)} holds {held}; offered for install.");
             AddFound(path, origin, error: null, mods);
+        }
         else
-            Log.Write($"Ignored {Path.GetFileName(path)}: nothing in it is a newer version of an installed mod, and no update was waiting for it.");
+        {
+            Log.Write($"Ignored {Path.GetFileName(path)} ({held}): nothing in it is a newer version of an installed mod, and no update was waiting for it.");
+        }
     }
 
     private void AddFound(string path, string origin, string? error, List<ArchiveMod>? mods = null)
@@ -1316,6 +1347,25 @@ internal sealed partial class UpdateService : IDisposable
         });
     }
 
+    /// <summary>Shows a downloaded file as a card to install by hand. Returns false when it holds no mod.</summary>
+    private bool OfferFound(string path, string origin)
+    {
+        try
+        {
+            using var archive = ArchiveFile.Open(path);
+            var mods = ArchiveInspector.FindMods(archive);
+            if (mods.Count == 0)
+                return false;
+            AddFound(path, origin, error: null, mods);
+            return true;
+        }
+        catch (Exception ex) when (ex is ArchiveException or IOException)
+        {
+            Log.Write("Could not offer " + Path.GetFileName(path) + ": " + ex.Message);
+            return false;
+        }
+    }
+
     public async Task InstallFoundAsync(string id)
     {
         FoundArchive? f;
@@ -1334,12 +1384,13 @@ internal sealed partial class UpdateService : IDisposable
                 var archiveMods = ArchiveInspector.FindMods(archive);
                 var plan = Installer.Plan(f.Path, archive, _game!.ModsPath, _mods, movedFrom: m => MovedFromInstalled(m, archiveMods));
                 await Task.Run(() => _installer.Apply(plan, _game.ModsPath, label));
+                // before the next install may plan, so a mod this file just added is not planned as new a second time
+                await RescanQuietlyAsync();
             }
             finally
             {
                 _installGate.Release();
             }
-            await RescanQuietlyAsync();
             Update(() => _found.RemoveAll(x => x.Id == id));
             if (f.Path.StartsWith(AppEnvironment.StagingDir, StringComparison.OrdinalIgnoreCase))
                 Downloader.Cleanup(f.Path);
@@ -1438,6 +1489,9 @@ internal sealed partial class UpdateService : IDisposable
                         i.Details.Add(Loc.T("core.also_installed", string.Join(", ", extras.Select(e => e.Source.Manifest.Name))));
                 }
             });
+
+            // while the install gate is still held, so the next item plans against what is really in the Mods folder
+            await RescanQuietlyAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
@@ -1455,7 +1509,6 @@ internal sealed partial class UpdateService : IDisposable
         {
             _installGate.Release();
         }
-        await RescanQuietlyAsync();
     }
 
     /// <summary>
@@ -1557,19 +1610,27 @@ internal sealed partial class UpdateService : IDisposable
             if (item is not null)
                 Update(() => { item.Status = ItemStatus.Working; item.Message = Loc.T("core.msg_downloading", "Nexus"); item.Progress = 0; });
 
-            var url = await _nexus.GetDownloadUrlAsync(link.ModId, link.FileId, link.Key, link.Expires, CancellationToken.None);
-            var path = await Downloader.FetchAsync(url, null, p => { if (item is not null) Update(() => item.Progress = p); }, CancellationToken.None);
+            var urls = await _nexus.GetDownloadUrlsAsync(link.ModId, link.FileId, link.Key, link.Expires, CancellationToken.None);
+            var path = await Downloader.FetchAsync(urls, null, p => { if (item is not null) Update(() => item.Progress = p); }, CancellationToken.None);
 
             if (item is not null)
             {
+                var keep = false;
                 try
                 {
                     await InstallForItemsAsync(new[] { item }, path, "Nexus Mods", requireNewer: true, CancellationToken.None);
                     item.Waiter?.TrySetResult(new WaitResult(true, null));
                 }
+                catch (WrongFileException)
+                {
+                    // the file is a real mod but not a newer one: keep it so it can be installed anyway from its card
+                    keep = OfferFound(path, "Nexus Mods");
+                    throw;
+                }
                 finally
                 {
-                    Downloader.Cleanup(path);
+                    if (!keep)
+                        Downloader.Cleanup(path);
                 }
             }
             else
@@ -1891,6 +1952,7 @@ internal sealed partial class UpdateService : IDisposable
         _disposed = true;
         _cts.Cancel();
         _appCts.Cancel();
+        _poll?.Dispose();
         _watcher.Dispose();
     }
 }

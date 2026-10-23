@@ -263,6 +263,42 @@ public class ServiceTests
     }
 
     [Fact]
+    public async Task AFileWithTheSameVersionForAWaitingUpdateCanBeInstalledAnyway()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+        _ = rig.Service.ApplyAsync(new[] { "nexus:5" });
+        await rig.WaitForAsync(x => x.GetProperty("items").GetArrayLength() > 0 && Rig.ItemStatus(x) == "WaitingForYou");
+
+        // the author forgot to raise the version in the manifest: the file is right but not newer
+        using var good = new TempDir();
+        var zip = Zips.Build(good, "Thing-1.1.0.zip", ("Thing/manifest.json", Zips.Manifest("me.Thing", "1.0.0", "Thing")), ("Thing/Fixed.txt", "new"));
+        await rig.Service.HandleArchiveAsync(zip, "your browser download", CancellationToken.None);
+
+        var s = rig.Snapshot();
+        Assert.Equal("WaitingForYou", Rig.ItemStatus(s));
+        var card = Assert.Single(s.GetProperty("found").EnumerateArray());
+
+        await rig.Service.InstallFoundAsync(card.GetProperty("id").GetString()!);
+        Assert.True(File.Exists(rig.Dir.Combine("game", "Mods", "Thing", "Fixed.txt")));
+        Assert.Empty(rig.Snapshot().GetProperty("found").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task AFileWithAVersionThatCannotBeComparedIsStillOffered()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        await rig.StartAsync();
+        await rig.WaitForAsync(x => x.GetProperty("phase").GetString() == "Review");
+
+        using var good = new TempDir();
+        var zip = Zips.Build(good, "Thing-beta.zip", ("Thing/manifest.json", Zips.Manifest("me.Thing", "1.1.0b", "Thing")));
+        await rig.Service.HandleArchiveAsync(zip, "your browser download", CancellationToken.None);
+        Assert.Single(rig.Snapshot().GetProperty("found").EnumerateArray());
+    }
+
+    [Fact]
     public async Task UpdatesInPlaceWhenTheModPageMovedToANewModId()
     {
         using var rig = new Rig(SourcePolicy.NexusFirst);

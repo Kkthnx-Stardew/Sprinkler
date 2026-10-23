@@ -47,6 +47,19 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
         if (mods.Count == 0)
             throw new WrongFileException(Loc.T("core.no_manifest_pack"));
 
+        // two copies of one mod in a file (say a main and an alternative folder) would write to the same place, so the newer one is used
+        var extraCopies = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        mods = mods
+            .GroupBy(m => m.Manifest.UniqueId, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var best = g.OrderByDescending(m => ModVersion.Parse(m.Manifest.Version), Comparer<ModVersion?>.Create((a, b) => a is null ? (b is null ? 0 : -1) : a.CompareTo(b))).First();
+                if (g.Count() > 1)
+                    extraCopies[g.Key] = g.Where(m => m != best).Select(m => m.RootPath.Length == 0 ? "/" : m.RootPath).ToList();
+                return best;
+            })
+            .ToList();
+
         var plan = new InstallPlan { ArchivePath = archivePath };
         var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -65,7 +78,8 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             }
             else
             {
-                var baseName = mod.RootPath.Length > 0 ? mod.RootPath.Split('/').Last() : Sanitize(mod.Manifest.Name);
+                var last = mod.RootPath.Split('/').Last();
+                var baseName = mod.RootPath.Length > 0 && !last.StartsWith(ArchiveFile.NestedMarker, StringComparison.Ordinal) ? last : Sanitize(mod.Manifest.Name);
                 if (baseName.StartsWith('.'))
                     baseName = baseName.TrimStart('.');
                 var name = baseName;
@@ -76,6 +90,8 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             }
 
             var planned = new PlannedFolder { Source = mod, TargetPath = target, Replaces = existing };
+            if (extraCopies.TryGetValue(mod.Manifest.UniqueId, out var skipped))
+                planned.Warnings.Add(Loc.T("core.dup_copies", mod.Manifest.Name, string.Join(", ", skipped)));
             if (existing is not null)
             {
                 var newV = ModVersion.Parse(mod.Manifest.Version);
@@ -176,6 +192,7 @@ internal sealed class Installer(HistoryStore history, SettingsStore settings)
             }).ToList(),
         };
         history.Add(entry, settings.Data.BackupsPerMod);
+        Log.Write($"Installed {string.Join(", ", plan.Folders.Select(f => f.Source.Manifest.Name + " " + f.Source.Manifest.Version))} from {sourceLabel}.");
         return new InstallResult(id, messages);
     }
 

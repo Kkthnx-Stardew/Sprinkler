@@ -2,6 +2,24 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Fixed
+
+- A downloaded file that was not installed because the author never raised the version in the mod's manifest (the page says 1.2.1, the file inside still says 1.2.0) was refused with no way forward. The file now appears as a card with an Install button, which installs it anyway with a backup and an Undo as usual.
+- A file whose name does not match what it really is (a 7z saved as `.zip`, a zip saved as `.rar`) was called damaged. The first bytes of the file now decide how it is read, and a download is renamed to match.
+- A zip with a second zip inside it, which some authors upload, was reported as holding no mod. The inner archive is now opened, and its mods are installed like any other.
+- Two updates that both bring the same required mod could install it twice, the second time as "Mod (2)", because the second install was planned before the first finished. The Mods folder is now read again inside the install lock.
+- A file whose version number cannot be compared (such as `1.2a`) was ignored when it turned up in Downloads. It is now offered whenever its version differs from the installed one.
+- A file that holds the same mod twice (a main and an alternative folder) wrote both to the same place. The newer copy is used and a note says which copy was left out.
+- A GitHub release without an attached file hid a later release that has one. A release tagged `latest` is now judged by the version in its file name.
+
+### Improved
+
+- Downloads are tried again after a dropped connection, a server error or a stall, and a download that ends early is caught by comparing it with the size the server promised. Nexus Premium downloads fall back to the next Nexus server when one fails. A web page sent in place of a file is refused.
+- The Downloads folder is read again every 15 seconds while an update waits for a file, in case the file system watcher missed it. A big file saved straight under its final name is now waited for up to an hour instead of two minutes.
+- The log now says what happened to every download and install: what was seen in Downloads, what was in it, and why it was installed, offered or ignored.
+
 ## 1.0.1 (2026-10-17)
 
 ### Fixed

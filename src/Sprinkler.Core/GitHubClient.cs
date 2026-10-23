@@ -36,17 +36,24 @@ internal sealed class GitHubClient
         }
 
         var target = ModVersion.Parse(targetVersion);
+        SourceOffer? noAsset = null;
         foreach (var rel in (releases ?? new()).Where(r => !r.Draft && (allowPrerelease || !r.Prerelease)))
         {
             // The release's own version is the first one in its tag or title. A later number such as "for SMAPI 4.1.0" is
-            // a requirement of the mod, and must not make an older release look new.
-            var version = ModVersion.FindAll(rel.TagName).FirstOrDefault() ?? ModVersion.FindAll(rel.Name).FirstOrDefault();
+            // a requirement of the mod, and must not make an older release look new. A tag such as "latest" says nothing,
+            // so the name of the file attached to the release is the last place to look.
+            var version = ModVersion.FindAll(rel.TagName).FirstOrDefault() ?? ModVersion.FindAll(rel.Name).FirstOrDefault()
+                ?? (rel.Assets ?? new()).Where(a => IsArchive(a.Name)).Select(a => ModVersion.FindAll(a.Name).FirstOrDefault()).FirstOrDefault(v => v is not null);
             if (target is not null && (version is null || version < target))
                 continue;
 
             var asset = PickAsset(rel.Assets ?? new(), modName, uniqueId);
             if (asset is null)
-                return Unusable(rel.HtmlUrl ?? page, Loc.T("core.gh_no_asset"));
+            {
+                // a release without a file (the author attached it to the next one) must not hide a later release that has one
+                noAsset ??= Unusable(rel.HtmlUrl ?? page, Loc.T("core.gh_no_asset"));
+                continue;
+            }
 
             return new SourceOffer
             {
@@ -60,7 +67,7 @@ internal sealed class GitHubClient
             };
         }
 
-        return Unusable(page, Loc.T("core.gh_no_release"));
+        return noAsset ?? Unusable(page, Loc.T("core.gh_no_release"));
     }
 
     private static Asset? PickAsset(List<Asset> assets, string modName, string uniqueId)

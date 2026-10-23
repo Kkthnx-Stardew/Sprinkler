@@ -133,7 +133,11 @@ internal sealed class NexusClient(Func<string?> keyProvider)
         };
     }
 
-    public async Task<string> GetDownloadUrlAsync(string modId, string fileId, string? nxmKey, string? expires, CancellationToken ct)
+    public async Task<string> GetDownloadUrlAsync(string modId, string fileId, string? nxmKey, string? expires, CancellationToken ct) =>
+        (await GetDownloadUrlsAsync(modId, fileId, nxmKey, expires, ct))[0];
+
+    /// <summary>Every download server Nexus offers for a file, so a failing one can be skipped.</summary>
+    public async Task<List<string>> GetDownloadUrlsAsync(string modId, string fileId, string? nxmKey, string? expires, CancellationToken ct)
     {
         var key = keyProvider() ?? throw new NexusException(NexusError.InvalidKey, Loc.T("core.nx_no_key"));
         var path = $"/games/{AppEnvironment.NexusGame}/mods/{modId}/files/{fileId}/download_link.json";
@@ -141,8 +145,8 @@ internal sealed class NexusClient(Func<string?> keyProvider)
             path += $"?key={Uri.EscapeDataString(nxmKey)}&expires={Uri.EscapeDataString(expires)}";
 
         var links = await GetAsync<List<DownloadLink>>(path, key, ct);
-        var url = links.FirstOrDefault(l => !string.IsNullOrEmpty(l.Uri))?.Uri;
-        return url ?? throw new NexusException(NexusError.Other, Loc.T("core.nx_no_link"));
+        var urls = links.Select(l => l.Uri).Where(u => !string.IsNullOrEmpty(u)).Select(u => u!).Distinct().ToList();
+        return urls.Count > 0 ? urls : throw new NexusException(NexusError.Other, Loc.T("core.nx_no_link"));
     }
 
     /// <summary>Changelog lines for one version, or an empty list.</summary>

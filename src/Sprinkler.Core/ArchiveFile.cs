@@ -15,43 +15,28 @@ internal sealed class ArchiveFile : IDisposable
 
     private static readonly string[] JunkNames = { ".DS_Store", "Thumbs.db", "desktop.ini" };
 
-    private readonly ZipArchive? _zip;
-    private readonly IArchive? _other;
+    /// <summary>Starts the folder name of an archive that was found inside another one, so its mods get a name of their own.</summary>
+    public const string NestedMarker = "@inner";
+
+    private const int MaxNested = 8;
+
+    private ZipArchive? _zip;
+    private IArchive? _other;
     private readonly Dictionary<string, Func<Stream>> _openers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<ArchiveFile> _inner = new();
+    private string? _innerDir;
 
     public List<ArchiveEntryInfo> Entries { get; } = new();
 
     public long TotalBytes { get; }
 
-    private ArchiveFile(string path)
+    private ArchiveFile(string path, int depth)
     {
-        var ext = Path.GetExtension(path).ToLowerInvariant();
         try
         {
-            if (ext == ".zip" || LooksLikeZip(path))
-            {
-                _zip = ZipFile.OpenRead(path);
-                foreach (var e in _zip.Entries)
-                {
-                    var name = Normalize(e.FullName);
-                    if (name is null || name.EndsWith('/') || IsJunk(name))
-                        continue;
-                    Add(name, e.Length, () => e.Open());
-                }
-            }
-            else
-            {
-                _other = ArchiveFactory.Open(path);
-                foreach (var e in _other.Entries)
-                {
-                    if (e.IsDirectory || e.Key is null)
-                        continue;
-                    var name = Normalize(e.Key);
-                    if (name is null || name.EndsWith('/') || IsJunk(name))
-                        continue;
-                    Add(name, e.Size, () => e.OpenEntryStream());
-                }
-            }
+            LoadEntries(path);
+            if (depth == 0)
+                UnwrapNested();
         }
         catch (ArchiveException)
         {
@@ -78,7 +63,126 @@ internal sealed class ArchiveFile : IDisposable
         }
     }
 
-    public static ArchiveFile Open(string path) => new(path);
+    /// <summary>
+    /// The extension is only a hint: a download is often named .zip while it is a 7z, or the other way round. The first bytes decide,
+    /// and a file that fails as a zip is tried with the other readers before it is called damaged.
+    /// </summary>
+    private void LoadEntries(string path)
+    {
+        var ext = Path.GetExtension(path).ToLowerInvariant();
+        var zipMagic = LooksLikeZip(path);
+        if (zipMagic || ext == ".zip")
+        {
+            try
+            {
+                LoadZip(path);
+                return;
+            }
+            catch (InvalidDataException) when (!zipMagic)
+            {
+                _zip?.Dispose();
+                _zip = null;
+                _openers.Clear();
+                Entries.Clear();
+            }
+        }
+        LoadOther(path);
+    }
+
+    private void LoadZip(string path)
+    {
+        _zip = ZipFile.OpenRead(path);
+        foreach (var e in _zip.Entries)
+        {
+            var name = Normalize(e.FullName);
+            if (name is null || name.EndsWith('/') || IsJunk(name))
+                continue;
+            Add(name, e.Length, () => e.Open());
+        }
+    }
+
+    private void LoadOther(string path)
+    {
+        _other = ArchiveFactory.Open(path);
+        foreach (var e in _other.Entries)
+        {
+            if (e.IsDirectory || e.Key is null)
+                continue;
+            var name = Normalize(e.Key);
+            if (name is null || name.EndsWith('/') || IsJunk(name))
+                continue;
+            Add(name, e.Size, () => e.OpenEntryStream());
+        }
+    }
+
+    /// <summary>
+    /// Some authors zip their zip. When the archive holds no manifest but a few archives, the ones that do hold a mod are opened
+    /// and their files show up here under a folder of their own, so the rest of the app never needs to know.
+    /// </summary>
+    private void UnwrapNested()
+    {
+        if (Entries.Any(e => IsManifestPath(e.Path)))
+            return;
+        var nested = Entries.Where(e => IsArchivePath(e.Path) && e.Size > 0 && e.Size <= MaxTotalBytes).ToList();
+        if (nested.Count == 0 || nested.Count > MaxNested)
+            return;
+
+        var written = 0L;
+        for (var i = 0; i < nested.Count; i++)
+        {
+            var outer = nested[i];
+            var temp = Path.Combine(_innerDir ??= Path.Combine(AppEnvironment.StagingDir, "nested-" + Guid.NewGuid().ToString("N")[..8]),
+                i + Path.GetExtension(outer.Path).ToLowerInvariant());
+            Directory.CreateDirectory(Path.GetDirectoryName(temp)!);
+            try
+            {
+                using (var input = OpenEntry(outer.Path))
+                using (var output = File.Create(temp))
+                {
+                    var buffer = new byte[81920];
+                    int n;
+                    while ((n = input.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        written += n;
+                        if (written > MaxTotalBytes)
+                            throw new ArchiveException(Loc.T("core.archive_lies"));
+                        output.Write(buffer, 0, n);
+                    }
+                }
+
+                var inner = new ArchiveFile(temp, depth: 1);
+                if (!inner.Entries.Any(e => IsManifestPath(e.Path)))
+                {
+                    inner.Dispose();
+                    continue;
+                }
+                _inner.Add(inner);
+                foreach (var e in inner.Entries)
+                {
+                    var innerPath = e.Path;
+                    Add($"{NestedMarker}{i}/{innerPath}", e.Size, () => inner.OpenEntry(innerPath));
+                }
+                Entries.Remove(outer);
+                Log.Write($"Opened {outer.Path} inside the archive and found {inner.Entries.Count(e => IsManifestPath(e.Path))} mod(s) in it.");
+            }
+            catch (ArchiveException ex)
+            {
+                Log.Write($"Skipped {outer.Path} inside the archive: {ex.Message}");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+            {
+                Log.Write($"Skipped {outer.Path} inside the archive: {ex.Message}");
+            }
+        }
+    }
+
+    private static bool IsManifestPath(string path) =>
+        path.Split('/').Last().Equals("manifest.json", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsArchivePath(string path) =>
+        Path.GetExtension(path).ToLowerInvariant() is ".zip" or ".7z" or ".rar";
+
+    public static ArchiveFile Open(string path) => new(path, depth: 0);
 
     public Stream OpenEntry(string path) =>
         _openers.TryGetValue(path, out var open) ? open() : throw new FileNotFoundException(path);
@@ -101,8 +205,12 @@ internal sealed class ArchiveFile : IDisposable
 
     public void Dispose()
     {
+        foreach (var inner in _inner)
+            inner.Dispose();
         _zip?.Dispose();
         _other?.Dispose();
+        if (_innerDir is not null)
+            Cleanup.TryDeleteDirectory(_innerDir);
     }
 
     private void Add(string name, long size, Func<Stream> open)
@@ -140,19 +248,37 @@ internal sealed class ArchiveFile : IDisposable
     private static bool IsJunk(string path) =>
         JunkNames.Contains(path.Split('/').Last(), StringComparer.OrdinalIgnoreCase);
 
-    private static bool LooksLikeZip(string path)
+    private static bool LooksLikeZip(string path) => Sniff(path) == ArchiveKind.Zip;
+
+    /// <summary>What a file really is, judged by its first bytes and not by its name.</summary>
+    internal static ArchiveKind Sniff(string path)
     {
         try
         {
             using var f = File.OpenRead(path);
-            var b = new byte[4];
-            return f.Read(b, 0, 4) == 4 && b[0] == 0x50 && b[1] == 0x4B;
+            var b = new byte[6];
+            var n = f.Read(b, 0, b.Length);
+            if (n >= 2 && b[0] == 0x50 && b[1] == 0x4B)
+                return ArchiveKind.Zip;
+            if (n >= 6 && b[0] == 0x37 && b[1] == 0x7A && b[2] == 0xBC && b[3] == 0xAF && b[4] == 0x27 && b[5] == 0x1C)
+                return ArchiveKind.SevenZip;
+            if (n >= 4 && b[0] == 0x52 && b[1] == 0x61 && b[2] == 0x72 && b[3] == 0x21)
+                return ArchiveKind.Rar;
+            return ArchiveKind.Unknown;
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return false;
+            return ArchiveKind.Unknown;
         }
     }
+}
+
+internal enum ArchiveKind
+{
+    Unknown,
+    Zip,
+    SevenZip,
+    Rar,
 }
 
 /// <summary>A mod folder inside an archive, found by its manifest.</summary>

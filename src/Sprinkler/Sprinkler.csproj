@@ -22,6 +22,8 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <!-- precompiled code starts the window in about half the time, for a larger file -->
+    <PublishReadyToRun>true</PublishReadyToRun>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
     <TrimmerSingleWarn>true</TrimmerSingleWarn>

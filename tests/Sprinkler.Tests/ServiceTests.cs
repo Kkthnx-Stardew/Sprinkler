@@ -48,15 +48,23 @@ internal sealed class FakeWeb : IDisposable
             var path = ctx.Request.Url!.AbsolutePath;
             lock (Requests)
                 Requests.Add(ctx.Request.HttpMethod + " " + path);
-            var body = Handler(path, ctx);
-            if (body is null)
+            try
             {
-                ctx.Response.StatusCode = ctx.Response.StatusCode == 200 ? 404 : ctx.Response.StatusCode;
+                var body = Handler(path, ctx);
+                if (body is null)
+                {
+                    ctx.Response.StatusCode = ctx.Response.StatusCode == 200 ? 404 : ctx.Response.StatusCode;
+                    ctx.Response.Close();
+                    continue;
+                }
+                ctx.Response.OutputStream.Write(body);
                 ctx.Response.Close();
-                continue;
             }
-            ctx.Response.OutputStream.Write(body);
-            ctx.Response.Close();
+            catch (Exception ex) when (ex is InvalidOperationException or HttpListenerException or IOException)
+            {
+                // a handler that already sent part of an answer cannot also change its status; the listener must keep serving
+                ctx.Response.Abort();
+            }
         }
     }
 
@@ -205,6 +213,27 @@ public class ServiceTests
         Assert.Equal("GitHub", s.GetProperty("history")[0].GetProperty("source").GetString());
         Assert.Equal("1.1.0", ManifestReader.ReadFile(rig.Dir.Combine("game", "Mods", "Thing", "manifest.json"), "x")!.Version);
         Assert.Equal("{\"keep\":1}", File.ReadAllText(rig.Dir.Combine("game", "Mods", "Thing", "config.json")));
+    }
+
+    [Fact]
+    public async Task KeepsTheModListWhenSmapiCannotBeReached()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        rig.Dir.Write("game/Mods/.Off/manifest.json", Zips.Manifest("me.Off", "1.0.0", "Off"));
+        rig.Web.Handler = (path, ctx) =>
+        {
+            ctx.Response.StatusCode = 503;
+            return null;
+        };
+        await rig.StartAsync();
+        var s = await rig.WaitForAsync(x => x.GetProperty("error").ValueKind == JsonValueKind.String);
+
+        Assert.Equal("Idle", s.GetProperty("phase").GetString());
+        var rows = s.GetProperty("rows").EnumerateArray().ToDictionary(r => r.GetProperty("uniqueId").GetString()!);
+        Assert.Equal(2, rows.Count);
+        Assert.Equal("Error", rows["me.Thing"].GetProperty("state").GetString());
+        Assert.True(rows["me.Thing"].GetProperty("hasConfig").GetBoolean());
+        Assert.Equal("Disabled", rows["me.Off"].GetProperty("state").GetString());
     }
 
     [Fact]

@@ -340,6 +340,8 @@ internal sealed partial class UpdateService : IDisposable
             var timedOut = ex is OperationCanceledException;
             Update(() =>
             {
+                if (_rows.Count == 0 && _mods.Count > 0)
+                    _rows = OfflineRows(_mods, new HashSet<string>(Settings.Data.Ignored, StringComparer.OrdinalIgnoreCase), ex.Message);
                 _phase = Phase.Idle;
                 _fatal = timedOut
                     ? Loc.T("core.check_timeout")
@@ -351,6 +353,19 @@ internal sealed partial class UpdateService : IDisposable
             _opGate.Release();
         }
     }
+
+    /// <summary>What the mods list shows when no update site could be asked: everything found on disk, none of it checked.</summary>
+    private static List<ModRow> OfflineRows(List<ModInfo> mods, HashSet<string> ignored, string reason) =>
+        mods.Select(m =>
+        {
+            var (state, note) = m.Bundled ? (RowState.Bundled, Loc.T("core.row_bundled"))
+                : m.Disabled ? (RowState.Disabled, Loc.T("core.row_off"))
+                : ignored.Contains(m.UniqueId) ? (RowState.Ignored, Loc.T("core.row_ignored"))
+                : (RowState.Error, Loc.T("core.row_error", reason));
+            return new ModRow(m.Name, m.UniqueId, m.Version, state, note, m.FolderName,
+                Author: m.Author, IsContentPack: m.ContentPackFor is not null, ParentId: m.ContentPackFor,
+                HasConfig: File.Exists(Path.Combine(m.FolderPath, "config.json")));
+        }).OrderBy(r => r.State == RowState.Bundled).ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
     private async Task RunCheckAsync(GameInstall game, List<ModInfo> mods, CancellationToken ct)
     {
@@ -383,8 +398,11 @@ internal sealed partial class UpdateService : IDisposable
         }
         catch (HttpRequestException ex)
         {
+            // the folder was still read, so keep the list usable (switch on and off, profiles) when the site cannot be reached
+            var offline = OfflineRows(mods, ignored, ex.Message);
             Update(() =>
             {
+                _rows = offline;
                 _phase = Phase.Idle;
                 _fatal = Loc.T("core.smapi_unreachable", ex.Message);
             });

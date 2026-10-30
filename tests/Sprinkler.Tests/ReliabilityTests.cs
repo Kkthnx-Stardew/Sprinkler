@@ -327,6 +327,56 @@ public class ReliabilityTests
         }
     }
 
+    [Fact]
+    public async Task AServerThatNeverAnswersIsGivenUp()
+    {
+        using var _ = new FastRetries();
+        var before = Downloader.StallTimeout;
+        Downloader.StallTimeout = TimeSpan.FromMilliseconds(300);
+        try
+        {
+            using var web = new FakeWeb();
+            web.Handler = (path, ctx) =>
+            {
+                // accept the request and send nothing at all, not even the headers
+                Thread.Sleep(5000);
+                return null;
+            };
+            var started = DateTime.UtcNow;
+            var ex = await Assert.ThrowsAsync<DownloadException>(() => Downloader.FetchAsync(web.Base + "/silent.zip", null, null, CancellationToken.None));
+            Assert.True(ex.Transient);
+            Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(4), "the wait for an answer was not cut short");
+        }
+        finally
+        {
+            Downloader.StallTimeout = before;
+        }
+    }
+
+    [Fact]
+    public async Task AnAppUpdateFromAServerThatNeverAnswersIsGivenUp()
+    {
+        var before = Downloader.StallTimeout;
+        Downloader.StallTimeout = TimeSpan.FromMilliseconds(300);
+        try
+        {
+            using var web = new FakeWeb();
+            web.Handler = (path, ctx) =>
+            {
+                Thread.Sleep(3000);
+                return null;
+            };
+            var release = new AppRelease("9.9.9", "", "Sprinkler-win-x64.zip", web.Base + "/a.zip", 100, web.Base + "/a.sha256", web.Base + "/a.sig");
+            var started = DateTime.UtcNow;
+            await Assert.ThrowsAsync<AppUpdateException>(() => SelfUpdate.FetchAsync(release, new byte[1], "Sprinkler.exe", null, CancellationToken.None));
+            Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(2), "the wait for an answer was not cut short");
+        }
+        finally
+        {
+            Downloader.StallTimeout = before;
+        }
+    }
+
     // ------------------------------------------------------------ watcher
 
     [Fact]

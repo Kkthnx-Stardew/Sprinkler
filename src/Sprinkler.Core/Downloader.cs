@@ -60,7 +60,20 @@ internal static class Downloader
 
         try
         {
-            using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            // a server that accepts the connection and then says nothing must not hold the download for the client's own ten minutes
+            using var waiting = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            waiting.CancelAfter(StallTimeout);
+            HttpResponseMessage response;
+            try
+            {
+                response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, waiting.Token);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                throw new DownloadException(Loc.T("core.dl_stalled"), transient: true);
+            }
+            using var owned = response;
+            waiting.CancelAfter(Timeout.InfiniteTimeSpan);
             if (!response.IsSuccessStatusCode)
             {
                 var code = (int)response.StatusCode;

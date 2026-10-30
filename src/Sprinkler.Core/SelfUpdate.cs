@@ -178,24 +178,34 @@ internal static class SelfUpdate
     {
         try
         {
-            using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var idle = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            idle.CancelAfter(Downloader.StallTimeout);
+            using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, idle.Token);
             if (!response.IsSuccessStatusCode)
                 throw new AppUpdateException(Loc.T("upd.http", (int)response.StatusCode));
-            await using var stream = await response.Content.ReadAsStreamAsync(ct);
+            await using var stream = await response.Content.ReadAsStreamAsync(idle.Token);
             using var buffer = new MemoryStream();
             var chunk = new byte[1024];
             int n;
-            while ((n = await stream.ReadAsync(chunk, ct)) > 0)
+            while (true)
             {
+                idle.CancelAfter(Downloader.StallTimeout);
+                n = await stream.ReadAsync(chunk, idle.Token);
+                if (n <= 0)
+                    break;
                 buffer.Write(chunk, 0, n);
                 if (buffer.Length > limit)
                     throw new AppUpdateException(Loc.T("upd.bad_sums"));
             }
             return buffer.ToArray();
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or IOException)
         {
             throw new AppUpdateException(Loc.T("upd.network", ex.Message));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new AppUpdateException(Loc.T("upd.network", Loc.T("core.dl_stalled")));
         }
     }
 
@@ -230,19 +240,25 @@ internal static class SelfUpdate
     {
         try
         {
-            using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var idle = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            idle.CancelAfter(Downloader.StallTimeout);
+            using var response = await AppEnvironment.Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, idle.Token);
             if (!response.IsSuccessStatusCode)
                 throw new AppUpdateException(Loc.T("upd.http", (int)response.StatusCode));
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-            await using (var input = await response.Content.ReadAsStreamAsync(ct))
+            await using (var input = await response.Content.ReadAsStreamAsync(idle.Token))
             await using (var output = File.Create(path))
             {
                 var buffer = new byte[81920];
                 long read = 0;
                 var last = -1;
                 int n;
-                while ((n = await input.ReadAsync(buffer, ct)) > 0)
+                while (true)
                 {
+                    idle.CancelAfter(Downloader.StallTimeout);
+                    n = await input.ReadAsync(buffer, idle.Token);
+                    if (n <= 0)
+                        break;
                     read += n;
                     if (read > Math.Max(declared, 1) + 4096 || read > MaxArchiveBytes)
                         throw new AppUpdateException(Loc.T("upd.too_big"));
@@ -260,9 +276,13 @@ internal static class SelfUpdate
             if (actual != expectedHash)
                 throw new AppUpdateException(Loc.T("upd.bad_hash"));
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or IOException)
         {
             throw new AppUpdateException(Loc.T("upd.network", ex.Message));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new AppUpdateException(Loc.T("upd.network", Loc.T("core.dl_stalled")));
         }
     }
 

@@ -2,6 +2,32 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Added
+
+- "Switch all on" and "Switch all off" on the All mods tab. They act on exactly the mods the list shows, so type in the search box or pick a filter first (for example "Animated", or Cannot check). One confirmation says how many mods change and names any switched-on mod outside the group that needs one of them and would stop loading. A folder that cannot be renamed is skipped and reported, and the rest still go through. Switching back is the other button.
+
+### Fixed
+
+- When smapi.io could not be reached (no internet, or the service is down), the All mods tab said "No mods found yet" and nothing could be switched on or off. The mods found on disk now stay in the list, each marked as not checked, and the check message still explains why.
+- A download server that accepted the connection and then never answered could hold a download for ten minutes per try. Waiting for an answer now gives up after a minute, the same as a download that stalls midway, and the same guard covers the download of a new Sprinkler version.
+- The profile and app update chips in the header were cut off with no ellipsis when a translation was long. They now end in an ellipsis, and the profile chip shows its full text on hover.
+- The four count tiles on Updates could end up at different heights when a translation wrapped onto more lines. They now stay level.
+- The search box turned almost black while it had focus. It now keeps one tone whether idle, hovered or focused.
+- In a short window the All mods list shrank to one or two rows. The page now scrolls instead, so the list keeps room to show several mods.
+
+- In a narrow window the last tab, Help, was cut off behind a scroll bar. Below 940 pixels wide the tabs drop their icons and tighten up, so all six fit.
+- In a short window the step chips, the picture in the summary banner and the "About this list" fold-out are hidden, so the cards and the mod list get the room.
+- The text under an update card started at a position that matched neither the picture nor the title, and moved out of line on cards whose tick box was hidden. It now lines up with the picture in every state.
+- A card with a "What changed" fold-out had a taller row and a larger gap above "Skip this version" than a card without one. They now match, and the fold-out arrow lines up with the others.
+- On Nexus and settings, two cards had no icon beside their title and the Browse and Save buttons of the two folder rows ended at different places. Every card now has an icon, and both folder rows share their button widths. The Help title icon lines up with the rest.
+
+### Improved
+
+- The program files for Windows and Linux are now precompiled, so the window opens in about half the time (0.6 seconds instead of 1.3 on the test PC) and uses half the start-up processor time. The download is about 15 MB larger.
+- Notices at the top take at most a third of a short window, so the tab below keeps its room.
+
 ## 1.0.2 (2026-10-22)
 
 ### Fixed

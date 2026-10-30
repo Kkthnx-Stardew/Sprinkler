@@ -29,7 +29,13 @@
               <ComboBoxItem Content="{loc:T ui.author}" />
             </ComboBox>
           </Grid>
-          <CheckBox IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Center" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <CheckBox IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" ToolTip.Tip="{loc:T ui.switch_shown_tip}">
+              <Button Classes="slim" Command="{Binding SwitchShownOnCommand}"><TextBlock Text="{loc:T ui.switch_all_on}" /></Button>
+              <Button Classes="slim" Command="{Binding SwitchShownOffCommand}"><TextBlock Text="{loc:T ui.switch_all_off}" /></Button>
+            </StackPanel>
+          </Grid>
         </StackPanel>
         <ItemsControl Grid.Row="3" ItemsSource="{Binding ModChips}">
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>

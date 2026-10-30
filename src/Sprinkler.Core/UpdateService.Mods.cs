@@ -13,6 +13,63 @@ internal sealed partial class UpdateService
                 && m.RequiredIds.Any(id => id.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase)))
             .Select(m => m.Name).Distinct().ToArray();
 
+    // ---------------------------------------------------------------- switch many on or off
+
+    /// <summary>The mods among <paramref name="folders"/> that a bulk switch would change, with the folder names of the others skipped.</summary>
+    private static List<ModInfo> BulkTargets(IEnumerable<ModInfo> all, IReadOnlyCollection<string> folders, bool enable)
+    {
+        var wanted = new HashSet<string>(folders, StringComparer.OrdinalIgnoreCase);
+        return all.Where(m => !m.Bundled && m.Disabled == enable && wanted.Contains(m.FolderName)).ToList();
+    }
+
+    /// <summary>
+    /// What switching these folders on or off would do: how many mods change, and (when switching off) the names of
+    /// switched-on mods outside the group that need one of them and would stop loading.
+    /// </summary>
+    public (int Count, string[] LeftBehind) PlanBulkSwitch(IReadOnlyCollection<string> folders, bool enable)
+    {
+        List<ModInfo> all;
+        lock (_gate)
+            all = _mods.ToList();
+        var targets = BulkTargets(all, folders, enable);
+        if (enable || targets.Count == 0)
+            return (targets.Count, Array.Empty<string>());
+
+        var ids = new HashSet<string>(targets.Select(m => m.UniqueId), StringComparer.OrdinalIgnoreCase);
+        var leaving = new HashSet<ModInfo>(targets);
+        var left = all.Where(m => !m.Disabled && !leaving.Contains(m) && m.RequiredIds.Any(ids.Contains))
+            .Select(m => m.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        return (targets.Count, left);
+    }
+
+    /// <summary>Switches every one of these mod folders on or off the way <see cref="SetModEnabledAsync"/> does, and reports how many worked.</summary>
+    public async Task<(int Changed, int Failed, string? Error)> SetModsEnabledAsync(IReadOnlyCollection<string> folders, bool enable)
+    {
+        if (GameLocator.IsGameRunning(fresh: true))
+            return (0, 0, Loc.T("core.close_game_first"));
+
+        List<ModInfo> targets;
+        lock (_gate)
+            targets = BulkTargets(_mods, folders, enable);
+
+        int changed = 0, failed = 0;
+        foreach (var mod in targets)
+        {
+            if (RenameMod(mod, enable) is null)
+                changed++;
+            else
+                failed++;
+        }
+        Log.Write($"{(enable ? "Switched on" : "Switched off")} {changed} mods in one go, {failed} failed.");
+
+        if (changed > 0)
+        {
+            await RescanQuietlyAsync();
+            _ = CheckAsync();
+        }
+        return (changed, failed, null);
+    }
+
     // ---------------------------------------------------------------- remove
 
     /// <summary>

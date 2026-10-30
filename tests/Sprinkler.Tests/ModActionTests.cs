@@ -222,3 +222,62 @@ public class EndorsementTests
         Assert.Contains("Connect", result.Message);
     }
 }
+
+public class BulkSwitchTests
+{
+    [Fact]
+    public async Task SwitchingOffNamesTheModsOutsideTheGroupThatWouldStopLoading()
+    {
+        using var rig = new ProfileServiceTests.Rig();
+        await rig.StartAsync();
+
+        var (count, left) = rig.Service.PlanBulkSwitch(new[] { "A", "C" }, enable: false);
+        Assert.Equal(2, count);
+        Assert.Equal(new[] { "Beta" }, left);
+
+        (count, left) = rig.Service.PlanBulkSwitch(new[] { "A", "B", "C" }, enable: false);
+        Assert.Equal(3, count);
+        Assert.Empty(left);
+    }
+
+    [Fact]
+    public async Task ManyModsSwitchOffAndBackOnInOneGo()
+    {
+        using var rig = new ProfileServiceTests.Rig();
+        await rig.StartAsync();
+
+        var (changed, failed, error) = await rig.Service.SetModsEnabledAsync(new[] { "A", "C" }, enable: false);
+        Assert.Null(error);
+        Assert.Equal((2, 0), (changed, failed));
+        Assert.Contains(".A", rig.Folders());
+        Assert.Contains(".C", rig.Folders());
+        Assert.Contains("B", rig.Folders());
+        await rig.WaitForReviewAsync();
+
+        // folders that are already off are not counted again, and the dotted names are what a switch-on needs
+        Assert.Equal(0, rig.Service.PlanBulkSwitch(new[] { ".A", ".C" }, enable: false).Count);
+        Assert.Equal(2, rig.Service.PlanBulkSwitch(new[] { ".A", ".C", "B" }, enable: true).Count);
+
+        (changed, failed, error) = await rig.Service.SetModsEnabledAsync(new[] { ".A", ".C" }, enable: true);
+        Assert.Null(error);
+        Assert.Equal((2, 0), (changed, failed));
+        Assert.Contains("A", rig.Folders());
+        Assert.Contains("C", rig.Folders());
+        Assert.Equal("{\"level\":1}", File.ReadAllText(Path.Combine(rig.Mods, "A", "config.json")));
+    }
+
+    [Fact]
+    public async Task OneFolderThatCannotBeRenamedDoesNotStopTheRest()
+    {
+        using var rig = new ProfileServiceTests.Rig();
+        await rig.StartAsync();
+        Directory.CreateDirectory(Path.Combine(rig.Mods, ".C"));
+
+        var (changed, failed, error) = await rig.Service.SetModsEnabledAsync(new[] { "A", "C" }, enable: false);
+
+        Assert.Null(error);
+        Assert.Equal((1, 1), (changed, failed));
+        Assert.Contains(".A", rig.Folders());
+        Assert.Contains("C", rig.Folders());
+    }
+}

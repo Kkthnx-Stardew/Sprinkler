@@ -344,6 +344,15 @@ internal sealed partial class MainViewModel
         _ => true,
     };
 
+    /// <summary>The rows the current chip and search box pick, before sorting and grouping. A bulk switch acts on exactly these.</summary>
+    private IEnumerable<ModRowViewModel> MatchingRows(IEnumerable<ModRowViewModel> rows)
+    {
+        var term = ModSearch.Trim();
+        return rows
+            .Where(v => FilterMatches(_modFilter, v.Row))
+            .Where(v => term.Length == 0 || (v.Row.Name + " " + v.Row.Author + " " + v.Row.UniqueId).Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
+
     private void RebuildMods()
     {
         var rows = _rowMap.Values.ToList();
@@ -355,9 +364,7 @@ internal sealed partial class MainViewModel
         }
 
         var term = ModSearch.Trim();
-        var shown = rows
-            .Where(v => FilterMatches(_modFilter, v.Row))
-            .Where(v => term.Length == 0 || (v.Row.Name + " " + v.Row.Author + " " + v.Row.UniqueId).Contains(term, StringComparison.OrdinalIgnoreCase));
+        var shown = MatchingRows(rows);
 
         IOrderedEnumerable<ModRowViewModel> ordered = ModSortIndex switch
         {
@@ -535,6 +542,40 @@ internal sealed partial class MainViewModel
             return;
         }
         Toast(Loc.T(enable ? "act.is_on" : "act.is_off", row.Name));
+    }
+
+    [RelayCommand]
+    private Task SwitchShownOn() => SwitchShownAsync(true);
+
+    [RelayCommand]
+    private Task SwitchShownOff() => SwitchShownAsync(false);
+
+    /// <summary>Switches every mod the list currently matches on or off, after one confirmation that says how many and what would break.</summary>
+    private async Task SwitchShownAsync(bool enable)
+    {
+        var folders = MatchingRows(_rowMap.Values).Select(v => v.Row.Folder).ToList();
+        var (count, leftBehind) = _svc.PlanBulkSwitch(folders, enable);
+        if (count == 0)
+        {
+            Toast(Loc.T("act.bulk_none"));
+            return;
+        }
+
+        var many = Loc.Count("n.mod", count);
+        var text = Loc.T(enable ? "act.bulk_on_text" : "act.bulk_off_text");
+        if (leftBehind.Length > 0)
+            text += " " + Loc.T("act.bulk_needed_by", string.Join(", ", leftBehind.Take(4)) + (leftBehind.Length > 4 ? ", …" : ""));
+        if (!await AskAsync(Loc.T(enable ? "act.bulk_on_title" : "act.bulk_off_title", many), text, Loc.T(enable ? "act.bulk_on_button" : "act.bulk_off_button"), leftBehind.Length > 0 ? "alert" : "layers"))
+            return;
+
+        var (changed, failed, error) = await _svc.SetModsEnabledAsync(folders, enable);
+        Refresh();
+        if (error is not null)
+        {
+            Toast(error, true);
+            return;
+        }
+        Toast(Loc.T(enable ? "act.bulk_done_on" : "act.bulk_done_off", Loc.Count("n.mod", changed)) + (failed > 0 ? " " + Loc.T("act.bulk_failed", Loc.Count("n.mod", failed)) : ""), failed > 0);
     }
 
     public void SetIgnored(string uniqueId, bool ignore) => _svc.SetIgnored(uniqueId, ignore);

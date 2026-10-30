@@ -62,7 +62,7 @@ internal sealed class FakeWeb : IDisposable
             }
             catch (Exception ex) when (ex is InvalidOperationException or HttpListenerException or IOException)
             {
-                // a handler that already sent part of an answer cannot also change its status; the listener must keep serving
+                // a handler that already sent part of an answer cannot also change its status, so the listener must keep serving
                 ctx.Response.Abort();
             }
         }

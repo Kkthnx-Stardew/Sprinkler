@@ -27,6 +27,10 @@
       <SolidColorBrush x:Key="BadBrush" Color="#A33527" />
       <SolidColorBrush x:Key="BadSoftBrush" Color="#F8DFD9" />
       <SolidColorBrush x:Key="ScrimBrush" Color="#8C1A120E" />
+      <!-- the input fields stay one calm tone instead of changing while hovered or focused -->
+      <SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFF" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Dark">
       <SolidColorBrush x:Key="BgBrush" Color="#1E1713" />
@@ -49,6 +53,10 @@
       <SolidColorBrush x:Key="BadBrush" Color="#F28B7B" />
       <SolidColorBrush x:Key="BadSoftBrush" Color="#47211C" />
       <SolidColorBrush x:Key="ScrimBrush" Color="#B3000000" />
+      <!-- the input fields stay one calm tone instead of changing while hovered or focused -->
+      <SolidColorBrush x:Key="TextControlBackground" Color="#231A15" />
+      <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#231A15" />
+      <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#231A15" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

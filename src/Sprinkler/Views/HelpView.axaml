@@ -10,7 +10,7 @@
 
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" /><TextBlock Classes="h2" Text="{loc:T ui.getting_started}" /></StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="10"><Image Source="avares://Sprinkler/Assets/logo.png" Width="28" Height="28" Margin="-3,0" /><TextBlock Classes="h2" Text="{loc:T ui.getting_started}" /></StackPanel>
           <TextBlock Classes="muted" Text="{loc:T ui.three_steps_you_are_always_asked_before_anyt}" />
           <UniformGrid Columns="3">
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,12,0">

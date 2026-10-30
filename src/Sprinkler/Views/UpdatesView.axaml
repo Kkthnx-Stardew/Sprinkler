@@ -11,6 +11,7 @@
       <StackPanel MaxWidth="980" Margin="20,8,20,24">
 
         <!-- progress steps -->
+        <StackPanel Classes="optional">
         <ItemsControl ItemsSource="{Binding Steps}" IsVisible="{Binding HasSteps}" Margin="0,8,0,4">
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -19,6 +20,7 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        </StackPanel>
 
         <!-- starting -->
         <Border Classes="panel center" IsVisible="{Binding IsStarting}">

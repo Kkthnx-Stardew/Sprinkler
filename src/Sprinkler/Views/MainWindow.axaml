@@ -28,7 +28,7 @@
             </Border>
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
               <TextBlock Classes="h1" Text="Sprinkler" />
-              <WrapPanel Orientation="Horizontal">
+              <WrapPanel x:Name="Chips" Orientation="Horizontal">
                 <Border Classes="chip" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
                 <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
                 <Border Classes="chip bad" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
@@ -38,11 +38,11 @@
                 <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{loc:T ui.connect_nexus}" /></StackPanel>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{loc:T ui.your_active_profile}">
-                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Text="{Binding ProfileChipText}" /></StackPanel>
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{Binding ProfileChipText}">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Grid.Column="1" Text="{Binding ProfileChipText}" TextTrimming="CharacterEllipsis" /></Grid>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" IsEnabled="{Binding !AppUpdateBusy}" Command="{Binding OpenAppUpdateCommand}">
-                  <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Text="{Binding AppUpdateText}" /></StackPanel>
+                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" IsEnabled="{Binding !AppUpdateBusy}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding OpenAppUpdateCommand}">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Grid.Column="1" Text="{Binding AppUpdateText}" TextTrimming="CharacterEllipsis" /></Grid>
                 </Button>
               </WrapPanel>
             </StackPanel>
@@ -72,23 +72,23 @@
         <ListBox x:Name="TabStrip" Classes="tabs" SelectedIndex="{Binding TabIndex}" SelectionChanged="OnTabChanged" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T ui.sections}">
           <ListBoxItem>
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <ctl:IconView Kind="arrowup" Size="17" /><TextBlock Text="{loc:T ui.updates}" />
+              <ctl:IconView Classes="tabicon" Kind="arrowup" Size="17" /><TextBlock Text="{loc:T ui.updates}" />
               <Border Background="{DynamicResource AccentBrush}" CornerRadius="99" MinWidth="20" Padding="6,0" IsVisible="{Binding HasUpdateCount}" VerticalAlignment="Center">
                 <TextBlock Text="{Binding UpdateCount}" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource AccentInkBrush}" HorizontalAlignment="Center" />
               </Border>
             </StackPanel>
           </ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="package" Size="17" /><TextBlock Text="{loc:T ui.all_mods}" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="layers" Size="17" /><TextBlock Text="{loc:T ui.profiles}" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="clock" Size="17" /><TextBlock Text="{loc:T ui.history}" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="sliders" Size="17" /><TextBlock Text="{loc:T ui.nexus_and_settings}" /></StackPanel></ListBoxItem>
-          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="book" Size="17" /><TextBlock Text="{loc:T ui.help}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Classes="tabicon" Kind="package" Size="17" /><TextBlock Text="{loc:T ui.all_mods}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Classes="tabicon" Kind="layers" Size="17" /><TextBlock Text="{loc:T ui.profiles}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Classes="tabicon" Kind="clock" Size="17" /><TextBlock Text="{loc:T ui.history}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Classes="tabicon" Kind="sliders" Size="17" /><TextBlock Text="{loc:T ui.nexus_and_settings}" /></StackPanel></ListBoxItem>
+          <ListBoxItem><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Classes="tabicon" Kind="book" Size="17" /><TextBlock Text="{loc:T ui.help}" /></StackPanel></ListBoxItem>
         </ListBox>
         </ScrollViewer>
       </Border>
 
       <!-- ===== notices that apply to every tab ===== -->
-      <ScrollViewer Grid.Row="2" MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ScrollViewer x:Name="NoticeScroller" Grid.Row="2" MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <v:NoticesView MaxWidth="980" Margin="20,0" />
       </ScrollViewer>
 

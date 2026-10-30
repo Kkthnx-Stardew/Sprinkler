@@ -71,7 +71,7 @@
 
       <!-- folders -->
       <Border Classes="panel">
-        <StackPanel Spacing="8">
+        <StackPanel Spacing="8" Grid.IsSharedSizeScope="True">
           <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="folder" Size="22" /><TextBlock Classes="h2" Text="{loc:T ui.folders}" /></StackPanel>
           <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto" RowSpacing="6">
             <TextBlock Classes="muted" Text="{loc:T ui.game}" /><SelectableTextBlock Grid.Column="1" Text="{Binding GamePath}" TextWrapping="Wrap" />
@@ -82,18 +82,28 @@
             <Button Classes="link" Command="{Binding RevealCommand}" CommandParameter="logs"><TextBlock Text="{loc:T ui.open_log_folder}" /></Button>
           </StackPanel>
           <TextBlock Classes="h3" Text="{loc:T ui.change_the_game_folder}" />
-          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Browse" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Apply" />
+            </Grid.ColumnDefinitions>
             <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="{loc:T ui.game_folder}" />
-            <Button Grid.Column="1" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
-            <Button Grid.Column="2" Classes="primary" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="{loc:T ui.use_this_folder}" /></Button>
+            <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
+            <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="{loc:T ui.use_this_folder}" /></Button>
           </Grid>
           <TextBlock Classes="bad small strong" Text="{Binding GamePathError}" IsVisible="{Binding HasGamePathError}" TextWrapping="Wrap" />
           <TextBlock Classes="h3" Text="{loc:T ui.downloads_folder_the_app_watches}" />
           <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.when_you_download_a_mod_in_your_browser_the}" />
-          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Browse" />
+              <ColumnDefinition Width="Auto" SharedSizeGroup="Apply" />
+            </Grid.ColumnDefinitions>
             <TextBox Text="{Binding DownloadsInput}" AutomationProperties.Name="{loc:T ui.downloads_folder}" />
-            <Button Grid.Column="1" Command="{Binding BrowseDownloadsCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
-            <Button Grid.Column="2" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="{loc:T ui.save}" /></Button>
+            <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding BrowseDownloadsCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
+            <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="{loc:T ui.save}" /></Button>
           </Grid>
         </StackPanel>
       </Border>
@@ -114,7 +124,7 @@
       <!-- updates of this program -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <TextBlock Classes="h2" Text="{loc:T upd.title}" />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="refresh" Size="22" /><TextBlock Classes="h2" Text="{loc:T upd.title}" /></StackPanel>
           <CheckBox IsChecked="{Binding CheckAppUpdates}" Content="{loc:T upd.check}" />
           <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T upd.check_note}" />
         </StackPanel>
@@ -123,7 +133,7 @@
       <!-- language -->
       <Border Classes="panel">
         <StackPanel Spacing="10">
-          <TextBlock Classes="h2" Text="{loc:T set.language}" />
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="globe" Size="22" /><TextBlock Classes="h2" Text="{loc:T set.language}" /></StackPanel>
           <ComboBox ItemsSource="{Binding LanguageChoices}" SelectedItem="{Binding SelectedLanguage}" MinWidth="260" HorizontalAlignment="Left" AutomationProperties.Name="{loc:T set.language}">
             <ComboBox.ItemTemplate>
               <DataTemplate x:DataType="vm:LanguageChoice">

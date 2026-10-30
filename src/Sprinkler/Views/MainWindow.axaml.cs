@@ -8,6 +8,9 @@ namespace Sprinkler.Views;
 
 public partial class MainWindow : Window, IUiServices
 {
+    private const double NarrowWidth = 940;
+    private const double ShortHeight = 700;
+
     private int _dragDepth;
 
     public MainWindow()
@@ -19,6 +22,14 @@ public partial class MainWindow : Window, IUiServices
         AddHandler(DragDrop.DropEvent, OnDrop);
         KeyDown += OnKeyDown;
         Opened += (_, _) => ScrollSelectedTabIntoView();
+        // notices may take a third of a short window at most, so the tab below keeps room
+        SizeChanged += (_, e) =>
+        {
+            NoticeScroller.MaxHeight = Math.Clamp(e.NewSize.Height * 0.3, 90, 300);
+            // the styles key off these two: a narrow window gets compact tabs, a short one loses its decoration
+            Classes.Set("narrow", e.NewSize.Width < NarrowWidth);
+            Classes.Set("short", e.NewSize.Height < ShortHeight);
+        };
     }
 
     internal MainViewModel? ViewModel => DataContext as MainViewModel;

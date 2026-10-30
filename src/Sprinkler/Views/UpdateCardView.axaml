@@ -7,9 +7,9 @@
              x:Class="Sprinkler.Views.UpdateCardView"
              x:DataType="vm:ItemViewModel">
   <Border Classes="card" Classes.done="{Binding CardDone}" Classes.failed="{Binding CardFailed}">
-    <StackPanel>
+    <!-- the body sits in the same grid as the header, from the picture on, so it lines up whether or not the tick box is showing -->
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto" RowDefinitions="Auto,Auto" Margin="16,14,16,14" ColumnSpacing="12">
       <!-- header -->
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="16,14,16,6" ColumnSpacing="12">
         <CheckBox IsChecked="{Binding Selected}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding CanSelect}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Name}" />
         <Panel Grid.Column="1" Width="46" Height="46" VerticalAlignment="Center" ToolTip.Tip="{Binding Summary}">
           <v:ModIconView DataContext="{Binding}" Width="42" Height="42" HorizontalAlignment="Left" VerticalAlignment="Top" />
@@ -30,10 +30,9 @@
           <TextBlock Classes="muted" Text="→" IsVisible="{Binding HasInstalled}" VerticalAlignment="Center" />
           <Border Background="{DynamicResource AccentSoftBrush}" CornerRadius="8" Padding="9,2"><TextBlock Classes="accent" FontWeight="SemiBold" Text="{Binding Target}" /></Border>
         </StackPanel>
-      </Grid>
 
       <!-- body -->
-      <StackPanel Margin="68,0,16,14" Spacing="4">
+      <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,6,0,0" Spacing="4">
         <TextBlock Classes="muted small" Text="{Binding Why}" IsVisible="{Binding HasWhy}" TextWrapping="Wrap" />
 
         <!-- where the file comes from -->
@@ -104,6 +103,6 @@
         </StackPanel>
         <TextBlock Classes="muted small" Text="{Binding Message}" IsVisible="{Binding IsSkipped}" TextWrapping="Wrap" />
       </StackPanel>
-    </StackPanel>
+    </Grid>
   </Border>
 </UserControl>

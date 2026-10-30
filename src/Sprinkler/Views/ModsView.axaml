@@ -6,7 +6,8 @@
              xmlns:v="using:Sprinkler.Views"
              x:Class="Sprinkler.Views.ModsView"
              x:DataType="vm:MainViewModel">
-  <Grid MaxWidth="980" Margin="20,8,20,20">
+  <ScrollViewer x:Name="Page" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+  <Grid x:Name="Body" MaxWidth="980" Margin="20,8,20,20">
     <Border Classes="panel center" IsVisible="{Binding NoMods}" VerticalAlignment="Top">
       <StackPanel Spacing="10" HorizontalAlignment="Center">
         <ctl:IconView Kind="package" Size="48" HorizontalAlignment="Center" />
@@ -18,7 +19,7 @@
     <Border Classes="panel" IsVisible="{Binding HasMods}" Margin="0">
       <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
         <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="package" Size="22" /><TextBlock Classes="h2" Text="{Binding ModsTitle}" /></StackPanel>
-        <Expander Grid.Row="1" Classes="flat" Header="{loc:T ui.about_this_list}"><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" /></Expander>
+        <Expander Grid.Row="1" Classes="flat optional" Header="{loc:T ui.about_this_list}"><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" /></Expander>
         <StackPanel Grid.Row="2" Spacing="8">
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
             <TextBox Text="{Binding ModSearch}" PlaceholderText="{loc:T ui.search_mods_or_authors}" AutomationProperties.Name="{loc:T ui.search_mods}" />
@@ -115,4 +116,5 @@
       </Grid>
     </Border>
   </Grid>
+  </ScrollViewer>
 </UserControl>

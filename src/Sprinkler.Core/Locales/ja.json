@@ -650,7 +650,6 @@
   "ui.you_press_download_on_nexus_and_the_app_inst": "Nexus でダウンロードを押すと、アプリがダウンロードフォルダーからファイルをインストールします。",
   "ui.you_press_the_download_button_on_the_site_th": "サイトでダウンロードボタンを押します。ファイルがダウンロードフォルダーに届いた瞬間に、アプリがインストールします。",
   "ui.you_see_the_plan_first_and_press_update_your": "まず計画を確認し、自分で「更新」を押します。",
-  "ui.your_active_profile": "現在のプロファイル",
   "ui.your_turn": "あなたの番: ",
   "upd.b1": "ダウンロードしたファイルは、このプログラムに組み込まれた署名で検証されるため、改変されたファイルは拒否されます。",
   "upd.b2": "新しいバージョンは、今のものを置き換える前に、1回起動して動作を確かめます。",

@@ -650,7 +650,6 @@
   "ui.you_press_download_on_nexus_and_the_app_inst": "you press download on Nexus and the app installs the file from your Downloads folder.",
   "ui.you_press_the_download_button_on_the_site_th": "You press the download button on the site. The app installs the file the moment it lands in your Downloads folder.",
   "ui.you_see_the_plan_first_and_press_update_your": "You see the plan first and press Update yourself.",
-  "ui.your_active_profile": "Your active profile",
   "ui.your_turn": "Your turn: ",
   "upd.b1": "The download is checked against a signature built into this program, so a changed file is refused.",
   "upd.b2": "The new version is started once to make sure it works before it replaces this one.",

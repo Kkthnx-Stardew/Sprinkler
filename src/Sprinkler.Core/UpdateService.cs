@@ -1901,7 +1901,7 @@ internal sealed partial class UpdateService : IDisposable
         get
         {
             lock (_gate)
-                return _phase is Phase.Scanning or Phase.Checking or Phase.Applying
+                return _smapiBusy || _phase is Phase.Scanning or Phase.Checking or Phase.Applying
                     || _items.Any(i => i.Status is ItemStatus.Working or ItemStatus.WaitingForYou);
         }
     }
@@ -1961,7 +1961,8 @@ internal sealed partial class UpdateService : IDisposable
                 BackupBytes: backupBytes,
                 Profiles: BuildProfilesInfoLocked(),
                 ModNotes: new Dictionary<string, string>(Settings.Data.ModNotes, StringComparer.OrdinalIgnoreCase),
-                Endorsed: _endorsed.ToList());
+                Endorsed: _endorsed.ToList(),
+                SmapiSetup: SmapiSetup());
         }
     }
 

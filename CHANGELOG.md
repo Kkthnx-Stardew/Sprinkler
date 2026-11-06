@@ -2,6 +2,17 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## 1.2.0 (2026-11-05)
+
+### Added
+
+- Install and update SMAPI from the app. When the game folder has no SMAPI, or a newer one is out, a button on the Updates tab does it after you confirm. Sprinkler downloads the installer from SMAPI's official GitHub release, checks the file against the fingerprint GitHub lists for it, unpacks only the files for your system and runs SMAPI's own installer on the game folder. The installer is stopped if it stalls, the version in the folder is read back afterwards, and the mod list is checked again. Your mods, settings and saves are not touched, and the button is off while the game is running. On macOS the app still links to smapi.io. The new texts are in all 17 languages (machine written, corrections welcome).
+- A test that runs the real SMAPI installer on a copy of a game folder. It is off unless `SPRINKLER_REAL_SMAPI_GAME` names a throwaway folder.
+
+### Changed
+
+- The SMAPI notice no longer says the app leaves SMAPI alone.
+
 ## 1.1.0 (2026-10-30)
 
 ### Added

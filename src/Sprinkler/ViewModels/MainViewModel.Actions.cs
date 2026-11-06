@@ -49,6 +49,39 @@ internal sealed partial class MainViewModel
     [RelayCommand]
     private void OpenSmapiUpdate() => OpenUrl(SmapiUpdateUrl);
 
+    /// <summary>Installs SMAPI, or updates it, after asking. Where the app cannot do it, opens SMAPI's page instead.</summary>
+    [RelayCommand]
+    private async Task InstallSmapi()
+    {
+        if (!CanPressSmapi)
+        {
+            OpenUrl(SmapiUpdateUrl ?? "https://smapi.io");
+            return;
+        }
+
+        var (release, error) = await _svc.FindSmapiReleaseAsync();
+        if (release is null)
+        {
+            Toast(error ?? Loc.T("smapi.no_release"), true);
+            return;
+        }
+
+        var update = HasSmapi;
+        var dialog = new ConfirmDialogViewModel(Loc.T(update ? "smapi.confirm_update" : "smapi.confirm_install", release.Version), "gift",
+            Loc.T(update ? "smapi.update_btn" : "smapi.install_btn"), Loc.T("ui.cancel"),
+            new[] { new DialogLine("", Loc.T("smapi.confirm_text")) },
+            new[] { Loc.T("smapi.b1"), Loc.T("smapi.b2", Math.Max(1, release.AssetSize / (1024 * 1024))) });
+        ShowDialog(dialog);
+        if (!await dialog.Result)
+            return;
+
+        var failure = await _svc.InstallSmapiAsync(release);
+        if (failure is null)
+            Toast(Loc.T("smapi.done", release.Version));
+        else
+            Toast(failure, true);
+    }
+
     [RelayCommand]
     private async Task OpenAppUpdate()
     {

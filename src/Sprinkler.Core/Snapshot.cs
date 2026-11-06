@@ -7,6 +7,9 @@ internal sealed record UpdateNotice(string Version, string Url, bool CanInstall 
 
 internal sealed record ShortcutInfo(bool Installed);
 
+/// <summary>Whether SMAPI can be installed or updated from here, and how far an install in progress has got.</summary>
+internal sealed record SmapiSetupInfo(bool CanInstall, bool Busy, int Progress);
+
 internal sealed record AppInfo(string Name, string Version, string Repo, string Os, string DataDir, ShortcutInfo? Shortcut, UpdateNotice? Update);
 
 internal sealed record GameInfo(string Path, string Mods, string Store, string? GameVersion, string? Smapi, bool Running, bool CanLaunch, string Os);
@@ -41,4 +44,4 @@ internal sealed record StateSnapshot(
     AppInfo App, GameInfo? Game, List<CandidateInfo> Candidates, bool Welcomed, UpdateNotice? SmapiUpdate, DateTime? LastChecked,
     NexusInfo Nexus, SettingsInfo Settings, List<ItemInfo> Items, List<ModRow> Rows, List<Problem> Problems,
     List<FoundInfo> Found, List<HistoryInfo> History, GameLogInfo? GameLog, long BackupBytes,
-    ProfilesInfo Profiles, Dictionary<string, string> ModNotes, List<long> Endorsed);
+    ProfilesInfo Profiles, Dictionary<string, string> ModNotes, List<long> Endorsed, SmapiSetupInfo? SmapiSetup = null);

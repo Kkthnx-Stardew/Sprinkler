@@ -35,7 +35,7 @@ internal sealed partial class MainViewModel
     public bool HasAppUpdate => Snap?.App.Update is not null;
     public bool AppUpdateBusy => Snap?.App.Update?.Busy == true;
     public string AppUpdateText => Snap?.App.Update is { } u ? (u.Busy ? Loc.T("upd.chip_busy", u.Progress) : Loc.T("vm.app_update", u.Version)) : "";
-    public bool IsBusy => CurrentPhase is Phase.Scanning or Phase.Checking or Phase.Applying or Phase.Starting;
+    public bool IsBusy => CurrentPhase is Phase.Scanning or Phase.Checking or Phase.Applying or Phase.Starting || SmapiBusy;
     public bool CanCheck => HasGame && !IsBusy;
 
     // ---- banners
@@ -68,6 +68,11 @@ internal sealed partial class MainViewModel
     public bool HasSmapiUpdate => Snap?.SmapiUpdate is not null && Game is not null && PastScan;
     public string SmapiUpdateText => Snap?.SmapiUpdate is { } u ? Loc.T("vm.smapi_update", u.Version, Game?.Smapi ?? "?") : "";
     public string? SmapiUpdateUrl => Snap?.SmapiUpdate?.Url;
+    public bool CanInstallSmapi => Snap?.SmapiSetup is { CanInstall: true } && Game is not null && CurrentPhase is Phase.Idle or Phase.Review or Phase.Finished;
+    public bool SmapiBusy => Snap?.SmapiSetup is { Busy: true };
+    public bool CanPressSmapi => CanInstallSmapi && !SmapiBusy && !GameRunning;
+    public string SmapiBusyText => Loc.T("smapi.busy", Snap?.SmapiSetup?.Progress ?? 0);
+    public string InstallSmapiText => Loc.T(HasSmapi ? "smapi.update_btn" : "smapi.install_btn");
     public int RowCount => Snap?.Rows.Count ?? 0;
     private int ReadyCount => Items.Count;
     private int NewCount => Items.Count(i => i.IsNew);

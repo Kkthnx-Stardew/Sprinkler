@@ -103,7 +103,14 @@
         <Border Classes="banner info" IsVisible="{Binding HasSmapiUpdate}">
           <StackPanel Orientation="Horizontal" Spacing="12">
             <ctl:IconView Kind="gift" Size="20" VerticalAlignment="Top" />
-            <StackPanel Spacing="4"><TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding SmapiUpdateText}" /><Button Classes="link" Command="{Binding OpenSmapiUpdateCommand}"><TextBlock Text="{loc:T ui.get_smapi}" /></Button></StackPanel>
+            <StackPanel Spacing="6">
+              <TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding SmapiUpdateText}" />
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Classes="primary" Command="{Binding InstallSmapiCommand}" IsEnabled="{Binding CanPressSmapi}" IsVisible="{Binding CanInstallSmapi}"><TextBlock Text="{Binding InstallSmapiText}" /></Button>
+                <Button Classes="link" Command="{Binding OpenSmapiUpdateCommand}"><TextBlock Text="{loc:T ui.get_smapi}" /></Button>
+                <TextBlock Classes="muted small" VerticalAlignment="Center" Text="{Binding SmapiBusyText}" IsVisible="{Binding SmapiBusy}" />
+              </StackPanel>
+            </StackPanel>
           </StackPanel>
         </Border>
 

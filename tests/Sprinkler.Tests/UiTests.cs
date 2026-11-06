@@ -127,6 +127,29 @@ public class UiTests
     }
 
     [AvaloniaFact]
+    public async Task AGameWithoutSmapiOffersToInstallIt()
+    {
+        var (rig, vm, _) = await StartAsync();
+        using var _r = rig;
+        await SettleAsync(vm, () => vm.NoSmapi);
+        var window = new MainWindow();
+        window.Attach(vm);
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var install = window.GetVisualDescendants().OfType<Avalonia.Controls.Button>()
+            .FirstOrDefault(b => b.IsEffectivelyVisible && b.GetVisualDescendants().OfType<Avalonia.Controls.TextBlock>().Any(t => t.Text == "Install SMAPI"));
+        Assert.NotNull(install);
+        Assert.True(install.IsEffectivelyEnabled);
+        Assert.False(vm.SmapiBusy);
+
+        var shot = Environment.GetEnvironmentVariable("SPRINKLER_SHOT_DIR");
+        if (!string.IsNullOrEmpty(shot))
+            window.CaptureRenderedFrame()!.Save(Path.Combine(shot, "no-smapi.png"));
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task EveryTabOfTheRealWindowOpensWithoutAnError()
     {
         var (rig, vm, _) = await StartAsync();

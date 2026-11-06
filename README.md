@@ -61,6 +61,7 @@ It also finds required mods that are missing (the ones SMAPI skips without a cle
 - **Remove with undo.** Removing a mod backs up its folder first and shows it in History with an Undo button that brings it back with its settings.
 - **Notes and endorsing.** Keep a private note on any mod, open its settings file, and endorse mods on Nexus from the app (through your own key).
 - **A tidier list.** Content packs sit under the mod they belong to, and a filter finds the mods that have settings.
+- **SMAPI in one click.** With no SMAPI in the game folder, or a newer one out, a button installs or updates it. Sprinkler downloads SMAPI's installer from its official GitHub release, checks the file against the fingerprint GitHub records for it, and runs SMAPI's own installer on the game folder. Your mods, settings and saves are not touched, and nothing runs while the game is open. On macOS the app links to smapi.io instead.
 - **Updates itself, if you let it.** When a newer release exists, a pill in the header offers it. Pressing it asks first, then downloads the release, checks its signature and fingerprint against a key built into the app, starts the new version once to make sure it works, replaces the old one and restarts. Your mods, settings and profiles are not touched. Builds you run from source, or from a folder you cannot write to, only link to the release page. Looking for updates can be switched off under Nexus and settings.
 - **Your language.** The app speaks 17 languages (English, Spanish, French, German, Brazilian Portuguese, Italian, Dutch, Russian, Ukrainian, Polish, Turkish, Hungarian, Bulgarian, Simplified Chinese, Japanese, Korean and Thai). It follows your system and you can change it under Nexus and settings. The 16 translations were written with machine help and need native readers, so corrections are welcome: see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
@@ -74,7 +75,7 @@ Measured on a Windows 11 machine with the published single file: the download is
 
 - Nothing changes until you press Update, and the game must be closed.
 - Archives with paths that try to leave the Mods folder, duplicate entries, or absurd sizes are refused.
-- Sprinkler talks only to smapi.io, Nexus Mods, CurseForge and GitHub, and only opens links on a short allow-list of those sites.
+- Sprinkler talks only to smapi.io, Nexus Mods, CurseForge and GitHub (SMAPI's own installer comes from its GitHub release), and only opens links on a short allow-list of those sites.
 - Pictures are only stored when the bytes really are an image, under 2 MB, from an allowed site.
 - Save games are never touched. See [SECURITY.md](SECURITY.md) for how to report a problem privately.
 
@@ -105,7 +106,7 @@ Use the publish line for the system you are building for. See [CONTRIBUTING.md](
 
 - CurseForge is read through the same public endpoints its website uses, because its official API needs a key. Its mod pictures are not available that way, so those mods show a coloured initial instead.
 - Mods whose authors left update keys out of the manifest cannot be checked. They are listed so you can see which.
-- SMAPI itself is not updated by this app. It tells you when a new version exists.
+- SMAPI can be installed and updated from the app on Windows and Linux, but that path was tested with a stand-in installer in the test suite and not yet with SMAPI's real one on every system. macOS gets the link to smapi.io only.
 - On Linux the Nexus "Mod Manager Download" button works through a desktop entry and needs `xdg-utils`. Without it, use the Manual download button and Sprinkler installs the file from your Downloads folder.
 - macOS builds compile but are not released or tested yet, and the Nexus link handler is not available there.
 

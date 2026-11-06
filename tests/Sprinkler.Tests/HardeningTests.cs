@@ -117,7 +117,7 @@ public class HardeningTests
             sent = await Sprinkler.InstanceChannel.SendAsync("nxm " + link, 500, name);
 
         Assert.True(sent);
-        Assert.Equal("nxm " + link, await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal("nxm " + link, await received.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
         Assert.False(await Sprinkler.InstanceChannel.SendAsync("activate", 200, name + "-nobody-listens"));
     }
 

@@ -2,6 +2,28 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+### Fixed
+
+- Removing a mod, switching one on or off, undoing a change or switching profile started a new check, but if a check was already running the new one was silently dropped and the old, stale list stayed on screen. A new check now starts as soon as the running one ends.
+- A removed mod stayed in the All mods list, and its update card stayed under Updates, until the slow online check finished. The list now follows the folder at once: the row goes, a switched mod shows its new state, update cards for mods that are gone or switched off disappear, and mods that needed a removed mod say so right away.
+- A mod removed from the app stayed in the active profile, so the check offered to install it again as "part of your profile". It is now taken out of the active profile when you remove it, and Undo puts it back.
+
+### Added
+
+- Changes made outside Sprinkler are noticed. A folder deleted in Explorer, a mod copied in by hand or one switched off by another tool updates the list within a couple of seconds (and when the window comes to the front), shows a short notice saying what changed, and starts a new check. Settings files the game rewrites do not trigger anything.
+- A mod ID installed in two switched-on folders is reported before you start the game. SMAPI loads one copy and skips the other, which can stop the game from starting. The warning names the folders, and a red notice near the top of Updates points to it instead of leaving it under the update cards.
+- "Switch and play" on a profile switches to it and starts the game in one go (not when the profile still lacks mods), and the active profile has a Play button.
+- A profile that lists mods you no longer have shows an amber "not installed here" tag and a "Forget the missing mods" action in its menu, so it stops asking for them.
+
+### Improved
+
+- The Profiles tab shows your profiles first. The explanation, the active-profile banner and the introduction box only appear when they have something to say.
+- The "SMAPI was not found" notice puts its button beside the sentence, so it takes about half the height on every tab.
+- The All mods header is shorter: the title and "Switch all on/off" share a row, and the explanation and the grouping option share the next. About 80 pixels more room for the list.
+- Confirm dialogs no longer leave an empty line between the title and the text.
+
 ## 1.2.0 (2026-11-05)
 
 ### Added

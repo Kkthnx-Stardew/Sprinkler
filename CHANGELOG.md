@@ -19,6 +19,8 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 
 ### Improved
 
+- Updates are one row each: the name, the version change and where the file comes from. A chevron opens the source buttons, the changelog and "Skip this version" in place. A failed update opens by itself. The top of the tab is one block instead of a banner, four tiles and a panel, so about four rows fit on screen instead of one.
+- Problems that can affect the game are shown above the update rows, errors first. Only the first three are shown, the rest fold under "Show N more". This replaces the red notice added earlier in this version.
 - The Profiles tab shows your profiles first. The explanation, the active-profile banner and the introduction box only appear when they have something to say.
 - The "SMAPI was not found" notice puts its button beside the sentence, so it takes about half the height on every tab.
 - The All mods header is shorter: the title and "Switch all on/off" share a row, and the explanation and the grouping option share the next. About 80 pixels more room for the list.

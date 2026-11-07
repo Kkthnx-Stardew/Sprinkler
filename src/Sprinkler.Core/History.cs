@@ -22,6 +22,9 @@ internal sealed class HistoryEntry
     public List<HistoryFolder> Folders { get; set; } = new();
     public bool Undone { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>Set when removing the mod also took it out of this profile, so Undo can put it back there.</summary>
+    public string? RemovedFromProfile { get; set; }
 }
 
 /// <summary>A list of what the app changed, with the backup that lets each change be undone.</summary>
@@ -59,6 +62,19 @@ internal sealed class HistoryStore
         {
             _entries.Add(entry);
             Prune(keepPerMod);
+            Save();
+        }
+    }
+
+    /// <summary>Changes one entry in place and saves. Does nothing when the entry is gone.</summary>
+    public void Update(string id, Action<HistoryEntry> change)
+    {
+        lock (_gate)
+        {
+            var e = _entries.FirstOrDefault(x => x.Id == id);
+            if (e is null)
+                return;
+            change(e);
             Save();
         }
     }

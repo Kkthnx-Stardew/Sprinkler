@@ -16,7 +16,7 @@ public class RemoveModTests
         File.WriteAllText(Path.Combine(rig.Mods, "C", "config.json"), "{\"mine\":true}");
         await rig.StartAsync();
 
-        var (error, dependents) = await rig.Service.RemoveModAsync("me.C", force: false);
+        var (error, dependents, _) = await rig.Service.RemoveModAsync("me.C", force: false);
 
         Assert.Null(error);
         Assert.Null(dependents);
@@ -41,7 +41,7 @@ public class RemoveModTests
         using var rig = new ProfileServiceTests.Rig();
         await rig.StartAsync();
 
-        var (error, dependents) = await rig.Service.RemoveModAsync("me.A", force: false);
+        var (error, dependents, _) = await rig.Service.RemoveModAsync("me.A", force: false);
 
         Assert.Null(error);
         Assert.Equal(new[] { "Beta" }, dependents);

@@ -69,7 +69,7 @@ internal sealed partial class UpdateService
             };
             Profiles.Add(profile, makeActive: false);
             Update(() => { });
-            _ = CheckAsync();
+            RequestRecheck();
 
             var message = Loc.T("core.col_added", profile.Name, Fmt(selected.Count), selected.Count - toInstall);
             if (toInstall > 0)
@@ -89,7 +89,7 @@ internal sealed partial class UpdateService
         {
             Profiles.Update(name, p => p.PendingInstall = false);
             Update(() => { });
-            _ = CheckAsync();
+            RequestRecheck();
             return ProfileResult.Ok(Loc.T("core.col_dismissed"));
         }
         catch (ProfileException ex)

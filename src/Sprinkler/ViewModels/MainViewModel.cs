@@ -73,6 +73,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         ModChips[0].IsOn = true;
 
         _svc.Changed += OnServiceChanged;
+        _svc.ModsChangedOutside += OnModsChangedOutside;
         Loc.Instance.LanguageChanged += OnLanguageChanged;
         _svc.Art.Changed += () =>
         {
@@ -110,6 +111,20 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var running = GameLocator.IsGameRunning();
         if (_svc.Version != _lastVersion || running != _lastRunning)
             Refresh();
+    }
+
+    /// <summary>The window came to the front: if the Mods folder was changed meanwhile (in Explorer, by another tool), the list follows.</summary>
+    public void NoticeWindowActivated() => _svc.NoticeWindowActivated();
+
+    private void OnModsChangedOutside(ModsDelta delta)
+    {
+        if (_disposed)
+            return;
+        Dispatcher.UIThread.Post(() =>
+        {
+            var names = delta.Names.Count > 0 ? " " + string.Join(", ", delta.Names) + "." : "";
+            Toast(Loc.T("act.outside_changed", delta.Added, delta.Removed, delta.Changed) + names);
+        });
     }
 
     private void OnServiceChanged()
@@ -451,6 +466,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _debounce.Stop();
         _poll.Stop();
         _svc.Changed -= OnServiceChanged;
+        _svc.ModsChangedOutside -= OnModsChangedOutside;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
     }
 }

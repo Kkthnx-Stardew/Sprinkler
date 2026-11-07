@@ -65,7 +65,7 @@ internal sealed partial class UpdateService
         if (changed > 0)
         {
             await RescanQuietlyAsync();
-            _ = CheckAsync();
+            RequestRecheck();
         }
         return (changed, failed, null);
     }
@@ -76,10 +76,10 @@ internal sealed partial class UpdateService
     /// Removes a mod. The folder is backed up first and the removal shows up in History with an Undo button.
     /// Like switching a mod off, it first lists the mods that need it and waits for a second go-ahead.
     /// </summary>
-    public async Task<(string? Error, string[]? Dependents)> RemoveModAsync(string uniqueId, bool force)
+    public async Task<(string? Error, string[]? Dependents, string? LeftProfile)> RemoveModAsync(string uniqueId, bool force)
     {
         if (GameLocator.IsGameRunning(fresh: true))
-            return (Loc.T("core.close_game_first"), null);
+            return (Loc.T("core.close_game_first"), null, null);
 
         GameInstall? game;
         ModInfo? mod;
@@ -91,20 +91,21 @@ internal sealed partial class UpdateService
             mod = all.FirstOrDefault(m => m.UniqueId.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
         }
         if (game is null || mod is null || mod.Bundled)
-            return (Loc.T("core.mod_not_found"), null);
+            return (Loc.T("core.mod_not_found"), null, null);
 
         var dependents = DependentsOf(mod, all);
         if (dependents.Length > 0 && !force)
-            return (null, dependents);
+            return (null, dependents, null);
 
+        InstallResult removal;
         await _installGate.WaitAsync();
         try
         {
-            await Task.Run(() => _installer.Remove(mod.FolderPath, game.ModsPath, mod.UniqueId, mod.Name, mod.Version));
+            removal = await Task.Run(() => _installer.Remove(mod.FolderPath, game.ModsPath, mod.UniqueId, mod.Name, mod.Version));
         }
         catch (InstallException ex)
         {
-            return (ex.Message, null);
+            return (ex.Message, null, null);
         }
         finally
         {
@@ -113,8 +114,17 @@ internal sealed partial class UpdateService
 
         Log.Write($"Removed {mod.Name} {mod.Version}");
         await RescanQuietlyAsync();
-        _ = CheckAsync();
-        return (null, null);
+
+        // a mod taken out on purpose must not come back as "part of your profile"; Undo puts it back
+        var stillThere = false;
+        lock (_gate)
+            stillThere = _mods.Any(m => !m.Bundled && m.UniqueId.Equals(mod.UniqueId, StringComparison.OrdinalIgnoreCase));
+        var leftProfile = stillThere ? null : DropFromActiveProfile(mod.UniqueId);
+        if (leftProfile is not null)
+            History.Update(removal.HistoryId, e => e.RemovedFromProfile = leftProfile);
+        Update(() => { });
+        RequestRecheck();
+        return (null, null, leftProfile);
     }
 
     /// <summary>Remembers that the person folded or unfolded the content packs under one mod.</summary>

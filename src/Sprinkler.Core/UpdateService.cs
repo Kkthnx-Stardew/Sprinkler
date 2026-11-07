@@ -245,6 +245,7 @@ internal sealed partial class UpdateService : IDisposable
         Directory.CreateDirectory(game.ModsPath);
         Update(() => _phase = Phase.Idle);
         StartWatcher();
+        StartModsWatcher(game.ModsPath);
         await CheckAsync();
     }
 
@@ -292,10 +293,32 @@ internal sealed partial class UpdateService : IDisposable
 
     // ---------------------------------------------------------------- scan and check
 
-    public async Task CheckAsync()
+    public Task CheckAsync() => CheckCoreAsync(queueIfBusy: false);
+
+    private int _recheckRequested;
+
+    /// <summary>
+    /// Asks for a fresh check after something changed in the Mods folder. When a check is already running its list is
+    /// out of date, so a new one starts the moment it ends instead of the request being dropped.
+    /// </summary>
+    private void RequestRecheck() => _ = CheckCoreAsync(queueIfBusy: true);
+
+    /// <summary>Starts the check someone asked for while another operation held the gate.</summary>
+    private void RunPendingRecheck()
     {
+        if (!_disposed && Interlocked.Exchange(ref _recheckRequested, 0) == 1)
+            _ = CheckCoreAsync(queueIfBusy: false);
+    }
+
+    private async Task CheckCoreAsync(bool queueIfBusy)
+    {
+        // the request is written down before the gate is tried, so it cannot fall between a release and a failed try
+        if (queueIfBusy)
+            Volatile.Write(ref _recheckRequested, 1);
         if (!await _opGate.WaitAsync(0))
             return;
+        if (queueIfBusy)
+            Interlocked.Exchange(ref _recheckRequested, 0); // this check is the one that was asked for
         try
         {
             var game = _game;
@@ -351,6 +374,7 @@ internal sealed partial class UpdateService : IDisposable
         finally
         {
             _opGate.Release();
+            RunPendingRecheck();
         }
     }
 
@@ -576,6 +600,11 @@ internal sealed partial class UpdateService : IDisposable
                         Loc.T("core.dep_old_body", m.Name, have.Name, dep.MinimumVersion!, have.Version)));
             }
         }
+
+        // the same mod ID in two folders: SMAPI loads one and skips the other, so say so before the game is started
+        foreach (var twin in active.GroupBy(m => m.UniqueId, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
+            problems.Add(new Problem("error", Loc.T("core.prob_dup_title", twin.First().Name),
+                Loc.T("core.prob_dup_text", string.Join(", ", twin.Select(m => m.FolderName).Order(StringComparer.OrdinalIgnoreCase)))));
 
         var items = groups.Values.OrderBy(i => i.IsNew ? 0 : 1).ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
@@ -852,7 +881,7 @@ internal sealed partial class UpdateService : IDisposable
                 Settings.Data.Ignored.Add(uniqueId);
             Settings.Save();
         }
-        _ = CheckAsync();
+        RequestRecheck();
     }
 
     public void SetPolicy(SourcePolicy policy)
@@ -1039,6 +1068,7 @@ internal sealed partial class UpdateService : IDisposable
         finally
         {
             _opGate.Release();
+            RunPendingRecheck();
         }
     }
 
@@ -1412,7 +1442,7 @@ internal sealed partial class UpdateService : IDisposable
             Update(() => _found.RemoveAll(x => x.Id == id));
             if (f.Path.StartsWith(AppEnvironment.StagingDir, StringComparison.OrdinalIgnoreCase))
                 Downloader.Cleanup(f.Path);
-            _ = CheckAsync();
+            RequestRecheck();
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -1591,7 +1621,11 @@ internal sealed partial class UpdateService : IDisposable
             return;
         var mods = await Task.Run(() => ModScanner.Scan(game.ModsPath));
         SyncCollectionProfiles(mods);
-        Update(() => _mods = mods);
+        Update(() =>
+        {
+            _mods = mods;
+            ReconcileWithMods(mods);
+        });
     }
 
     // ---------------------------------------------------------------- nxm links
@@ -1681,6 +1715,7 @@ internal sealed partial class UpdateService : IDisposable
         var game = _game;
         if (game is null)
             return Loc.T("core.no_game");
+        var undoing = History.Find(historyId);
         await _installGate.WaitAsync();
         try
         {
@@ -1699,7 +1734,8 @@ internal sealed partial class UpdateService : IDisposable
             _installGate.Release();
         }
         await RescanQuietlyAsync();
-        _ = CheckAsync();
+        RestoreToProfileAfterUndo(undoing);
+        RequestRecheck();
         return null;
     }
 
@@ -1778,7 +1814,7 @@ internal sealed partial class UpdateService : IDisposable
             return (renameError, null);
 
         await RescanQuietlyAsync();
-        _ = CheckAsync();
+        RequestRecheck();
         return (null, null);
     }
 
@@ -1813,7 +1849,7 @@ internal sealed partial class UpdateService : IDisposable
         lock (_gate)
             phase = _phase;
         if (phase is Phase.Idle or Phase.Review)
-            _ = CheckAsync();
+            RequestRecheck();
     }
 
     /// <summary>Hides one specific version of a mod's update. A later version shows up again.</summary>
@@ -1843,7 +1879,7 @@ internal sealed partial class UpdateService : IDisposable
             if (Settings.Data.SkippedVersions.Remove(uniqueId))
                 Settings.Save();
         }
-        _ = CheckAsync();
+        RequestRecheck();
     }
 
     public void DismissLog()
@@ -1972,6 +2008,8 @@ internal sealed partial class UpdateService : IDisposable
         _cts.Cancel();
         _appCts.Cancel();
         _poll?.Dispose();
+        _modsDebounce?.Dispose();
+        StopModsWatcher();
         _watcher.Dispose();
     }
 }

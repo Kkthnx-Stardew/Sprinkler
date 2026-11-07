@@ -271,7 +271,7 @@ internal sealed partial class UpdateService
         var after = ScanNow(game);
         var configsWritten = Profiles.KeepConfigs ? ApplyConfigs(after, profile.Configs) : 0;
         Update(() => _mods = after);
-        _ = CheckAsync();
+        RequestRecheck();
 
         var sb = new StringBuilder(Loc.T("core.sw_head", profile.Name, turnedOn, turnedOff));
         if (configsWritten > 0)
@@ -377,6 +377,78 @@ internal sealed partial class UpdateService
             var missing = profile.Enabled.Where(id => !installed.Contains(id) && !IsSmapiId(id)).ToList();
             Update(() => { });
             return ProfileResult.Ok(missing.Count > 0 ? Loc.T("core.prof_added_missing", profile.Name, Fmt(profile.Enabled.Count), missing.Count) : Loc.T("core.prof_added", profile.Name, Fmt(profile.Enabled.Count)), missing);
+        }
+        catch (ProfileException ex)
+        {
+            return ProfileResult.Fail(ex.Message);
+        }
+    }
+
+    // ---------------------------------------------------------------- profiles follow removals
+
+    /// <summary>
+    /// Takes a mod the person removed on purpose out of the active profile, so the check does not offer it again as part
+    /// of the profile. Returns the profile's name when something changed, otherwise null.
+    /// </summary>
+    private string? DropFromActiveProfile(string uniqueId)
+    {
+        var active = Profiles.Active;
+        if (active is null || !active.Enabled.Contains(uniqueId, StringComparer.OrdinalIgnoreCase))
+            return null;
+        Profiles.Update(active.Name, p =>
+        {
+            p.Enabled.RemoveAll(id => id.Equals(uniqueId, StringComparison.OrdinalIgnoreCase));
+            p.Configs.Remove(uniqueId);
+        });
+        return active.Name;
+    }
+
+    /// <summary>After Undo brings a removed mod back, puts it into the profile it was taken out of (if that profile still exists).</summary>
+    private void RestoreToProfileAfterUndo(HistoryEntry? undone)
+    {
+        if (undone?.RemovedFromProfile is not { } profileName || Profiles.Find(profileName) is null)
+            return;
+        var ids = undone.Folders.Select(f => f.UniqueId).Where(id => id.Length > 0).ToList();
+        List<ModInfo> now;
+        lock (_gate)
+            now = _mods.ToList();
+        var back = ids.Where(id => now.Any(m => !m.Disabled && !m.Bundled && m.UniqueId.Equals(id, StringComparison.OrdinalIgnoreCase))).ToList();
+        if (back.Count == 0)
+            return;
+        Profiles.Update(profileName, p =>
+        {
+            foreach (var id in back.Where(id => !p.Enabled.Contains(id, StringComparer.OrdinalIgnoreCase)))
+                p.Enabled.Add(id);
+        });
+        Update(() => { });
+    }
+
+    /// <summary>Takes the mods a profile lists but that are not installed out of it, so it stops asking for them.</summary>
+    public ProfileResult ForgetMissingInProfile(string name)
+    {
+        try
+        {
+            var profile = Profiles.Find(name) ?? throw new ProfileException(Loc.T("core.prof_gone"));
+            List<ModInfo> mods;
+            lock (_gate)
+                mods = _mods.ToList();
+            var installed = InstalledIds(mods);
+            var gone = profile.Enabled.Where(id => !installed.Contains(id) && !IsSmapiId(id)).ToList();
+            if (gone.Count == 0)
+                return ProfileResult.Ok(Loc.T("core.prof_nothing_missing", profile.Name));
+            Profiles.Update(profile.Name, p =>
+            {
+                p.Enabled.RemoveAll(id => gone.Contains(id, StringComparer.OrdinalIgnoreCase));
+                foreach (var id in gone)
+                    p.Configs.Remove(id);
+                // a collection profile keeps its list, but stops asking for the mods that were dropped
+                if (p.Collection is not null)
+                    p.PendingInstall = false;
+            });
+            Log.Write($"Forgot {gone.Count} missing mods in the profile {profile.Name}.");
+            Update(() => { });
+            RequestRecheck();
+            return ProfileResult.Ok(Loc.T("core.prof_forgot", Fmt(gone.Count), profile.Name));
         }
         catch (ProfileException ex)
         {

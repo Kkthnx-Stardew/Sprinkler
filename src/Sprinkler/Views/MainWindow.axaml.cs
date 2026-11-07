@@ -22,6 +22,7 @@ public partial class MainWindow : Window, IUiServices
         AddHandler(DragDrop.DropEvent, OnDrop);
         KeyDown += OnKeyDown;
         Opened += (_, _) => ScrollSelectedTabIntoView();
+        Activated += (_, _) => ViewModel?.NoticeWindowActivated();
         // notices may take a third of a short window at most, so the tab below keeps room
         SizeChanged += (_, e) =>
         {

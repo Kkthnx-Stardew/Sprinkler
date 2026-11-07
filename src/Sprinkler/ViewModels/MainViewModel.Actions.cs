@@ -524,7 +524,7 @@ internal sealed partial class MainViewModel
             Loc.T("act.remove_yes"), "alert"))
             return;
 
-        var (error, dependents) = await _svc.RemoveModAsync(row.UniqueId, force);
+        var (error, dependents, leftProfile) = await _svc.RemoveModAsync(row.UniqueId, force);
         Refresh();
         if (error is not null)
         {
@@ -537,7 +537,7 @@ internal sealed partial class MainViewModel
                 await RemoveModAsync(row, force: true);
             return;
         }
-        Toast(Loc.T("act.removed", row.Name));
+        Toast(leftProfile is null ? Loc.T("act.removed", row.Name) : Loc.T("act.removed_profile", row.Name, leftProfile));
     }
 
     public async Task ToggleEndorsementAsync(ModRowViewModel row)

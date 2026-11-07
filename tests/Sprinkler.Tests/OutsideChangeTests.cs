@@ -68,7 +68,7 @@ public class OutsideChangeTests
         };
 
         var starting = rig.Service.SetGameFolderAsync(rig.Dir.Combine("game"));
-        await Task.Delay(300);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
         Assert.Null((await rig.Service.RemoveModAsync("me.C", false)).Error);
         release.Set();
         await starting;
@@ -76,7 +76,7 @@ public class OutsideChangeTests
         // the check that was running read the old folder; a second one must follow it instead of being dropped
         var end = DateTime.UtcNow.AddSeconds(20);
         while (DateTime.UtcNow < end && (calls < 2 || rig.Snapshot().GetProperty("phase").GetString() != "Review"))
-            await Task.Delay(50);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
         Assert.True(calls >= 2, "the second check never ran");
         Assert.DoesNotContain("me.C", RowIds(rig));
     }

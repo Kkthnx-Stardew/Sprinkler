@@ -12,7 +12,8 @@ internal sealed record SmapiSetupInfo(bool CanInstall, bool Busy, int Progress);
 
 internal sealed record AppInfo(string Name, string Version, string Repo, string Os, string DataDir, ShortcutInfo? Shortcut, UpdateNotice? Update);
 
-internal sealed record GameInfo(string Path, string Mods, string Store, string? GameVersion, string? Smapi, bool Running, bool CanLaunch, string Os);
+internal sealed record GameInfo(string Path, string Mods, string Store, string? GameVersion, string? Smapi, bool Running, bool CanLaunch, string Os,
+    LaunchPlan LaunchMods = LaunchPlan.DirectSmapi, LaunchPlan LaunchVanilla = LaunchPlan.DirectGame, bool SteamNeedsSetup = false, string SteamOption = "");
 
 internal sealed record CandidateInfo(string Path, string Store, string? Smapi);
 

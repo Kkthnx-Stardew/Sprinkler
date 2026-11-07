@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sprinkler.Localization"
+             xmlns:vm="using:Sprinkler.ViewModels"
+             xmlns:ctl="using:Sprinkler.Controls"
+             x:Class="Sprinkler.Views.PlayMenuButton"
+             x:Name="Root"
+             x:DataType="vm:MainViewModel">
+  <!-- Play opens a menu: with mods or without. Each choice says whether it goes through Steam or starts from the game folder. -->
+  <Button x:Name="PlayButton" Classes="primary" AutomationProperties.Name="{Binding #Root.Caption}" ToolTip.Tip="{loc:T ui.play_menu_tip}">
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <ctl:IconView Kind="play" Size="15" VerticalAlignment="Center" />
+      <TextBlock Text="{Binding #Root.Caption}" VerticalAlignment="Center" />
+      <ctl:IconView Kind="chevron" Size="12" VerticalAlignment="Center" Margin="2,0,0,0" />
+    </StackPanel>
+    <Button.Flyout>
+      <MenuFlyout Placement="BottomEdgeAlignedRight">
+        <MenuItem Command="{Binding LaunchCommand}" IsEnabled="{Binding CanLaunchMods}">
+          <MenuItem.Header>
+            <StackPanel Spacing="1" MinWidth="230">
+              <TextBlock Text="{loc:T ui.launch_with_mods}" FontWeight="SemiBold" />
+              <TextBlock Classes="muted small" Text="{Binding LaunchModsNote}" TextWrapping="Wrap" MaxWidth="300" />
+            </StackPanel>
+          </MenuItem.Header>
+        </MenuItem>
+        <MenuItem Command="{Binding LaunchVanillaCommand}" IsEnabled="{Binding CanLaunchVanilla}">
+          <MenuItem.Header>
+            <StackPanel Spacing="1" MinWidth="230">
+              <TextBlock Text="{loc:T ui.launch_without_mods}" FontWeight="SemiBold" />
+              <TextBlock Classes="muted small" Text="{Binding LaunchVanillaNote}" TextWrapping="Wrap" MaxWidth="300" />
+            </StackPanel>
+          </MenuItem.Header>
+        </MenuItem>
+        <Separator IsVisible="{Binding ShowSteamSetup}" />
+        <MenuItem Header="{loc:T ui.steam_setup_item}" Command="{Binding SetUpSteamCommand}" IsVisible="{Binding ShowSteamSetup}" />
+      </MenuFlyout>
+    </Button.Flyout>
+  </Button>
+</UserControl>

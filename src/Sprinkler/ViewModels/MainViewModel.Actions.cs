@@ -12,14 +12,40 @@ internal sealed partial class MainViewModel
     [RelayCommand]
     private Task Check() => Run(_svc.CheckAsync);
 
+    /// <summary>Starts the game with mods (through SMAPI). Used by the Play menu, "Switch and play" and the Play button.</summary>
     [RelayCommand]
-    private void Launch()
+    private void Launch() => StartGame(LaunchMode.WithMods);
+
+    /// <summary>Starts the plain game without any mods.</summary>
+    [RelayCommand]
+    private void LaunchVanilla() => StartGame(LaunchMode.Vanilla);
+
+    private void StartGame(LaunchMode mode)
     {
-        var error = _svc.LaunchGame();
-        if (error is null)
-            Toast(Loc.T("act.starting_game"));
-        else
-            Toast(error, true);
+        var result = _svc.LaunchGame(mode);
+        if (result.Error is not null)
+        {
+            Toast(result.Error, true);
+            return;
+        }
+        Toast(result.Plan == LaunchPlan.Steam ? Loc.T("act.starting_steam")
+            : mode == LaunchMode.Vanilla ? Loc.T("act.starting_vanilla")
+            : result.SteamOptionMissing ? Loc.T("act.starting_mods_no_steam_options")
+            : Loc.T("act.starting_game"));
+    }
+
+    /// <summary>Shows the one line to paste into Steam's launch options so Steam can start SMAPI, and copies it on request.</summary>
+    [RelayCommand]
+    private async Task SetUpSteam()
+    {
+        if (Game is null)
+            return;
+        var text = Game.SteamOption;
+        if (!await AskAsync(Loc.T("steam.setup_title"), Loc.T("steam.setup_text", text), Loc.T("steam.setup_yes"), "help"))
+            return;
+        if (Ui is not null)
+            await Ui.CopyTextAsync(text);
+        Toast(Loc.T("act.steam_copied"));
     }
 
     [RelayCommand]

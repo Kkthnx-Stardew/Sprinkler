@@ -29,19 +29,19 @@
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
               <TextBlock Classes="h1" Text="Sprinkler" />
               <WrapPanel x:Name="Chips" Orientation="Horizontal">
-                <Border Classes="chip" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
-                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
-                <Border Classes="chip bad" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
-                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,0" IsVisible="{Binding NexusConnected}">
+                <Border Classes="chip" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
+                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip bad" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding NoSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>
+                <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding NexusConnected}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{Binding NexusChip}" /></StackPanel>
                 </Border>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
+                <Button Classes="chipbtn" Margin="0,0,6,6" IsVisible="{Binding NexusNotConnected}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Settings}">
                   <StackPanel Orientation="Horizontal" Spacing="6"><ctl:IconView Kind="key" Size="13" /><TextBlock Text="{loc:T ui.connect_nexus}" /></StackPanel>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasActiveProfile}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{Binding ProfileChipText}">
+                <Button Classes="chipbtn" Margin="0,0,6,6" IsVisible="{Binding HasActiveProfile}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding GoToCommand}" CommandParameter="{x:Static vm:AppTab.Profiles}" ToolTip.Tip="{Binding ProfileChipText}">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6"><ctl:IconView Kind="layers" Size="13" /><TextBlock Grid.Column="1" Text="{Binding ProfileChipText}" TextTrimming="CharacterEllipsis" /></Grid>
                 </Button>
-                <Button Classes="chipbtn" Margin="0,0,6,0" IsVisible="{Binding HasAppUpdate}" IsEnabled="{Binding !AppUpdateBusy}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding OpenAppUpdateCommand}">
+                <Button Classes="chipbtn attn" Margin="0,0,6,6" IsVisible="{Binding HasAppUpdate}" IsEnabled="{Binding !AppUpdateBusy}" MaxWidth="{Binding #Chips.Bounds.Width}" Command="{Binding OpenAppUpdateCommand}">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6"><ctl:IconView Kind="gift" Size="13" /><TextBlock Grid.Column="1" Text="{Binding AppUpdateText}" TextTrimming="CharacterEllipsis" /></Grid>
                 </Button>
               </WrapPanel>
@@ -53,9 +53,7 @@
             <Button Command="{Binding CheckCommand}" IsEnabled="{Binding CanCheck}" IsVisible="{Binding HasGame}">
               <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="{loc:T ui.check_again}" /></StackPanel>
             </Button>
-            <Button Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}" ToolTip.Tip="{loc:T ui.start_stardew_valley_through_smapi}">
-              <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="{loc:T ui.play}" /></StackPanel>
-            </Button>
+            <v:PlayMenuButton Caption="{loc:T ui.play}" IsVisible="{Binding ShowHeaderPlay}" />
             <Button Classes="icon" Command="{Binding ShowTourFromStartCommand}" ToolTip.Tip="{loc:T ui.quick_tour_and_help}" AutomationProperties.Name="{loc:T ui.quick_tour}">
               <ctl:IconView Kind="help" Size="18" />
             </Button>

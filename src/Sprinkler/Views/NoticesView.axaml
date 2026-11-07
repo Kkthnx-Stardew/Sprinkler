@@ -31,7 +31,7 @@
           <TextBlock Classes="body" TextWrapping="Wrap" Text="{loc:T ui.smapi_was_not_found_in_this_game_folder_mods}" />
           <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{Binding SmapiBusyText}" IsVisible="{Binding SmapiBusy}" />
         </StackPanel>
-        <Button Grid.Column="2" Classes="primary" VerticalAlignment="Center" IsVisible="{Binding CanInstallSmapi}" Command="{Binding InstallSmapiCommand}" IsEnabled="{Binding CanPressSmapi}"><TextBlock Text="{Binding InstallSmapiText}" /></Button>
+        <Button Grid.Column="2" Classes="primary attn" VerticalAlignment="Center" IsVisible="{Binding CanInstallSmapi}" Command="{Binding InstallSmapiCommand}" IsEnabled="{Binding CanPressSmapi}"><TextBlock Text="{Binding InstallSmapiText}" /></Button>
       </Grid>
     </Border>
 

@@ -449,10 +449,12 @@ internal sealed partial class HistoryViewModel(MainViewModel main, HistoryInfo i
     private HistoryInfo _info = info;
 
     public string Name => Info.Name;
-    public string ArtKind => Info.Undone ? "skip" : Info.Removed ? "trash" : Info.From is not null ? "arrowup" : "gift";
+    public string ArtKind => Info.Undone ? "refresh" : Info.Removed ? "trash" : Info.From is not null ? "arrowup" : "gift";
     public string Detail => Info.Removed
         ? (Info.From is not null ? Loc.T("hist.removed_ver", Info.From, Fmt.Time(Info.When)) : Loc.T("hist.removed", Fmt.Time(Info.When)))
-        : (Info.From is not null ? Loc.T("hist.update", Info.From, Info.To, Info.Source, Fmt.Time(Info.When)) : Loc.T("hist.new_install", Info.To, Info.Source, Fmt.Time(Info.When)));
+        : (Info.From is not null
+            ? (Info.From == Info.To ? Loc.T("hist.reinstall", Info.To, Info.Source, Fmt.Time(Info.When)) : Loc.T("hist.update", Info.From, Info.To, Info.Source, Fmt.Time(Info.When)))
+            : Loc.T("hist.new_install", Info.To, Info.Source, Fmt.Time(Info.When)));
     public bool Undone => Info.Undone;
     public bool CanUndo => !Info.Undone && Info.CanUndo;
     public bool BackupGone => !Info.Undone && !Info.CanUndo;

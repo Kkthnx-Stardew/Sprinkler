@@ -222,6 +222,22 @@
     <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
   </Style>
 
+  <!-- a button that needs noticing, like a waiting app or SMAPI update: a bright border and a soft glow, with no motion -->
+  <Style Selector="Button.attn">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Button.chipbtn.attn">
+    <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentTextBrush}" />
+  </Style>
+  <Style Selector="Button.primary.attn">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentTextBrush}" />
+  </Style>
+  <Style Selector="Button.attn /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BoxShadow" Value="0 0 0 3 #40E8A93D, 0 0 16 2 #55E8A93D" />
+  </Style>
+
   <Style Selector="Button.chipbtn">
     <Setter Property="CornerRadius" Value="99" />
     <Setter Property="Height" Value="26" /><Setter Property="MinHeight" Value="26" />
@@ -337,6 +353,13 @@
   <Style Selector="ComboBox">
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="MinHeight" Value="38" />
+  </Style>
+  <!-- the arrow of a drop-down list: larger, in the text colour, and clear of the right edge, so it reads at a glance and is never clipped -->
+  <Style Selector="ComboBox /template/ PathIcon#DropDownGlyph">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+    <Setter Property="Margin" Value="0,0,14,0" />
+    <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
   </Style>
   <Style Selector="ProgressBar">
     <Setter Property="MinHeight" Value="8" />

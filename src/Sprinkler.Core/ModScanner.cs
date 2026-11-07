@@ -3,11 +3,17 @@ namespace Sprinkler.Core;
 /// <summary>Finds installed mods the way SMAPI does: any folder with a manifest is a mod, other folders are searched deeper.</summary>
 internal static class ModScanner
 {
-    public static List<ModInfo> Scan(string modsPath)
+    public static List<ModInfo> Scan(string modsPath) => Scan(modsPath, null);
+
+    /// <summary>
+    /// Reads the Mods folder. <paramref name="unreadable"/> receives the names of switched-on folders that hold a
+    /// manifest.json SMAPI cannot use (empty, damaged, or without a UniqueID), which SMAPI skips.
+    /// </summary>
+    public static List<ModInfo> Scan(string modsPath, List<string>? unreadable)
     {
         var mods = new List<ModInfo>();
         if (Directory.Exists(modsPath))
-            ScanFolder(modsPath, mods, disabled: false, isRoot: true);
+            ScanFolder(modsPath, mods, disabled: false, isRoot: true, unreadable);
 
         return mods
             .OrderBy(m => m.Bundled)
@@ -26,7 +32,7 @@ internal static class ModScanner
     // (possible on Linux) from being followed until the path gets too long.
     private const int MaxDepth = 12;
 
-    private static void ScanFolder(string folder, List<ModInfo> mods, bool disabled, bool isRoot, int depth = 0)
+    private static void ScanFolder(string folder, List<ModInfo> mods, bool disabled, bool isRoot, List<string>? unreadable, int depth = 0)
     {
         var name = Path.GetFileName(folder);
         if (!isRoot && IsIgnoredFolder(name) || depth > MaxDepth)
@@ -40,6 +46,8 @@ internal static class ModScanner
             var info = ManifestReader.ReadFile(manifest, folder, isDisabled);
             if (info is not null)
                 mods.Add(info);
+            else if (!isDisabled)
+                unreadable?.Add(name);
             return;
         }
 
@@ -54,6 +62,6 @@ internal static class ModScanner
         }
 
         foreach (var sub in subfolders)
-            ScanFolder(sub, mods, isDisabled, isRoot: false, depth + 1);
+            ScanFolder(sub, mods, isDisabled, isRoot: false, unreadable, depth + 1);
     }
 }

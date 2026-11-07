@@ -206,7 +206,7 @@ internal sealed partial class UpdateService : IDisposable
         if (chosen is not null)
         {
             if (!string.IsNullOrWhiteSpace(savedMods) && Directory.Exists(savedMods))
-                chosen = chosen with { ModsPath = savedMods };
+                chosen = chosen with { ModsPath = Platform.TrueCase(savedMods) };
             await UseGameAsync(chosen, remember: Settings.Data.GamePath is not null);
         }
         else
@@ -297,6 +297,9 @@ internal sealed partial class UpdateService : IDisposable
 
     private int _recheckRequested;
 
+    /// <summary>Folders with a manifest.json SMAPI cannot use, from the last read of the Mods folder.</summary>
+    private List<string> _unreadable = new();
+
     /// <summary>
     /// Asks for a fresh check after something changed in the Mods folder. When a check is already running its list is
     /// out of date, so a new one starts the moment it ends instead of the request being dropped.
@@ -340,11 +343,13 @@ internal sealed partial class UpdateService : IDisposable
                 _smapiUpdate = null;
             });
 
-            var mods = await Task.Run(() => ModScanner.Scan(game.ModsPath), ct);
+            var unreadable = new List<string>();
+            var mods = await Task.Run(() => ModScanner.Scan(game.ModsPath, unreadable), ct);
             var gameLog = await Task.Run(() => SmapiLog.Read(), ct);
             Update(() =>
             {
                 _mods = mods;
+                _unreadable = unreadable;
                 _gameLog = gameLog;
                 _phase = Phase.Checking;
                 _status = Loc.T("core.status_found", Loc.Count("n.mod", mods.Count));
@@ -379,12 +384,13 @@ internal sealed partial class UpdateService : IDisposable
     }
 
     /// <summary>What the mods list shows when no update site could be asked: everything found on disk, none of it checked.</summary>
-    private static List<ModRow> OfflineRows(List<ModInfo> mods, HashSet<string> ignored, string reason) =>
+    private static List<ModRow> OfflineRows(List<ModInfo> mods, HashSet<string> ignored, string reason, bool unreachable = false) =>
         mods.Select(m =>
         {
             var (state, note) = m.Bundled ? (RowState.Bundled, Loc.T("core.row_bundled"))
                 : m.Disabled ? (RowState.Disabled, Loc.T("core.row_off"))
                 : ignored.Contains(m.UniqueId) ? (RowState.Ignored, Loc.T("core.row_ignored"))
+                : unreachable ? (RowState.NoInfo, Loc.T("core.row_offline"))
                 : (RowState.Error, Loc.T("core.row_error", reason));
             return new ModRow(m.Name, m.UniqueId, m.Version, state, note, m.FolderName,
                 Author: m.Author, IsContentPack: m.ContentPackFor is not null, ParentId: m.ContentPackFor,
@@ -423,7 +429,7 @@ internal sealed partial class UpdateService : IDisposable
         catch (HttpRequestException ex)
         {
             // the folder was still read, so keep the list usable (switch on and off, profiles) when the site cannot be reached
-            var offline = OfflineRows(mods, ignored, ex.Message);
+            var offline = OfflineRows(mods, ignored, ex.Message, unreachable: true);
             Update(() =>
             {
                 _rows = offline;
@@ -605,6 +611,16 @@ internal sealed partial class UpdateService : IDisposable
         foreach (var twin in active.GroupBy(m => m.UniqueId, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
             problems.Add(new Problem("error", Loc.T("core.prob_dup_title", twin.First().Name),
                 Loc.T("core.prob_dup_text", string.Join(", ", twin.Select(m => m.FolderName).Order(StringComparer.OrdinalIgnoreCase)))));
+
+        // a manifest SMAPI cannot read means the mod never loads, and nothing else says so before the game is started
+        List<string> broken;
+        lock (_gate)
+            broken = _unreadable.ToList();
+        if (broken.Count > 0)
+        {
+            var names = string.Join(", ", broken.Order(StringComparer.OrdinalIgnoreCase).Take(6)) + (broken.Count > 6 ? ", ..." : "");
+            problems.Add(new Problem("warn", Loc.T("core.prob_unreadable_title"), Loc.T("core.prob_unreadable_text", names)));
+        }
 
         var items = groups.Values.OrderBy(i => i.IsNew ? 0 : 1).ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
@@ -1895,10 +1911,10 @@ internal sealed partial class UpdateService : IDisposable
         }
     }
 
-    public string? LaunchGame()
+    public LaunchResult LaunchGame(LaunchMode mode = LaunchMode.WithMods)
     {
         var game = _game;
-        return game is null ? Loc.T("core.no_game") : GameProcess.Launch(game);
+        return game is null ? LaunchResult.Fail(Loc.T("core.no_game")) : GameProcess.Launch(game, mode);
     }
 
     public string? ModFolder(string uniqueId)
@@ -1952,6 +1968,8 @@ internal sealed partial class UpdateService : IDisposable
             game = _game;
         var running = game is not null && GameLocator.IsGameRunning();
         var canLaunch = game is not null && GameProcess.CanLaunch(game);
+        var launch = game is null ? (WithMods: LaunchPlan.Unavailable, Vanilla: LaunchPlan.Unavailable, SteamNeedsSetup: false) : GameProcess.Describe(game);
+        var steamOption = game is null ? "" : GameProcess.SteamLaunchOptionText(game);
         var nxmStatus = NxmRegistration.Status();
         var shortcut = Platform.IsLinux ? new ShortcutInfo(LinuxShortcut.IsInstalled()) : null;
         var backupBytes = History.BackupBytes();
@@ -1969,7 +1987,8 @@ internal sealed partial class UpdateService : IDisposable
                     shortcut,
                     AppUpdateNotice()),
                 Game: game is null ? null : new GameInfo(
-                    game.GamePath, game.ModsPath, game.Store, game.GameVersion, game.SmapiVersion, running, canLaunch, Platform.SmapiName),
+                    game.GamePath, game.ModsPath, game.Store, game.GameVersion, game.SmapiVersion, running, canLaunch, Platform.SmapiName,
+                    launch.WithMods, launch.Vanilla, launch.SteamNeedsSetup, steamOption),
                 Candidates: _candidates.Select(c => new CandidateInfo(c.GamePath, c.Store, c.SmapiVersion)).ToList(),
                 Welcomed: Settings.Data.Welcomed,
                 SmapiUpdate: _smapiUpdate is null ? null : new UpdateNotice(_smapiUpdate.Value.Version, _smapiUpdate.Value.Url),

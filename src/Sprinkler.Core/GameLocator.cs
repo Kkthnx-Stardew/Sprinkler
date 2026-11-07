@@ -171,6 +171,7 @@ internal static partial class GameLocator
         {
             if (!Directory.Exists(gamePath))
                 return null;
+            gamePath = Platform.TrueCase(gamePath);
 
             // SMAPI treats a folder as the game when Stardew Valley.dll exists (game 1.6 and newer)
             var gameDll = Path.Combine(gamePath, "Stardew Valley.dll");

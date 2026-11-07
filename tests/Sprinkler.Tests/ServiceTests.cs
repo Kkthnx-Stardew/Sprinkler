@@ -231,7 +231,8 @@ public class ServiceTests
         Assert.Equal("Idle", s.GetProperty("phase").GetString());
         var rows = s.GetProperty("rows").EnumerateArray().ToDictionary(r => r.GetProperty("uniqueId").GetString()!);
         Assert.Equal(2, rows.Count);
-        Assert.Equal("Error", rows["me.Thing"].GetProperty("state").GetString());
+        Assert.Equal("NoInfo", rows["me.Thing"].GetProperty("state").GetString());
+        Assert.Contains("smapi.io could not be reached", rows["me.Thing"].GetProperty("note").GetString());
         Assert.True(rows["me.Thing"].GetProperty("hasConfig").GetBoolean());
         Assert.Equal("Disabled", rows["me.Off"].GetProperty("state").GetString());
     }

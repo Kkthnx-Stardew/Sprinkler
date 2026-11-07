@@ -29,6 +29,20 @@ internal sealed partial class MainViewModel
     public string SmapiChip => Game?.Smapi is { } v ? Loc.T("vm.smapi_chip", v) : Loc.T("vm.smapi_not_found");
     public bool GameRunning => Game?.Running == true;
     public bool CanPlay => Game is { CanLaunch: true, Running: false };
+
+    // ---- the Play menu: what each choice will do right now, said before anyone clicks
+    public bool CanLaunchMods => Game is { Running: false } g && g.LaunchMods != LaunchPlan.Unavailable;
+    public bool CanLaunchVanilla => Game is { Running: false } g && g.LaunchVanilla != LaunchPlan.Unavailable;
+    public bool ShowSteamSetup => Game?.SteamNeedsSetup == true;
+    public string LaunchModsNote => LaunchNote(Game?.LaunchMods, withMods: true);
+    public string LaunchVanillaNote => LaunchNote(Game?.LaunchVanilla, withMods: false);
+
+    private static string LaunchNote(LaunchPlan? plan, bool withMods) => plan switch
+    {
+        LaunchPlan.Steam => Loc.T("ui.launch_via_steam"),
+        LaunchPlan.DirectSmapi or LaunchPlan.DirectGame => Loc.T("ui.launch_direct"),
+        _ => Loc.T(withMods ? "core.launch_no_smapi" : "core.launch_unavailable"),
+    };
     public bool NexusConnected => Snap?.Nexus.Connected == true;
     public bool NexusNotConnected => Snap is not null && !Snap.Nexus.Connected;
     public string NexusChip => Snap?.Nexus is { Connected: true } n ? (n.Premium ? Loc.T("vm.nexus_chip_premium", n.User ?? "") : n.User ?? "") : "";
@@ -105,6 +119,9 @@ internal sealed partial class MainViewModel
     }
 
     public bool HeroPlay => ReadyCount == 0 && CanPlay;
+
+    /// <summary>The header's Play button steps aside while the Updates headline shows its own, so the screen never has two.</summary>
+    public bool ShowHeaderPlay => CanPlay && !(ShowUpdatesTab && IsReview && HeroPlay);
     public int CountAll => RowCount;
     public int CountUpdates => ReadyCount;
     public int CountUpToDate => Snap?.Rows.Count(r => r.State == RowState.UpToDate) ?? 0;
@@ -120,6 +137,12 @@ internal sealed partial class MainViewModel
 
     public bool ShowTickPanel => IsReview && Items.Count > 0;
     public bool HasProblems => Problems.Count > 0;
+
+    // the count chips read as "321 mods in your folder" for a screen reader, not as a bare number
+    public string ChipAllName => $"{CountAll} {Loc.T("ui.mods_in_your_folder")}";
+    public string ChipUpdatesName => $"{CountUpdates} {Loc.T("ui.updates_or_installs")}";
+    public string ChipOkName => $"{CountUpToDate} {Loc.T("ui.up_to_date")}";
+    public string ChipNoCheckName => $"{CountUnchecked} {Loc.T("ui.cannot_be_checked")}";
 
     public bool HasOtherProblems => OtherProblems.Count > 0;
     public string OtherProblemsText => Loc.T("ui.more_notes", OtherProblems.Count);

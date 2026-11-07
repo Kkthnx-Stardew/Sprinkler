@@ -185,6 +185,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(TabIndex));
         OnPropertyChanged(nameof(ShowUpdatesTab));
+        OnPropertyChanged(nameof(ShowHeaderPlay));
         OnPropertyChanged(nameof(ShowModsTab));
         OnPropertyChanged(nameof(ShowProfilesTab));
         OnPropertyChanged(nameof(ShowHistoryTab));

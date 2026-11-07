@@ -106,7 +106,7 @@
             <StackPanel Spacing="6">
               <TextBlock Classes="body" TextWrapping="Wrap" Text="{Binding SmapiUpdateText}" />
               <StackPanel Orientation="Horizontal" Spacing="10">
-                <Button Classes="primary" Command="{Binding InstallSmapiCommand}" IsEnabled="{Binding CanPressSmapi}" IsVisible="{Binding CanInstallSmapi}"><TextBlock Text="{Binding InstallSmapiText}" /></Button>
+                <Button Classes="primary attn" Command="{Binding InstallSmapiCommand}" IsEnabled="{Binding CanPressSmapi}" IsVisible="{Binding CanInstallSmapi}"><TextBlock Text="{Binding InstallSmapiText}" /></Button>
                 <Button Classes="link" Command="{Binding OpenSmapiUpdateCommand}"><TextBlock Text="{loc:T ui.get_smapi}" /></Button>
                 <TextBlock Classes="muted small" VerticalAlignment="Center" Text="{Binding SmapiBusyText}" IsVisible="{Binding SmapiBusy}" />
               </StackPanel>
@@ -123,37 +123,31 @@
                 <TextBlock Classes="h2" Text="{Binding HeroTitle}" TextWrapping="Wrap" />
                 <TextBlock Classes="muted small" Text="{Binding HeroText}" TextWrapping="Wrap" />
               </StackPanel>
-              <Button Grid.Column="2" Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding HeroPlay}" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="16" /><TextBlock Text="{loc:T ui.play_stardew_valley}" /></StackPanel>
-              </Button>
+              <v:PlayMenuButton Grid.Column="2" Caption="{loc:T ui.play_stardew_valley}" IsVisible="{Binding HeroPlay}" VerticalAlignment="Center" />
             </Grid>
             <WrapPanel Orientation="Horizontal">
-              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,4">
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,4" AutomationProperties.Name="{Binding ChipAllName}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <ctl:IconView Kind="package" Size="14" VerticalAlignment="Center" />
-                  <TextBlock FontWeight="Bold" Text="{Binding CountAll}" VerticalAlignment="Center" />
-                  <TextBlock Text="{loc:T ui.mods_in_your_folder}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountAll}" VerticalAlignment="Center" /><TextBlock Text="{loc:T ui.mods_in_your_folder}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="0,0,6,4">
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="0,0,6,4" AutomationProperties.Name="{Binding ChipUpdatesName}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <ctl:IconView Kind="arrowup" Size="14" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" />
-                  <TextBlock FontWeight="Bold" Text="{Binding CountUpdates}" VerticalAlignment="Center" />
-                  <TextBlock Text="{loc:T ui.updates_or_installs}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUpdates}" VerticalAlignment="Center" /><TextBlock Text="{loc:T ui.updates_or_installs}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="0,0,6,4">
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="0,0,6,4" AutomationProperties.Name="{Binding ChipOkName}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <ctl:IconView Kind="check" Size="14" Foreground="{DynamicResource GoodBrush}" VerticalAlignment="Center" />
-                  <TextBlock FontWeight="Bold" Text="{Binding CountUpToDate}" VerticalAlignment="Center" />
-                  <TextBlock Text="{loc:T ui.up_to_date}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUpToDate}" VerticalAlignment="Center" /><TextBlock Text="{loc:T ui.up_to_date}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
-              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="0,0,6,4">
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="0,0,6,4" AutomationProperties.Name="{Binding ChipNoCheckName}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <ctl:IconView Kind="help" Size="14" VerticalAlignment="Center" />
-                  <TextBlock FontWeight="Bold" Text="{Binding CountUnchecked}" VerticalAlignment="Center" />
-                  <TextBlock Text="{loc:T ui.cannot_be_checked}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUnchecked}" VerticalAlignment="Center" /><TextBlock Text="{loc:T ui.cannot_be_checked}" VerticalAlignment="Center" />
                 </StackPanel>
               </Button>
             </WrapPanel>
@@ -238,7 +232,7 @@
             <TextBlock Classes="h2" Text="{loc:T ui.finished}" HorizontalAlignment="Center" />
             <TextBlock Classes="muted" Text="{Binding FinishedText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="560" />
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-              <Button Classes="primary big" Command="{Binding LaunchCommand}" IsVisible="{Binding CanPlay}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="16" /><TextBlock Text="{loc:T ui.play_stardew_valley}" /></StackPanel></Button>
+              <v:PlayMenuButton Big="True" Caption="{loc:T ui.play_stardew_valley}" IsVisible="{Binding CanPlay}" />
               <Button Classes="big" Command="{Binding BackToReviewCommand}"><TextBlock Text="{loc:T ui.back_to_the_list}" /></Button>
               <Button Classes="big" Command="{Binding CheckCommand}"><StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="refresh" Size="16" /><TextBlock Text="{loc:T ui.check_again}" /></StackPanel></Button>
             </StackPanel>
@@ -259,7 +253,7 @@
     <Border Grid.Row="1" Padding="20,0,20,16" IsVisible="{Binding ShowActions}">
       <Border Classes="actions" MaxWidth="980">
         <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="10">
-          <Button Classes="primary big" Command="{Binding UpdateSelectedCommand}" IsEnabled="{Binding CanUpdate}">
+          <Button Classes="primary big attn" Command="{Binding UpdateSelectedCommand}" IsEnabled="{Binding CanUpdate}">
             <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="arrowup" Size="18" /><TextBlock Text="{Binding UpdateButtonText}" /></StackPanel>
           </Button>
           <Button Grid.Column="1" Command="{Binding SelectAllCommand}"><TextBlock Text="{loc:T ui.select_all}" /></Button>

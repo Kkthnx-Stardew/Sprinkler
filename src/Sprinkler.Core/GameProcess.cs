@@ -84,51 +84,102 @@ internal static class GameProcess
         return false;
     }
 
-    /// <summary>True when this install can be started from here.</summary>
+    /// <summary>The program that starts the plain game from its folder, or null when there is none to start directly.</summary>
+    internal static string? VanillaExecutable(GameInstall game)
+    {
+        if (Platform.IsWindows)
+        {
+            foreach (var name in new[] { "Stardew Valley.exe", "StardewValley.exe" })
+            {
+                var exe = Path.Combine(game.GamePath, name);
+                if (File.Exists(exe))
+                    return exe;
+            }
+            return null;
+        }
+        var native = Path.Combine(game.GamePath, "StardewValley");
+        return Platform.IsExecutable(native) ? native : null;
+    }
+
+    /// <summary>True when this install can be started from here, with or without mods.</summary>
     public static bool CanLaunch(GameInstall game)
     {
+        if (VanillaExecutable(game) is not null)
+            return true;
         if (Platform.IsWindows)
             return game.HasSmapi;
         return UnixLauncher(game) is not null || Platform.Which("steam") is not null || game.Store.StartsWith("Steam", StringComparison.Ordinal);
     }
 
-    /// <summary>Starts the game through SMAPI. Returns a plain message when it cannot, or null on success.</summary>
-    public static string? Launch(GameInstall game)
+    private static bool IsSteamInstall(GameInstall game) => game.Store.StartsWith("Steam", StringComparison.Ordinal) || SteamLaunch.IsSteamFolder(game.GamePath);
+
+    /// <summary>What a launch would do right now, for the menu to say so before anyone clicks.</summary>
+    public static (LaunchPlan WithMods, LaunchPlan Vanilla, bool SteamNeedsSetup) Describe(GameInstall game)
+    {
+        var steamInstall = IsSteamInstall(game);
+        var running = steamInstall && SteamLaunch.IsSteamRunning();
+        var optionSmapi = steamInstall && SteamLaunch.OptionsStartSmapi(SteamLaunch.ReadSavedLaunchOptions());
+        var hasSmapi = game.HasSmapi || UnixLauncher(game) is not null;
+        var direct = VanillaExecutable(game) is not null;
+        var mods = SteamLaunch.Plan(LaunchMode.WithMods, steamInstall, running, optionSmapi, hasSmapi, direct);
+        // Linux under Proton has no SMAPI program in the folder: Steam's own launch options are the only way
+        if (mods == LaunchPlan.Unavailable && !Platform.IsWindows && (Platform.Which("steam") is not null || steamInstall))
+            mods = LaunchPlan.Steam;
+        var vanilla = SteamLaunch.Plan(LaunchMode.Vanilla, steamInstall, running, optionSmapi, hasSmapi, direct);
+        return (mods, vanilla, steamInstall && game.HasSmapi && !optionSmapi);
+    }
+
+    /// <summary>The text to paste into the game's Steam launch options so Steam can start SMAPI.</summary>
+    public static string SteamLaunchOptionText(GameInstall game)
+    {
+        var program = Platform.IsWindows ? "StardewModdingAPI.exe" : "StardewModdingAPI";
+        return "\"" + Path.Combine(game.GamePath, program) + "\" %command%";
+    }
+
+    /// <summary>Starts the game, with or without mods. Returns what happened, or a plain message when it cannot start.</summary>
+    public static LaunchResult Launch(GameInstall game, LaunchMode mode = LaunchMode.WithMods)
     {
         if (IsRunning())
-            return Loc.T("core.game_running");
+            return LaunchResult.Fail(Loc.T("core.game_running"));
 
-        if (Platform.IsWindows)
+        var (mods, vanilla, _) = Describe(game);
+        var plan = mode == LaunchMode.WithMods ? mods : vanilla;
+        try
         {
-            var exe = Path.Combine(game.GamePath, "StardewModdingAPI.exe");
-            if (!File.Exists(exe))
-                return "SMAPI is not installed in this game folder. Get it from smapi.io first.";
-            Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = game.GamePath, UseShellExecute = true })?.Dispose();
-            return null;
-        }
-
-        var launcher = UnixLauncher(game);
-        if (launcher is not null)
-        {
-            try
+            switch (plan)
             {
-                var psi = new ProcessStartInfo(launcher) { WorkingDirectory = game.GamePath, UseShellExecute = false };
-                Process.Start(psi)?.Dispose();
-                return null;
-            }
-            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-            {
-                Log.Write("Direct launch failed, trying Steam: " + ex.Message);
-            }
-        }
+                case LaunchPlan.Steam:
+                    Platform.OpenUrl("steam://rungameid/" + SteamLaunch.AppId);
+                    return new LaunchResult(null, plan, false);
 
-        // Steam can start the game with the launch options the player already set up (this also covers Proton)
-        if (Platform.Which("steam") is not null || game.Store.StartsWith("Steam", StringComparison.Ordinal))
-        {
-            Platform.OpenUrl("steam://rungameid/413150");
-            return null;
+                case LaunchPlan.DirectGame:
+                    {
+                        var exe = VanillaExecutable(game)!;
+                        Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = game.GamePath, UseShellExecute = Platform.IsWindows })?.Dispose();
+                        return new LaunchResult(null, plan, false);
+                    }
+
+                case LaunchPlan.DirectSmapi:
+                    {
+                        var exe = Platform.IsWindows ? Path.Combine(game.GamePath, "StardewModdingAPI.exe") : UnixLauncher(game);
+                        if (exe is null || !File.Exists(exe))
+                            return LaunchResult.Fail(Loc.T("core.launch_no_smapi"));
+                        Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = game.GamePath, UseShellExecute = Platform.IsWindows })?.Dispose();
+                        // Steam is open and this is a Steam game, but SMAPI is not set up as its launch option: the mods load,
+                        // Steam's overlay, playtime and achievements do not, and the person is told how to change that
+                        var steamOpen = IsSteamInstall(game) && SteamLaunch.IsSteamRunning();
+                        return new LaunchResult(null, plan, steamOpen && !SteamLaunch.OptionsStartSmapi(SteamLaunch.ReadSavedLaunchOptions()));
+                    }
+
+                default:
+                    return LaunchResult.Fail(Loc.T(mode == LaunchMode.WithMods ? "core.launch_no_smapi" : "core.launch_unavailable"));
+            }
         }
-        return "SMAPI is not installed in this game folder. Get it from smapi.io first.";
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+        {
+            Log.Write($"Could not start the game ({plan}): {ex.Message}");
+            return LaunchResult.Fail(Loc.T("core.launch_failed", ex.Message));
+        }
     }
 
     /// <summary>The native SMAPI launcher that SMAPI's installer puts in the game folder on Linux and macOS.</summary>

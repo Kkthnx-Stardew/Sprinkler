@@ -50,7 +50,7 @@
         </ItemsControl>
 
         <Grid Grid.Row="4" RowDefinitions="Auto,*">
-          <Grid ColumnDefinitions="52,2.2*,90,*,36" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
+          <Grid ColumnDefinitions="52,2.2*,90,*,48" ColumnSpacing="12" Margin="4,6" IsHitTestVisible="False">
             <TextBlock Classes="muted small strong" Text="{loc:T ui.on}" />
             <TextBlock Grid.Column="1" Classes="muted small strong" Text="{loc:T ui.mod}" />
             <TextBlock Grid.Column="2" Classes="muted small strong" Text="{loc:T ui.version}" />
@@ -63,7 +63,7 @@
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:ModRowViewModel">
                     <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1" Padding="{Binding RowPadding}" Opacity="{Binding RowOpacity}">
-                      <Grid ColumnDefinitions="52,2.2*,90,*,36" ColumnSpacing="12">
+                      <Grid ColumnDefinitions="52,2.2*,90,*,48" ColumnSpacing="12">
                         <!-- a thin rail beside the content packs ties them to the mod above -->
                         <Border Grid.ColumnSpan="5" IsVisible="{Binding Indented}" Width="2" HorizontalAlignment="Left" Margin="76,-12,0,-12" Opacity="0.55"
                                 Background="{DynamicResource AccentBrush}" IsHitTestVisible="False" />
@@ -99,7 +99,7 @@
                           <Border Classes="chip" Classes.ok="{Binding ChipOk}" Classes.warn="{Binding ChipWarn}" Classes.bad="{Binding ChipBad}" Margin="0,0,6,0"><TextBlock Text="{Binding StatusText}" /></Border>
                           <Button Classes="chipbtn" Command="{Binding OpenUnofficialCommand}" IsVisible="{Binding HasUnofficial}" ToolTip.Tip="{loc:T ui.a_community_fix_exists_that_is_not_the_mod_a}"><TextBlock Text="{Binding UnofficialText}" /></Button>
                         </WrapPanel>
-                        <Button Grid.Column="4" Classes="icon ghost" Width="32" Height="32" MinHeight="32" VerticalAlignment="Center" AutomationProperties.Name="{loc:T ui.more_actions}" ToolTip.Tip="{loc:T ui.more_actions}">
+                        <Button Grid.Column="4" Classes="icon ghost" Width="32" Height="32" MinHeight="32" HorizontalAlignment="Left" VerticalAlignment="Center" AutomationProperties.Name="{loc:T ui.more_actions}" ToolTip.Tip="{loc:T ui.more_actions}">
                           <ctl:IconView Kind="more" Size="20" />
                           <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">

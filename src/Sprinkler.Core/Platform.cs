@@ -11,6 +11,34 @@ internal static class Platform
     public static bool IsLinux => OperatingSystem.IsLinux();
     public static bool IsMac => OperatingSystem.IsMacOS();
 
+    /// <summary>
+    /// A Windows path with each part in the capitals the file system really uses (Steam's files often write
+    /// "c:\program files (x86)\..."). Other systems are case sensitive already and the path is returned as it is.
+    /// </summary>
+    public static string TrueCase(string path)
+    {
+        if (!IsWindows || string.IsNullOrWhiteSpace(path))
+            return path;
+        try
+        {
+            var full = Path.GetFullPath(path).TrimEnd('\\', '/');
+            var root = Path.GetPathRoot(full);
+            if (string.IsNullOrEmpty(root) || root.StartsWith(@"\\", StringComparison.Ordinal))
+                return path;
+            var result = root.ToUpperInvariant();
+            foreach (var part in full[root.Length..].Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var found = Directory.EnumerateFileSystemEntries(result, part).FirstOrDefault();
+                result = found ?? Path.Combine(result, part);
+            }
+            return result;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return path;
+        }
+    }
+
     /// <summary>The platform name SMAPI's web API expects: Windows, Linux or Mac.</summary>
     public static string SmapiName => IsWindows ? "Windows" : IsMac ? "Mac" : "Linux";
 

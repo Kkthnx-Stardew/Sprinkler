@@ -2,7 +2,7 @@
 
 Working notes for whoever picks the project up next (a person or a coding assistant). It records what is not obvious from the code: where things stand, decisions and the reasons, what was and was not verified, and what to do next. How the program is built is in [ARCHITECTURE.md](ARCHITECTURE.md); how to build and contribute is in [../CONTRIBUTING.md](../CONTRIBUTING.md). Keep this page short and update it at the end of each milestone. No secrets, no personal paths.
 
-Last updated: 2026-11-07, against version 1.2.0 plus uncommitted work (see "State").
+Last updated: 2026-11-07, at version 1.3.0 (see "State").
 
 ## Purpose and audience
 
@@ -28,7 +28,7 @@ Rules of thumb used when changing screens: put the thing the person came for fir
 ## Commands
 
 ```
-dotnet test Sprinkler.sln                      # about 45 seconds, 482 tests at last count
+dotnet test Sprinkler.sln                      # about 45 seconds, 486 tests at last count
 dotnet run --project src/Sprinkler
 dotnet publish src/Sprinkler -c Release -r win-x64 -p:PublishSingleFile=true -o artifacts/publish
 ```
@@ -40,16 +40,15 @@ To look at the real window without touching a real game, make a temporary folder
 - Profiles switch by renaming folders (leading dot), SMAPI's own rule. Nothing is moved.
 - The list on screen follows the Mods folder in three layers: (1) `RescanQuietlyAsync` reads the folder after every change the app makes and `ReconcileWithMods` fixes rows and update cards at once, before the slow online check; (2) `RequestRecheck` queues a new check if one is already running, so a stale result is never left on screen; (3) `UpdateService.Sync.cs` watches the Mods folder and rescans when the window is activated, so changes made in Explorer are seen. A change only counts if the folder really differs from what is shown, so the app's own writes cause no loop.
 - Removing a mod takes it out of the active profile (so it is not offered again as "part of your profile") and records that in History, so Undo puts it back. A mod that disappears outside the app stays listed in the profile, marked "not installed here", with a "Forget the missing mods" action.
-- A mod ID in two switched-on folders is reported as an error problem and a banner near the top of Updates. Rows for the two copies still look alike in All mods.
+- A mod ID in two switched-on folders is reported as an error problem, shown above the update rows. Rows for the two copies still look alike in All mods.
 - Updates tab design (chosen 2026-11-07 from three concepts in [REDESIGN_EXPLORATION.md](REDESIGN_EXPLORATION.md)): one-line rows that open in place, a compact top block, problems above the rows. A tab-per-job model stays; a merged list with an inspector and a pre-flight home screen were considered and not built.
 - Confirm only for actions that are hard to reverse; removals and updates rely on Undo in History.
 
 ## State
 
-- Released: 1.2.0 (2026-11-05), signed. Self-update, SMAPI install from the app, 17 languages.
-- Local, committed but not pushed, on top of 1.2.0 (listed in the Unreleased changelog section): queued rechecks, immediate list reconcile, Mods-folder watcher with a notice, profile follows removals, Forget missing mods, duplicate-mod warning and banner, Switch and play, Profiles tab list first, shorter All mods header, SMAPI notice beside its button, confirm dialog spacing fix.
-- Uncommitted on top of those: the Updates redesign (one-line rows, compact top block, problems strip, three new texts in 17 languages, 4 new tests). Measured result and what was not verified are at the end of [REDESIGN_EXPLORATION.md](REDESIGN_EXPLORATION.md).
-- Verified for the committed work: 482 tests pass (one unrelated collection test failed once in a full run and passed on three reruns, cause not found). Checked by hand in the real window on Windows with demo data: every tab at about 1100 and 780 pixels wide, deleting a folder in Explorer, removing a mod from the menu with a profile active, Forget the missing mods, the duplicate banner. Idle cost measured once: about 0.4 percent of one core and 216 MB.
+- Released: 1.3.0 (2026-11-07), built and signed by the release workflow. It adds queued rechecks, an immediate list reconcile, the Mods-folder watcher, profiles that follow removals, Forget missing mods, the duplicate-mod warning, Switch and play, and the Updates redesign (one-line rows, compact top block, problems above the rows). Details are in the changelog. 1.2.0 (2026-11-05) added self-update and SMAPI install from the app.
+- The Updates redesign result and what was not verified are at the end of [REDESIGN_EXPLORATION.md](REDESIGN_EXPLORATION.md).
+- Verified before release: 486 tests pass, and CI passed on Windows and Ubuntu on the commit before the version bump (one unrelated collection test failed once in a full run and passed on three reruns, cause not found). Checked by hand in the real window on Windows with demo data: every tab at about 1100 and 780 pixels wide, deleting a folder in Explorer, removing a mod from the menu with a profile active, Forget the missing mods, the duplicate banner. Idle cost measured once: about 0.4 percent of one core and 216 MB.
 - Not tested: Linux (window, watcher, Switch and play, self-update swap), per-monitor DPI changes and text scaling, keyboard-only use of the new controls, screen readers, a clean install and uninstall, Switch and play with a real game and SMAPI (the demo folder has neither, so the buttons were hidden), very large mod folders for the folder watcher.
 - The texts added in this milestone are in all 17 languages but were written by the assistant, not by native speakers.
 
@@ -62,7 +61,6 @@ To look at the real window without touching a real game, make a temporary folder
 
 ## Next steps
 
-1. Review the uncommitted work and commit it in small steps, then prepare 1.3.0 (move the Unreleased changelog section, bump `Directory.Build.props`).
-2. Run the "not tested" list above, starting with a real game folder with SMAPI and a Linux machine.
-3. Mark duplicate mods in the All mods rows themselves, and decide whether per-profile mod notes are worth adding (Stardrop ties notes to profiles; here notes are global).
-4. Have native speakers review the translations.
+1. Run the "not tested" list above, starting with a real game folder with SMAPI and a Linux machine.
+2. Mark duplicate mods in the All mods rows themselves, and decide whether per-profile mod notes are worth adding (Stardrop ties notes to profiles; here notes are global).
+3. Have native speakers review the translations.

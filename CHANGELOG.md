@@ -2,7 +2,7 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
-## Unreleased
+## 1.3.0 (2026-11-07)
 
 ### Fixed
 
@@ -13,14 +13,14 @@ All notable changes are listed here. The project follows [Semantic Versioning](h
 ### Added
 
 - Changes made outside Sprinkler are noticed. A folder deleted in Explorer, a mod copied in by hand or one switched off by another tool updates the list within a couple of seconds (and when the window comes to the front), shows a short notice saying what changed, and starts a new check. Settings files the game rewrites do not trigger anything.
-- A mod ID installed in two switched-on folders is reported before you start the game. SMAPI loads one copy and skips the other, which can stop the game from starting. The warning names the folders, and a red notice near the top of Updates points to it instead of leaving it under the update cards.
+- A mod ID installed in two switched-on folders is reported before you start the game. SMAPI loads one copy and skips the other, which can stop the game from starting. The warning names the folders and appears above the update rows.
 - "Switch and play" on a profile switches to it and starts the game in one go (not when the profile still lacks mods), and the active profile has a Play button.
 - A profile that lists mods you no longer have shows an amber "not installed here" tag and a "Forget the missing mods" action in its menu, so it stops asking for them.
 
 ### Improved
 
 - Updates are one row each: the name, the version change and where the file comes from. A chevron opens the source buttons, the changelog and "Skip this version" in place. A failed update opens by itself. The top of the tab is one block instead of a banner, four tiles and a panel, so about four rows fit on screen instead of one.
-- Problems that can affect the game are shown above the update rows, errors first. Only the first three are shown, the rest fold under "Show N more". This replaces the red notice added earlier in this version.
+- Problems that can affect the game are shown above the update rows, errors first. Only the first three are shown, the rest fold under "Show N more". They used to sit at the bottom, under every update card.
 - The Profiles tab shows your profiles first. The explanation, the active-profile banner and the introduction box only appear when they have something to say.
 - The "SMAPI was not found" notice puts its button beside the sentence, so it takes about half the height on every tab.
 - The All mods header is shorter: the title and "Switch all on/off" share a row, and the explanation and the grouping option share the next. About 80 pixels more room for the list.

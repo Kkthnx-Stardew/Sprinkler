@@ -33,7 +33,9 @@ internal sealed partial class MainViewModel
     public string ActiveProfileName => Snap?.Profiles.Active ?? "";
     public bool HasActiveProfile => !string.IsNullOrEmpty(Snap?.Profiles.Active);
     public bool NoActiveProfile => HasProfiles && !HasActiveProfile;
-    public bool ProfileModified => HasActiveProfile && Snap?.Profiles.Modified == true;
+    /// <summary>The introduction box is only worth its space when it has something to say: no profiles yet, unsaved changes, or none active.</summary>
+    public bool ShowProfilesIntro => NoProfiles || ProfileModified || NoActiveProfile;
+    public bool ProfileModified =>HasActiveProfile && Snap?.Profiles.Modified == true;
     public string ProfileModifiedText => Loc.T("prof.modified_text", ActiveProfileName);
     public string ActiveProfileLine => Loc.T("prof.active_line", ActiveProfileName);
     public string ProfileChipText => HasActiveProfile ? Loc.T(ProfileModified ? "prof.chip_changed" : "prof.chip", ActiveProfileName) : "";
@@ -120,13 +122,14 @@ internal sealed partial class MainViewModel
     }
 
     // ---- one profile
-    public async Task SwitchProfileAsync(string name)
+    /// <summary>Switches to a profile. Returns true when it switched with nothing left missing, so the caller may go on to start the game.</summary>
+    public async Task<bool> SwitchProfileAsync(string name)
     {
         if (ProfileModified && !name.Equals(ActiveProfileName, StringComparison.OrdinalIgnoreCase))
         {
             var go = await AskAsync(Loc.T("prof.unsaved_title"), Loc.T("prof.unsaved_text", ActiveProfileName), Loc.T("prof.unsaved_yes"), "alert");
             if (!go)
-                return;
+                return false;
         }
 
         var result = await Task.Run(() => _svc.ApplyProfile(name));
@@ -134,6 +137,20 @@ internal sealed partial class MainViewModel
         Toast(result.Error ?? result.Message, result.Error is not null);
         if (result.Error is null && result.Missing.Count > 0)
             Tab = AppTab.Updates;
+        return result.Error is null && result.Missing.Count == 0;
+    }
+
+    /// <summary>Switches and starts the game in one go. A profile that still lacks mods is not launched, because the person should see that first.</summary>
+    public async Task SwitchAndPlayAsync(string name)
+    {
+        if (await SwitchProfileAsync(name) && CanPlay)
+            Launch();
+    }
+
+    public void PlayNow()
+    {
+        if (CanPlay)
+            Launch();
     }
 
     public async Task RenameProfileAsync(string name)
@@ -161,6 +178,15 @@ internal sealed partial class MainViewModel
         if (!await AskAsync(Loc.T("prof.delete_title", name), Loc.T("prof.delete_text"), Loc.T("prof.delete_yes"), "alert"))
             return;
         var result = _svc.DeleteProfile(name);
+        Toast(result.Error ?? result.Message, result.Error is not null);
+        Refresh();
+    }
+
+    public async Task ForgetMissingAsync(string name)
+    {
+        if (!await AskAsync(Loc.T("prof.forget_title", name), Loc.T("prof.forget_text"), Loc.T("prof.forget_yes"), "alert"))
+            return;
+        var result = _svc.ForgetMissingInProfile(name);
         Toast(result.Error ?? result.Message, result.Error is not null);
         Refresh();
     }

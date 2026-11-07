@@ -11,7 +11,7 @@
       <StackPanel MaxWidth="980" Margin="20,8,20,24">
 
         <!-- progress steps -->
-        <StackPanel Classes="optional">
+        <StackPanel Classes="optional" IsVisible="{Binding !IsReview}">
         <ItemsControl ItemsSource="{Binding Steps}" IsVisible="{Binding HasSteps}" Margin="0,8,0,4">
           <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate>
@@ -114,35 +114,51 @@
           </StackPanel>
         </Border>
 
-        <!-- overview -->
-        <StackPanel IsVisible="{Binding IsReview}">
-          <Border Classes="hero">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="18">
-              <Border Classes="heroart"><Image Source="avares://Sprinkler/Assets/logo.png" Width="60" Height="60" /></Border>
-              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                <TextBlock Classes="hero" Text="{Binding HeroTitle}" TextWrapping="Wrap" />
-                <TextBlock Classes="muted" Text="{Binding HeroText}" TextWrapping="Wrap" />
+        <!-- overview: the headline and the four counts share one block, and each count still opens its filter -->
+        <Border Classes="hero" Padding="16,12" IsVisible="{Binding IsReview}">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+              <Image Source="avares://Sprinkler/Assets/logo.png" Width="44" Height="44" VerticalAlignment="Center" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                <TextBlock Classes="h2" Text="{Binding HeroTitle}" TextWrapping="Wrap" />
+                <TextBlock Classes="muted small" Text="{Binding HeroText}" TextWrapping="Wrap" />
               </StackPanel>
-              <Button Grid.Column="2" Classes="primary big" Command="{Binding LaunchCommand}" IsVisible="{Binding HeroPlay}" VerticalAlignment="Center">
+              <Button Grid.Column="2" Classes="primary" Command="{Binding LaunchCommand}" IsVisible="{Binding HeroPlay}" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="16" /><TextBlock Text="{loc:T ui.play_stardew_valley}" /></StackPanel>
               </Button>
             </Grid>
-          </Border>
-          <UniformGrid Columns="4" Margin="0,7">
-            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,0">
-              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="package" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountAll}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.mods_in_your_folder}" /></StackPanel></Grid>
-            </Button>
-            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="3,0">
-              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="arrowup" Size="22" Foreground="{DynamicResource AccentTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUpdates}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.updates_or_installs}" /></StackPanel></Grid>
-            </Button>
-            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="3,0">
-              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="check" Size="22" Foreground="{DynamicResource GoodBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUpToDate}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.up_to_date}" /></StackPanel></Grid>
-            </Button>
-            <Button Classes="tile" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="6,0,0,0">
-              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><Border Classes="dot"><ctl:IconView Kind="help" Size="22" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Classes="count" Text="{Binding CountUnchecked}" /><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.cannot_be_checked}" /></StackPanel></Grid>
-            </Button>
-          </UniformGrid>
-        </StackPanel>
+            <WrapPanel Orientation="Horizontal">
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="all" Margin="0,0,6,4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <ctl:IconView Kind="package" Size="14" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountAll}" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T ui.mods_in_your_folder}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="update" Margin="0,0,6,4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <ctl:IconView Kind="arrowup" Size="14" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUpdates}" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T ui.updates_or_installs}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="ok" Margin="0,0,6,4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <ctl:IconView Kind="check" Size="14" Foreground="{DynamicResource GoodBrush}" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUpToDate}" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T ui.up_to_date}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Classes="chipbtn" Command="{Binding ShowFilterCommand}" CommandParameter="nocheck" Margin="0,0,6,4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <ctl:IconView Kind="help" Size="14" VerticalAlignment="Center" />
+                  <TextBlock FontWeight="Bold" Text="{Binding CountUnchecked}" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T ui.cannot_be_checked}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </WrapPanel>
+          </StackPanel>
+        </Border>
 
         <!-- what SMAPI said about the last session -->
         <Border Classes="panel warnedge" IsVisible="{Binding HealthVisible}">
@@ -168,27 +184,51 @@
           </StackPanel>
         </Border>
 
-        <!-- problems that can stop the game are not left at the bottom, under every update card -->
-        <Border Classes="banner bad" IsVisible="{Binding HasBlockingProblems}">
-          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-            <ctl:IconView Kind="xcircle" Size="20" VerticalAlignment="Top" />
-            <TextBlock Grid.Column="1" Classes="body" TextWrapping="Wrap" Text="{Binding BlockingProblemsText}" />
-          </Grid>
-        </Border>
-
-        <!-- tick what you want -->
-        <Border Classes="panel tight" IsVisible="{Binding ShowTickPanel}">
+        <!-- what may stop the game or break a mod comes before the update rows, errors first; the rest folds away -->
+        <Border Classes="panel tight" IsVisible="{Binding HasProblems}">
           <StackPanel Spacing="6">
-            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="arrowup" Size="20" Foreground="{DynamicResource AccentTextBrush}" /><TextBlock Classes="strong" Text="{loc:T ui.tick_what_you_want_then_press_update}" /></StackPanel>
-            <Expander Classes="flat" Header="{loc:T ui.what_do_the_labels_mean}">
-              <StackPanel Spacing="8">
-                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag auto"><TextBlock Text="{loc:T ui.automatic}" /></Border><TextBlock Classes="small" Text="{loc:T ui.the_app_downloads_and_installs_it_by_itself}" /></StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="{loc:T ui.one_click}" /></Border><TextBlock Classes="small" Text="{loc:T ui.you_click_mod_manager_download_on_nexus_and}" /></StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="{loc:T ui.you_download}" /></Border><TextBlock Classes="small" Text="{loc:T ui.you_press_the_download_button_on_the_site_th}" TextWrapping="Wrap" /></StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag new"><TextBlock Text="{loc:T ui.new_install}" /></Border><TextBlock Classes="small" Text="{loc:T ui.a_mod_you_need_but_do_not_have_yet_smapi_ski}" TextWrapping="Wrap" /></StackPanel>
-              </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="20" Foreground="{DynamicResource WarnBrush}" /><TextBlock Classes="strong" Text="{loc:T ui.heads_up}" /></StackPanel>
+            <ItemsControl ItemsSource="{Binding TopProblems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProblemViewModel">
+                  <Border Classes="banner warn" Classes.bad="{Binding IsError}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Classes="body small" Text="{Binding Detail}" TextWrapping="Wrap" />
+                      <Button Classes="link" Command="{Binding Open}" IsVisible="{Binding HasLink}"><TextBlock Text="{Binding LinkText}" /></Button>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Expander Classes="flat" Header="{Binding OtherProblemsText}" IsVisible="{Binding HasOtherProblems}">
+              <ItemsControl ItemsSource="{Binding OtherProblems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProblemViewModel">
+                  <Border Classes="banner warn" Classes.bad="{Binding IsError}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Classes="body small" Text="{Binding Detail}" TextWrapping="Wrap" />
+                      <Button Classes="link" Command="{Binding Open}" IsVisible="{Binding HasLink}"><TextBlock Text="{Binding LinkText}" /></Button>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+              </ItemsControl>
             </Expander>
           </StackPanel>
+        </Border>
+
+        <!-- tick what you want: the instruction is the header, the legend for the labels opens under it -->
+        <Border Classes="panel tight" IsVisible="{Binding ShowTickPanel}">
+          <Expander Classes="flat" Header="{loc:T ui.tick_what_you_want_then_press_update}">
+            <StackPanel Spacing="8">
+              <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag auto"><TextBlock Text="{loc:T ui.automatic}" /></Border><TextBlock Classes="small" Text="{loc:T ui.the_app_downloads_and_installs_it_by_itself}" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="{loc:T ui.one_click}" /></Border><TextBlock Classes="small" Text="{loc:T ui.you_click_mod_manager_download_on_nexus_and}" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag click"><TextBlock Text="{loc:T ui.you_download}" /></Border><TextBlock Classes="small" Text="{loc:T ui.you_press_the_download_button_on_the_site_th}" TextWrapping="Wrap" /></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="10"><Border Classes="tag new"><TextBlock Text="{loc:T ui.new_install}" /></Border><TextBlock Classes="small" Text="{loc:T ui.a_mod_you_need_but_do_not_have_yet_smapi_ski}" TextWrapping="Wrap" /></StackPanel>
+            </StackPanel>
+          </Expander>
         </Border>
 
         <!-- finished -->
@@ -212,26 +252,6 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- things the app noticed -->
-        <Border Classes="panel" IsVisible="{Binding HasProblems}">
-          <StackPanel Spacing="6">
-            <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="alert" Size="22" Foreground="{DynamicResource WarnBrush}" /><TextBlock Classes="h2" Text="{loc:T ui.heads_up}" /></StackPanel>
-            <TextBlock Classes="muted small" Text="{loc:T ui.things_the_app_noticed_that_may_affect_your}" />
-            <ItemsControl ItemsSource="{Binding Problems}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:ProblemViewModel">
-                  <Border Classes="banner warn" Classes.bad="{Binding IsError}">
-                    <StackPanel Spacing="2">
-                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                      <TextBlock Classes="body small" Text="{Binding Detail}" TextWrapping="Wrap" />
-                      <Button Classes="link" Command="{Binding Open}" IsVisible="{Binding HasLink}"><TextBlock Text="{Binding LinkText}" /></Button>
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </Border>
       </StackPanel>
     </ScrollViewer>
 

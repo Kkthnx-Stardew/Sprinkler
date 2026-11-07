@@ -86,7 +86,8 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
     public bool HasMessage => !string.IsNullOrEmpty(Info.Message);
     public string? PageUrl => Info.PageUrl;
     public bool HasChangelog => Info.Changelog.Count > 0;
-    public bool ShowPageLink => !HasChangelog && !string.IsNullOrEmpty(Info.PageUrl);
+    public bool ShowChangelog => HasChangelog && ShowDetails;
+    public bool ShowPageLink => !HasChangelog && !string.IsNullOrEmpty(Info.PageUrl) && ShowDetails;
     public string ChangelogTitle => Loc.T("card.changed_in", Info.Target);
     public bool HasDetails => Info.Details.Count > 0;
     public bool HasHistory => !string.IsNullOrEmpty(Info.HistoryId);
@@ -99,18 +100,45 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
     public bool IsFailed => Info.Status == ItemStatus.Failed;
     public bool IsSkipped => Info.Status == ItemStatus.Skipped;
     public bool CanEdit => Info.Status is ItemStatus.Ready or ItemStatus.Failed or ItemStatus.Skipped;
-    public bool ShowSources => CanEdit && Offers.Count > 0;
+    public bool ShowSources => CanEdit && Offers.Count > 0 && ShowDetails;
     public bool ShowLookingUp => CanEdit && Offers.Count == 0 && !IsFailed;
     public string LookingUpText => string.IsNullOrEmpty(Info.Message) ? Loc.T("card.looking_up") : Info.Message;
     public bool CanSelect => Info.Offers.Any(o => o.Usable);
     public bool ShowChosenNote => ShowSources && ChosenNote.Length > 0;
     public string ChosenNote => Info.Chosen >= 0 && Info.Chosen < Info.Offers.Count ? Info.Offers[Info.Chosen].Note : "";
-    public bool ShowSkipVersion => !Info.IsNew && IsReady;
+    public bool ShowSkipVersion => !Info.IsNew && IsReady && IsExpanded;
     public bool ShowOtherSources => ShowSources && !Info.AlternativesLoaded;
     public bool ProgressIndeterminate => Info.Progress <= 0 || Info.Progress >= 100;
     public double ProgressValue => Math.Clamp(Info.Progress, 0, 100);
     public bool CardDone => IsDone;
     public bool CardFailed => IsFailed;
+
+    // A ready update is one line: name, versions and where the file comes from. The source buttons, the changelog and the
+    // links open in place. A failed one opens by itself, because the person has to choose what to try next.
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    partial void OnIsExpandedChanged(bool value) => OnPropertyChanged(string.Empty);
+
+    public bool ShowDetails => IsExpanded || IsFailed;
+    public bool ShowChevron => IsReady;
+    public Avalonia.Media.ITransform ChevronTurn => new Avalonia.Media.RotateTransform(IsExpanded ? 0 : -90);
+    public string ExpandText => Loc.T(IsExpanded ? "ui.hide_details" : "ui.show_details");
+    public bool ShowSummaryLine => IsReady && !IsExpanded && SourceSummary.Length > 0;
+
+    /// <summary>"Nexus Mods · You download": the chosen source and how the file arrives, or the reason there is none.</summary>
+    public string SourceSummary
+    {
+        get
+        {
+            if (Info.Chosen >= 0 && Info.Chosen < Offers.Count && Offers[Info.Chosen].Usable)
+                return Offers[Info.Chosen].Label + " · " + Offers[Info.Chosen].ModeText;
+            return Offers.Count > 0 ? Info.Message : "";
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleExpanded() => IsExpanded = !IsExpanded;
 
     // the mod picture
     public Bitmap? Icon => ArtImages.Get(_main.Art.PathFor(Info.ArtKey));

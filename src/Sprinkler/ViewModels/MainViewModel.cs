@@ -153,6 +153,11 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     public ObservableCollection<HistoryViewModel> History { get; } = new();
     public ObservableCollection<FoundViewModel> Found { get; } = new();
     public ObservableCollection<ProblemViewModel> Problems { get; } = new();
+    public ObservableCollection<ProblemViewModel> TopProblems { get; } = new();
+    public ObservableCollection<ProblemViewModel> OtherProblems { get; } = new();
+
+    /// <summary>How many problems show at once above the update rows; every error always shows, the rest fold away.</summary>
+    private const int ProblemsShown = 3;
     public ObservableCollection<SkippedModViewModel> SkippedMods { get; } = new();
     public ObservableCollection<LogErrorViewModel> LogErrors { get; } = new();
     public ObservableCollection<CandidateViewModel> Candidates { get; } = new();
@@ -330,8 +335,17 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         _problemSignature = sig;
         Problems.Clear();
-        foreach (var p in s.Problems)
-            Problems.Add(new ProblemViewModel(this, p));
+        TopProblems.Clear();
+        OtherProblems.Clear();
+        // errors first (stable, so the order within each group stays as the check found it)
+        var ordered = s.Problems.OrderBy(p => p.Level == "error" ? 0 : 1).ToList();
+        var errors = ordered.Count(p => p.Level == "error");
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            var vm = new ProblemViewModel(this, ordered[i]);
+            Problems.Add(vm);
+            (i < Math.Max(errors, ProblemsShown) ? TopProblems : OtherProblems).Add(vm);
+        }
     }
 
     private void SyncLog(StateSnapshot s)

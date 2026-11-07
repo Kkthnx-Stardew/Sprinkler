@@ -2,6 +2,28 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## 1.4.0 (2026-11-07)
+
+### Added
+
+- **Play opens a menu.** "Launch with mods" and "Launch without mods", each saying how it will start before you click: through Steam, or straight from the game folder. Playing without mods works even before SMAPI is installed.
+- **Steam is used only when it is open.** Sprinkler never starts Steam just to play. With Steam open, "Launch with mods" goes through Steam only if SMAPI is already set as the game's Steam launch option (it reads Steam's own setting), because otherwise Steam would start the plain game. If it is not set, SMAPI starts directly and a note says Steam's overlay and playtime stay off, and the Play menu offers to copy the one line to paste into Steam's Launch Options.
+- A folder in Mods whose `manifest.json` SMAPI cannot use (empty, damaged, or without a UniqueID) is named in the warnings above the update rows. SMAPI skips such a folder without a word, so the mod just never loads. Switched-off folders are not reported.
+- Buttons that need noticing get a bright border and a soft glow: the app update pill, Install and Update SMAPI, and "Update N mods".
+
+### Fixed
+
+- The count chips on Updates ("321 mods in your folder", "8 updates or installs") were read by a screen reader as a bare number. Each now reads with its label.
+- The scroll bar of the All mods list sat on top of the row menu button (the three dots). The menu button now has its own space.
+- The Profiles tab said "give it a name above" while the name field was below. The empty-state box now follows the name field.
+- The Help tab offered "Connect Nexus" while you were already connected, and Updates showed two Play buttons when everything was up to date.
+- A reinstalled version read in History as an update ("0.9.0 → 0.9.0"). It now says "reinstalled". An undone change shows a circular arrow instead of a skip-forward symbol.
+- When smapi.io could not be reached, every mod showed a red "Check failed" pill with the same long error. The rows now say "Not checked: smapi.io could not be reached", and the one error is shown once.
+- The game and Mods paths in Settings kept the lowercase spelling Steam's config file uses ("c:\program files (x86)\steam"). They now show the capitals Explorer shows.
+- The header pills touched each other when they wrapped onto a second row.
+- The arrow of a drop-down list is larger, in the text colour and clear of the right edge.
+- The "SMAPI is not installed" launch message was always English. It is now in every language.
+
 ## 1.3.0 (2026-11-07)
 
 ### Fixed

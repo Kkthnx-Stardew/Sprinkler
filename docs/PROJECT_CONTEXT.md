@@ -2,7 +2,7 @@
 
 Working notes for whoever picks the project up next (a person or a coding assistant). It records what is not obvious from the code: where things stand, decisions and the reasons, what was and was not verified, and what to do next. How the program is built is in [ARCHITECTURE.md](ARCHITECTURE.md); how to build and contribute is in [../CONTRIBUTING.md](../CONTRIBUTING.md). Keep this page short and update it at the end of each milestone. No secrets, no personal paths.
 
-Last updated: 2026-11-07, at version 1.3.0 (see "State").
+Last updated: 2026-11-07, at version 1.4.0 (see "State").
 
 ## Purpose and audience
 
@@ -46,10 +46,11 @@ To look at the real window without touching a real game, make a temporary folder
 
 ## State
 
-- Released: 1.3.0 (2026-11-07), built and signed by the release workflow. It adds queued rechecks, an immediate list reconcile, the Mods-folder watcher, profiles that follow removals, Forget missing mods, the duplicate-mod warning, Switch and play, and the Updates redesign (one-line rows, compact top block, problems above the rows). Details are in the changelog. 1.2.0 (2026-11-05) added self-update and SMAPI install from the app.
+- Released: 1.4.0 (2026-11-07), built and signed by the release workflow. It adds the Play menu (with or without mods, through Steam only when Steam is open and SMAPI is already its launch option), the unreadable-manifest warning, highlighted update buttons and the fixes from a hands-on test of 1.3.0. Before it, 1.3.0 (2026-11-07) shipped queued rechecks, the immediate list reconcile, the Mods-folder watcher, profiles that follow removals, Forget missing mods, the duplicate-mod warning, Switch and play and the Updates redesign (one-line rows, compact top block, problems above the rows), and 1.2.0 (2026-11-05) added self-update and SMAPI install from the app. Details are in the changelog.
 - The Updates redesign result and what was not verified are at the end of [REDESIGN_EXPLORATION.md](REDESIGN_EXPLORATION.md).
-- Verified before release: 486 tests pass, and CI passed on Windows and Ubuntu on the commit before the version bump (one unrelated collection test failed once in a full run and passed on three reruns, cause not found). Checked by hand in the real window on Windows with demo data: every tab at about 1100 and 780 pixels wide, deleting a folder in Explorer, removing a mod from the menu with a profile active, Forget the missing mods, the duplicate banner. Idle cost measured once: about 0.4 percent of one core and 216 MB.
-- Not tested: Linux (window, watcher, Switch and play, self-update swap), per-monitor DPI changes and text scaling, keyboard-only use of the new controls, screen readers, a clean install and uninstall, Switch and play with a real game and SMAPI (the demo folder has neither, so the buttons were hidden), very large mod folders for the folder watcher.
+- Verified before release: 516 tests pass, and CI passed on Windows and Ubuntu on the commit before the version bump (one unrelated collection test failed once in a full run and passed on three reruns, cause not found). Checked by hand in the real window on Windows with demo data: every tab at about 1100 and 780 pixels wide, deleting a folder in Explorer, removing a mod from the menu with a profile active, Forget the missing mods, the duplicate banner. Idle cost measured once: about 0.4 percent of one core and 216 MB.
+- A hands-on test of 1.3.0 on Windows (real 100-mod setup, a 321-mod stress folder with broken manifests and Unicode names, seven languages by two widths by six tabs, seven window sizes, offline, install and undo, second instance) is the source of most 1.4.0 fixes. Scripts for it were throwaway and are not in the repo.
+- Not tested: a real game launch from the Play menu, Steam's overlay and playtime when started through Steam, the Play menu and the folder watcher on Linux and macOS, the self-update swap on Linux, per-monitor DPI changes and text scaling, keyboard-only use of the new controls (the Play menu included), screen readers, dragging the scroll bar, touch, a clean install and uninstall, and very large mod folders for the folder watcher.
 - The texts added in this milestone are in all 17 languages but were written by the assistant, not by native speakers.
 
 ## Known issues and risks

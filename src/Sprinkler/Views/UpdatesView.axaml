@@ -168,6 +168,14 @@
           </StackPanel>
         </Border>
 
+        <!-- problems that can stop the game are not left at the bottom, under every update card -->
+        <Border Classes="banner bad" IsVisible="{Binding HasBlockingProblems}">
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <ctl:IconView Kind="xcircle" Size="20" VerticalAlignment="Top" />
+            <TextBlock Grid.Column="1" Classes="body" TextWrapping="Wrap" Text="{Binding BlockingProblemsText}" />
+          </Grid>
+        </Border>
+
         <!-- tick what you want -->
         <Border Classes="panel tight" IsVisible="{Binding ShowTickPanel}">
           <StackPanel Spacing="6">

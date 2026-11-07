@@ -121,6 +121,19 @@ internal sealed partial class MainViewModel
     public bool ShowTickPanel => IsReview && Items.Count > 0;
     public bool HasProblems => Problems.Count > 0;
 
+    /// <summary>The titles of the problems that can stop the game from starting, shown near the top instead of only in the list at the bottom.</summary>
+    private List<string> BlockingProblems => Snap?.Problems.Where(p => p.Level == "error").Select(p => p.Title).Distinct().ToList() ?? new();
+    public bool HasBlockingProblems => IsReview && BlockingProblems.Count > 0;
+    public string BlockingProblemsText
+    {
+        get
+        {
+            var titles = BlockingProblems;
+            var shown = string.Join("; ", titles.Take(3)) + (titles.Count > 3 ? "; ..." : "");
+            return Loc.T("ui.blocking_problems", shown);
+        }
+    }
+
     // ---- the action bar
     public int SelectedCount => Items.Count(i => i.IsReady && i.Selected && i.CanSelect);
     public bool ShowActions => IsReview && Items.Count > 0;

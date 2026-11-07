@@ -14,8 +14,8 @@
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:DialogLine">
             <StackPanel Margin="0,4" Spacing="2">
-              <TextBlock Text="{Binding Lead}" FontWeight="SemiBold" TextWrapping="Wrap" />
-              <TextBlock Classes="muted small" Text="{Binding Text}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Lead}" FontWeight="SemiBold" TextWrapping="Wrap" IsVisible="{Binding Lead, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              <TextBlock Classes="muted small" Text="{Binding Text}" TextWrapping="Wrap" IsVisible="{Binding Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>

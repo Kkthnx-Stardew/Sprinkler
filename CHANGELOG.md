@@ -2,6 +2,27 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## 1.5.0 (2026-11-22)
+
+### Added
+
+- **An optional reminder.** Under Nexus and settings, "Check my mods when I sign in" starts the app quietly after you sign in to Windows or Linux. It checks your mods and opens only if updates are waiting, otherwise it closes again. It uses your own start list (the Run key on Windows, an autostart file on Linux), needs no extra rights, and is removed when you switch it off.
+- **Agrees with SMAPI about skipped mods.** Mods listed under `SuppressUpdateChecks` in `smapi-internal/config.json`, `config.user.json` or `Mods/SMAPI-config.json` are not checked or offered, and All mods says why.
+
+### Improved
+
+- A mod SMAPI could not load in your last game session is reported to SMAPI's update service as broken, the way SMAPI reports it, so the service can also suggest a preview file that fixes it. A mod updated since that session is not flagged.
+- Versions tagged `unofficial` sort below any other pre-release of the same version, as SMAPI sorts them.
+- The window does much less work while a download runs. A refresh redraws only the update rows that changed and skips the All mods list when it has not changed. With 400 mods and 80 updates, a refresh went from about 9.8 ms to 3.2 ms on Updates and from 6.2 ms to 0.9 ms on All mods, with about a fifth of the short-lived memory, on the test PC.
+- Texts that joined two sentences with a semicolon now use two sentences, and no text names another mod manager, in all 17 languages.
+
+### Fixed
+
+- A note added to a mod, or an endorsement, did not appear on its row in All mods until something else about that mod changed.
+- The main window kept a handler on the mod picture store after it closed.
+- "Use Nexus Mods instead" on an update waiting for you was always in English.
+- The tests failed while Stardew Valley was running on the same PC, because they saw the real game and read its live SMAPI log.
+
 ## 1.4.0 (2026-11-07)
 
 ### Added

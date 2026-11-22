@@ -427,6 +427,7 @@
   "row.state.error": "Sprawdzenie nie powiodło się",
   "row.state.ignored": "Pominięty przez ciebie",
   "row.state.nocheck": "Nie do sprawdzenia",
+  "row.state.smapi_skips": "Pominięty przez SMAPI",
   "row.state.uptodate": "Aktualny",
   "row.state.warning": "Ostrzeżenie",
   "row.stop_skipping": "Przestań pomijać {0}",

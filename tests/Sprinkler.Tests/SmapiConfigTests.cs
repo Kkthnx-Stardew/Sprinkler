@@ -71,6 +71,10 @@ public class SmapiSkipServiceTests
         var row = snap.Rows.Single(r => r.UniqueId == "me.Thing");
         Assert.Equal(RowState.Ignored, row.State);
         Assert.True(row.SkippedBySmapi);
+        // the status names SMAPI, not the player, and the app's own "stop skipping" is not offered
+        var vm = new Sprinkler.ViewModels.ModRowViewModel(null!, row);
+        Assert.Equal("Skipped by SMAPI", vm.StatusText);
+        Assert.False(vm.CanIgnore);
         var ids = JsonDocument.Parse(body!).RootElement.GetProperty("mods").EnumerateArray().Select(m => m.GetProperty("id").GetString()).ToList();
         Assert.DoesNotContain("me.Thing", ids);
         Assert.Contains("me.Other", ids);

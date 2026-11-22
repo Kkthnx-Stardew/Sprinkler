@@ -27,7 +27,10 @@
               <Image Source="avares://Sprinkler/Assets/logo.png" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-              <TextBlock Classes="h1" Text="Sprinkler" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Classes="h1" Text="Sprinkler" />
+                <TextBlock Classes="muted small" Text="{Binding AppVersion}" VerticalAlignment="Bottom" Margin="0,0,0,3" ToolTip.Tip="{Binding AppVersion}" />
+              </StackPanel>
               <WrapPanel x:Name="Chips" Orientation="Horizontal">
                 <Border Classes="chip" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding HasGame}"><TextBlock Text="{Binding GameChip}" /></Border>
                 <Border Classes="chip ok" MinHeight="26" Margin="0,0,6,6" IsVisible="{Binding HasSmapi}"><TextBlock Text="{Binding SmapiChip}" /></Border>

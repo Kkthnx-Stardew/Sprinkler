@@ -417,6 +417,7 @@
   "row.state.error": "Az ellenőrzés nem sikerült",
   "row.state.ignored": "Általad kihagyva",
   "row.state.nocheck": "Nem ellenőrizhető",
+  "row.state.smapi_skips": "A SMAPI kihagyja",
   "row.state.uptodate": "Naprakész",
   "row.state.warning": "Figyelmeztetés",
   "row.stop_skipping": "Ne hagyja ki tovább: {0}",

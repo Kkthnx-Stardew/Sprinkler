@@ -417,6 +417,7 @@
   "row.state.error": "Falló la comprobación",
   "row.state.ignored": "Omitido por ti",
   "row.state.nocheck": "Sin comprobar",
+  "row.state.smapi_skips": "Omitido por SMAPI",
   "row.state.uptodate": "Al día",
   "row.state.warning": "Aviso",
   "row.stop_skipping": "Dejar de omitir {0}",

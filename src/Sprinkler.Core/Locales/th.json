@@ -417,6 +417,7 @@
   "row.state.error": "ตรวจสอบไม่สำเร็จ",
   "row.state.ignored": "คุณข้ามไว้",
   "row.state.nocheck": "ตรวจไม่ได้",
+  "row.state.smapi_skips": "SMAPI ข้ามไว้",
   "row.state.uptodate": "เป็นปัจจุบัน",
   "row.state.warning": "คำเตือน",
   "row.stop_skipping": "เลิกข้าม {0}",

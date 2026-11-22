@@ -417,6 +417,7 @@
   "row.state.error": "確認に失敗",
   "row.state.ignored": "スキップ中",
   "row.state.nocheck": "確認できない",
+  "row.state.smapi_skips": "SMAPI がスキップ",
   "row.state.uptodate": "最新",
   "row.state.warning": "警告",
   "row.stop_skipping": "{0} のスキップをやめる",

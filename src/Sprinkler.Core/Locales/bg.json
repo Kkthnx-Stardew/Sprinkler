@@ -417,6 +417,7 @@
   "row.state.error": "Проверката не успя",
   "row.state.ignored": "Пропуснат от вас",
   "row.state.nocheck": "Не може да се провери",
+  "row.state.smapi_skips": "Пропуснат от SMAPI",
   "row.state.uptodate": "Актуален",
   "row.state.warning": "Предупреждение",
   "row.stop_skipping": "Спри да пропускаш {0}",

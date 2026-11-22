@@ -427,6 +427,7 @@
   "row.state.error": "Проверка не удалась",
   "row.state.ignored": "Пропущен вами",
   "row.state.nocheck": "Нельзя проверить",
+  "row.state.smapi_skips": "Пропущен SMAPI",
   "row.state.uptodate": "Актуален",
   "row.state.warning": "Предупреждение",
   "row.stop_skipping": "Больше не пропускать {0}",

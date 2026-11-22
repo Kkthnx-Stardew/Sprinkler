@@ -417,6 +417,7 @@
   "row.state.error": "Controllo non riuscito",
   "row.state.ignored": "Saltato da te",
   "row.state.nocheck": "Non verificabile",
+  "row.state.smapi_skips": "Saltato da SMAPI",
   "row.state.uptodate": "Aggiornato",
   "row.state.warning": "Avviso",
   "row.stop_skipping": "Non saltare più {0}",

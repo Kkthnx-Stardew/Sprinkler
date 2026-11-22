@@ -417,6 +417,7 @@
   "row.state.error": "Denetim başarısız",
   "row.state.ignored": "Senin atladığın",
   "row.state.nocheck": "Denetlenemiyor",
+  "row.state.smapi_skips": "SMAPI atlıyor",
   "row.state.uptodate": "Güncel",
   "row.state.warning": "Uyarı",
   "row.stop_skipping": "{0} sürümünü atlamayı bırak",

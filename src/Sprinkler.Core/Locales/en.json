@@ -417,6 +417,7 @@
   "row.state.error": "Check failed",
   "row.state.ignored": "Skipped by you",
   "row.state.nocheck": "Cannot check",
+  "row.state.smapi_skips": "Skipped by SMAPI",
   "row.state.uptodate": "Up to date",
   "row.state.warning": "Warning",
   "row.stop_skipping": "Stop skipping {0}",

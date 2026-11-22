@@ -313,7 +313,7 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
                 RowState.Error => Loc.T("row.state.error"),
                 RowState.Disabled => Loc.T("row.state.disabled"),
                 RowState.Bundled => Loc.T("row.state.bundled"),
-                RowState.Ignored => Loc.T("row.state.ignored"),
+                RowState.Ignored => Loc.T(Row.SkippedBySmapi ? "row.state.smapi_skips" : "row.state.ignored"),
                 RowState.Warning => Loc.T("row.state.warning"),
                 _ => "",
             };

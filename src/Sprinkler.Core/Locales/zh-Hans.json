@@ -417,6 +417,7 @@
   "row.state.error": "检查失败",
   "row.state.ignored": "已被你跳过",
   "row.state.nocheck": "无法检查",
+  "row.state.smapi_skips": "已被 SMAPI 跳过",
   "row.state.uptodate": "已是最新",
   "row.state.warning": "警告",
   "row.stop_skipping": "不再跳过 {0}",

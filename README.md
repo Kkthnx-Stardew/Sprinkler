@@ -4,7 +4,7 @@
 
 A Stardew Valley mod updater. It checks every mod in your Mods folder, shows what is out of date, and installs updates with a backup. Free, open source, no ads, no tracking, no account of ours.
 
-![The All mods list with pictures](docs/screenshots/mods-dark.png)
+![The All mods list](docs/screenshots/mods-dark.png)
 
 ## Get it
 

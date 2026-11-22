@@ -417,6 +417,7 @@
   "row.state.error": "Falha na verificação",
   "row.state.ignored": "Ignorado por você",
   "row.state.nocheck": "Não verificável",
+  "row.state.smapi_skips": "Ignorado pelo SMAPI",
   "row.state.uptodate": "Atualizado",
   "row.state.warning": "Aviso",
   "row.stop_skipping": "Parar de ignorar {0}",

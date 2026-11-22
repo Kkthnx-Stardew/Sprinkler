@@ -417,6 +417,7 @@
   "row.state.error": "확인 실패",
   "row.state.ignored": "직접 건너뜀",
   "row.state.nocheck": "확인 불가",
+  "row.state.smapi_skips": "SMAPI가 건너뜀",
   "row.state.uptodate": "최신",
   "row.state.warning": "경고",
   "row.stop_skipping": "{0} 건너뛰기 중지",

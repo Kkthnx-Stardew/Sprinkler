@@ -54,13 +54,13 @@
                   </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                  <Button Classes="primary" Command="{Binding PlayCommand}" IsVisible="{Binding CanPlayActive}">
+                  <Button Command="{Binding PlayCommand}" IsVisible="{Binding CanPlayActive}">
                     <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="{loc:T ui.play}" /></StackPanel>
                   </Button>
                   <Button Command="{Binding SwitchAndPlayCommand}" IsVisible="{Binding CanSwitchAndPlay}" ToolTip.Tip="{loc:T ui.switch_and_play_tip}">
                     <StackPanel Orientation="Horizontal" Spacing="8"><ctl:IconView Kind="play" Size="15" /><TextBlock Text="{loc:T ui.switch_and_play}" /></StackPanel>
                   </Button>
-                  <Button Classes="primary" Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="{loc:T ui.switch_to_it}" /></Button>
+                  <Button Command="{Binding SwitchCommand}" IsVisible="{Binding CanSwitch}"><TextBlock Text="{loc:T ui.switch_to_it}" /></Button>
                   <Button Classes="icon ghost" Width="34" Height="34" MinHeight="34" AutomationProperties.Name="{loc:T ui.more_actions}" ToolTip.Tip="{loc:T ui.more_actions}">
                     <ctl:IconView Kind="more" Size="20" />
                     <Button.Flyout>

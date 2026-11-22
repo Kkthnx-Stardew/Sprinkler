@@ -417,6 +417,7 @@
   "row.state.error": "Controle mislukt",
   "row.state.ignored": "Door jou overgeslagen",
   "row.state.nocheck": "Niet te controleren",
+  "row.state.smapi_skips": "Door SMAPI overgeslagen",
   "row.state.uptodate": "Actueel",
   "row.state.warning": "Waarschuwing",
   "row.stop_skipping": "{0} niet meer overslaan",

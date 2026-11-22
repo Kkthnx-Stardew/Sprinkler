@@ -417,6 +417,7 @@
   "row.state.error": "Prüfung fehlgeschlagen",
   "row.state.ignored": "Von dir übersprungen",
   "row.state.nocheck": "Nicht prüfbar",
+  "row.state.smapi_skips": "Von SMAPI übersprungen",
   "row.state.uptodate": "Aktuell",
   "row.state.warning": "Warnung",
   "row.stop_skipping": "{0} nicht mehr überspringen",

@@ -90,7 +90,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Text="{Binding GamePathInput}" PlaceholderText="{Binding GamePathExample}" AutomationProperties.Name="{loc:T ui.game_folder}" />
             <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding BrowseGameFolderCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
-            <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="{loc:T ui.use_this_folder}" /></Button>
+            <Button Grid.Column="2" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding UseTypedGamePathCommand}"><TextBlock Text="{loc:T ui.use_this_folder}" /></Button>
           </Grid>
           <TextBlock Classes="bad small strong" Text="{Binding GamePathError}" IsVisible="{Binding HasGamePathError}" TextWrapping="Wrap" />
           <TextBlock Classes="h3" Text="{loc:T ui.downloads_folder_the_app_watches}" />
@@ -103,7 +103,7 @@
             </Grid.ColumnDefinitions>
             <TextBox Text="{Binding DownloadsInput}" AutomationProperties.Name="{loc:T ui.downloads_folder}" />
             <Button Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding BrowseDownloadsCommand}"><TextBlock Text="{loc:T ui.browse}" /></Button>
-            <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="{loc:T ui.save}" /></Button>
+            <Button Grid.Column="2" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveDownloadsCommand}"><TextBlock Text="{loc:T ui.save}" /></Button>
           </Grid>
         </StackPanel>
       </Border>

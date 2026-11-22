@@ -27,7 +27,7 @@
           </StackPanel>
         </Grid>
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-          <Expander Classes="flat optional" Header="{loc:T ui.about_this_list}"><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" /></Expander>
+          <Expander Classes="flat inline optional" Header="{loc:T ui.about_this_list}"><TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T ui.use_the_switch_to_turn_a_mod_off_or_on_smapi}" /></Expander>
           <CheckBox Grid.Column="1" IsChecked="{Binding GroupPacks}" Content="{loc:T ui.group_content_packs_under_their_mod}" VerticalAlignment="Top" />
         </Grid>
         <StackPanel Grid.Row="2" Spacing="8">

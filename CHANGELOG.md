@@ -2,6 +2,18 @@
 
 All notable changes are listed here. The project follows [Semantic Versioning](https://semver.org).
 
+## 1.5.1 (2026-11-22)
+
+### Added
+
+- The version number sits beside the name at the top of the window.
+
+### Fixed
+
+- A mod skipped through SMAPI's own settings said "Skipped by you" on All mods. It now says "Skipped by SMAPI".
+- Settings showed three gold buttons at once, and every saved profile had a gold "Switch to it" beside the gold Play. Gold now marks one main action per screen: Connect on Nexus and settings, and Play in the header.
+- The arrow of "About this list" on All mods sat at the far right, next to "Group content packs under their mod", and looked like part of it. It now sits beside its own words.
+
 ## 1.5.0 (2026-11-22)
 
 ### Added

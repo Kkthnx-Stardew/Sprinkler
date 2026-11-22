@@ -14,6 +14,10 @@ public class ModVersionTests
     [InlineData("2.0.0-alpha", "2.0.0-beta", -1)]
     [InlineData("v1.5.0", "1.5.0", 0)]
     [InlineData("1.2.3.4", "1.2.3", 1)]
+    [InlineData("1.0.0-unofficial.1", "1.0.0-beta", -1)]
+    [InlineData("1.0.0-alpha", "1.0.0-unofficial.2", 1)]
+    [InlineData("1.0.0-unofficial.1", "1.0.0-unofficial.2", -1)]
+    [InlineData("1.0.0-unofficial.1", "1.0.0", -1)]
     public void Compares(string a, string b, int expected) =>
         Assert.Equal(expected, Math.Sign(ModVersion.Parse(a)!.CompareTo(ModVersion.Parse(b))));
 

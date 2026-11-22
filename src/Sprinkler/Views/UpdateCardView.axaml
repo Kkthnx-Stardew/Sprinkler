@@ -93,7 +93,7 @@
                 <ItemsControl ItemsSource="{Binding OtherOffers}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:OfferViewModel"><Button Classes="slim" Command="{Binding ChooseCommand}" ToolTip.Tip="{Binding Note}" Margin="0,0,8,6"><TextBlock Text="{Binding Label, StringFormat='Use {0} instead'}" /></Button></DataTemplate>
+                    <DataTemplate x:DataType="vm:OfferViewModel"><Button Classes="slim" Command="{Binding ChooseCommand}" ToolTip.Tip="{Binding Note}" Margin="0,0,8,6"><TextBlock Text="{Binding UseInsteadText}" /></Button></DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <Button Classes="slim" Command="{Binding SkipThisCommand}" Margin="0,0,8,6"><TextBlock Text="{loc:T ui.skip_this_one}" /></Button>

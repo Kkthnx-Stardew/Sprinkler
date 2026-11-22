@@ -15,7 +15,13 @@ internal static class Boot
         var dir = Path.Combine(Path.GetTempPath(), "smu-tests-data");
         Directory.CreateDirectory(dir);
         Environment.SetEnvironmentVariable("SPRINKLER_DATA", dir);
+        // never read the player's real SMAPI log, which the game may be writing while the tests run
+        Environment.SetEnvironmentVariable("SPRINKLER_LOG", NoLog);
+        // the tests use fake game folders, so a real game being played must not count as running
+        Sprinkler.Core.GameLocator.RunningProbe = () => false;
     }
+
+    public static string NoLog => Path.Combine(Path.GetTempPath(), "smu-tests-data", "no-SMAPI-latest.txt");
 }
 
 /// <summary>A throwaway folder that is deleted when the test ends.</summary>

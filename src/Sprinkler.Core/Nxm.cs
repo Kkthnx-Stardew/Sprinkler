@@ -80,7 +80,7 @@ internal static class NxmRegistration
         return false;
     }
 
-    /// <summary>The program that handles nxm links now, if it is not this app (for example Vortex).</summary>
+    /// <summary>The program that handles nxm links now, if it is not this app (often another mod manager).</summary>
     public static string? CurrentHandler()
     {
         if (OperatingSystem.IsWindows())

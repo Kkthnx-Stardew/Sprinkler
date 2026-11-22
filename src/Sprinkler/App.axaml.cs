@@ -50,11 +50,21 @@ public partial class App : Application
 
             var window = new MainWindow();
             window.Attach(_viewModel);
-            desktop.MainWindow = window;
+            if (options.Remind)
+            {
+                // a sign-in check: no window until there is something to show
+                desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                _ = RemindAsync(desktop, window);
+            }
+            else
+            {
+                desktop.MainWindow = window;
+            }
             desktop.ShutdownRequested += (_, _) => Shutdown();
+            _service.RefreshSignInStart();
 
             _channel = new InstanceChannel();
-            _channel.MessageReceived += message => Dispatcher.UIThread.Post(() => OnInstanceMessage(window, message));
+            _channel.MessageReceived += message => Dispatcher.UIThread.Post(() => OnInstanceMessage(desktop, window, message));
             _channel.Start();
 
             // last line of defence: a failure nobody expected is written to the log and shown, not allowed to close the program
@@ -84,8 +94,46 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void OnInstanceMessage(Window window, string message)
+    /// <summary>Waits for the check to settle, then opens the window if updates are waiting, or quits quietly if not.</summary>
+    private async Task RemindAsync(IClassicDesktopStyleApplicationLifetime desktop, MainWindow window)
     {
+        var waiting = false;
+        var end = DateTime.UtcNow.AddMinutes(3);
+        while (DateTime.UtcNow < end && _service is { } service)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            var s = service.Snapshot();
+            // a missing game folder or a failed check is not worth a window at sign-in
+            if (s.Phase is Phase.ChooseGame or Phase.Idle)
+                break;
+            if (s.Phase == Phase.Review)
+            {
+                waiting = s.Items.Any(i => i.Status == ItemStatus.Ready);
+                break;
+            }
+        }
+        if (window.IsVisible)
+            return; // the person opened the app themselves in the meantime
+        Log.Write(waiting ? "Sign-in check found updates, opening the window." : "Sign-in check found nothing to do.");
+        if (waiting)
+            ShowWindow(desktop, window);
+        else
+            desktop.Shutdown();
+    }
+
+    private static void ShowWindow(IClassicDesktopStyleApplicationLifetime desktop, Window window)
+    {
+        if (!window.IsVisible)
+        {
+            desktop.MainWindow = window;
+            desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
+            window.Show();
+        }
+    }
+
+    private void OnInstanceMessage(IClassicDesktopStyleApplicationLifetime desktop, Window window, string message)
+    {
+        ShowWindow(desktop, window);
         if (message.StartsWith("nxm ", StringComparison.Ordinal))
             _ = _viewModel?.HandleNxmAsync(message[4..]);
 

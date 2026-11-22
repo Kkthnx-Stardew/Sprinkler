@@ -73,7 +73,7 @@ internal sealed class UpdateItem
 
 internal sealed record WaitResult(bool Installed, int? SwitchTo);
 
-internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null, string? ParentId = null, bool HasConfig = false, string? Target = null);
+internal sealed record ModRow(string Name, string UniqueId, string Version, RowState State, string Note, string Folder, string? Url = null, string? Author = null, bool IsContentPack = false, string[]? Needs = null, string? Unofficial = null, string? UnofficialUrl = null, string? SkippedVersion = null, string? ParentId = null, bool HasConfig = false, string? Target = null, bool SkippedBySmapi = false);
 
 internal sealed record Problem(string Level, string Title, string Detail, string? Url = null, string? UrlLabel = null);
 
@@ -384,6 +384,23 @@ internal sealed partial class UpdateService : IDisposable
     }
 
     /// <summary>What the mods list shows when no update site could be asked: everything found on disk, none of it checked.</summary>
+    /// <summary>
+    /// Whether SMAPI skipped this mod in the last game session, matched by the name and version its log prints.
+    /// SMAPI marks every skipped mod as failed and tells the update service so, and the service then also suggests
+    /// a preview file that may fix it. A mod updated since that session has another version, so it no longer matches.
+    /// </summary>
+    internal static bool SkippedInLastSession(GameLog? log, string name, string version)
+    {
+        if (log is null || ModVersion.Parse(version) is not { } have)
+            return false;
+        foreach (var s in log.Skipped)
+        {
+            if (s.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && ModVersion.Parse(s.Version) is { } v && v == have)
+                return true;
+        }
+        return false;
+    }
+
     private static List<ModRow> OfflineRows(List<ModInfo> mods, HashSet<string> ignored, string reason, bool unreachable = false) =>
         mods.Select(m =>
         {
@@ -402,6 +419,8 @@ internal sealed partial class UpdateService : IDisposable
         var settings = Settings.Data;
         var active = mods.Where(m => !m.Disabled && !m.Bundled).ToList();
         var ignored = new HashSet<string>(settings.Ignored, StringComparer.OrdinalIgnoreCase);
+        // mods the player told SMAPI not to check are not checked here either, so both agree on what is out of date
+        var smapiSkips = SmapiConfig.SuppressedUpdateChecks(game.GamePath, game.ModsPath);
         var installedIds = new HashSet<string>(mods.Where(m => !m.Disabled).Select(m => m.UniqueId), StringComparer.OrdinalIgnoreCase);
 
         var missing = FindMissingRequirements(active, installedIds);
@@ -412,9 +431,11 @@ internal sealed partial class UpdateService : IDisposable
             list.AddRange(wantedBy);
         }
 
+        var gameLog = _gameLog;
         var queries = active
+            .Where(m => !smapiSkips.Contains(m.UniqueId))
             .GroupBy(m => m.UniqueId, StringComparer.OrdinalIgnoreCase)
-            .Select(g => new SmapiQuery(g.Key, g.First().UpdateKeys, g.First().Version))
+            .Select(g => new SmapiQuery(g.Key, g.First().UpdateKeys, g.First().Version, SkippedInLastSession(gameLog, g.First().Name, g.First().Version)))
             .ToList();
         foreach (var id in missing.Keys.Where(id => queries.All(q => !q.Id.Equals(id, StringComparison.OrdinalIgnoreCase))))
             queries.Add(new SmapiQuery(id, Array.Empty<string>(), null));
@@ -458,6 +479,11 @@ internal sealed partial class UpdateService : IDisposable
             if (ignored.Contains(m.UniqueId))
             {
                 rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Ignored, Loc.T("core.row_ignored"), m.FolderName));
+                continue;
+            }
+            if (smapiSkips.Contains(m.UniqueId))
+            {
+                rows.Add(new ModRow(m.Name, m.UniqueId, m.Version, RowState.Ignored, Loc.T("core.row_smapi_skips"), m.FolderName, SkippedBySmapi: true));
                 continue;
             }
 
@@ -1998,12 +2024,14 @@ internal sealed partial class UpdateService : IDisposable
                     Settings.Data.NxmRegistered && nxmStatus.Ours, nxmStatus.Other, NxmRegistration.Supported, Settings.KeyStorage),
                 Settings: new SettingsInfo(
                     Settings.Data.Policy, Settings.Data.AppWindow, Settings.Data.Theme, Settings.Data.TourSeen, Settings.DownloadsPath,
-                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks, Settings.Data.Language, Settings.Data.CheckAppUpdates),
+                    _watcher.Folder is not null, Settings.Data.BackupsPerMod, Settings.Data.Ignored.ToList(), Settings.Data.GroupContentPacks, Settings.Data.Language, Settings.Data.CheckAppUpdates, Settings.Data.RemindOnSignIn),
                 Items: _items.Select(i => new ItemInfo(
                     i.Id, i.Name, i.Installed, i.Target, i.PartCount, i.IsNew, i.Why, i.Status, i.Message, i.Progress, i.Selected, i.Chosen,
                     i.AlternativesLoaded, i.Changelog.ToList(), i.ModPageUrl, i.Details.ToList(), i.HistoryId,
                     i.Offers.Select(o => new OfferInfo(o.Kind, o.Label, o.Mode, o.Version, o.Usable, o.Note)).ToList(), ModArtStore.KeyFor(i.NexusId, i.GitHubRepo))).ToList(),
-                Rows: _rows.ToList(),
+                // _rows is only ever replaced as a whole, never changed in place, so every snapshot can share it, and the
+                // window can tell an unchanged list by reference
+                Rows: _rows,
                 Problems: _problems.ToList(),
                 Found: _found.Select(f => new FoundInfo(f.Id, f.FileName, f.Origin, f.Lines.ToList(), f.Busy, f.Error)).ToList(),
                 History: History.All().Take(40).Select(h => new HistoryInfo(

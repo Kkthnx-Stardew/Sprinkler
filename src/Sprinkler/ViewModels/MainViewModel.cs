@@ -75,11 +75,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _svc.Changed += OnServiceChanged;
         _svc.ModsChangedOutside += OnModsChangedOutside;
         Loc.Instance.LanguageChanged += OnLanguageChanged;
-        _svc.Art.Changed += () =>
-        {
-            _artDirty = true;
-            OnServiceChanged();
-        };
+        // the service passes picture changes on through Changed as well; this only marks the pictures for redrawing
+        _svc.Art.Changed += OnArtChanged;
         _poll.Start();
     }
 
@@ -126,6 +123,8 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
             Toast(Loc.T("act.outside_changed", delta.Added, delta.Removed, delta.Changed) + names);
         });
     }
+
+    private void OnArtChanged() => _artDirty = true;
 
     private void OnServiceChanged()
     {
@@ -252,8 +251,12 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var order = new List<ItemViewModel>();
         foreach (var info in s.Items)
         {
+            // only a card whose state changed is redrawn, so a download tick touches one card, not all of them
             if (_itemMap.TryGetValue(info.Id, out var vm))
-                vm.Update(info);
+            {
+                if (!ItemViewModel.SameState(vm.Info, info))
+                    vm.Update(info);
+            }
             else
                 _itemMap[info.Id] = vm = new ItemViewModel(this, info);
             order.Add(vm);
@@ -270,8 +273,17 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         SyncList(VisibleItems, shown);
     }
 
+    private List<ModRow>? _syncedRows;
+    private bool _syncedGrouping;
+
     private void SyncMods(StateSnapshot s)
     {
+        // the service replaces its list of rows whenever one changes, so the same list means nothing to rebuild (a download tick)
+        if (ReferenceEquals(s.Rows, _syncedRows) && s.Settings.GroupContentPacks == _syncedGrouping)
+            return;
+        _syncedRows = s.Rows;
+        _syncedGrouping = s.Settings.GroupContentPacks;
+
         foreach (var row in s.Rows)
         {
             var key = RowKey(row);
@@ -481,6 +493,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         _debounce.Stop();
         _poll.Stop();
         _svc.Changed -= OnServiceChanged;
+        _svc.Art.Changed -= OnArtChanged;
         _svc.ModsChangedOutside -= OnModsChangedOutside;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
     }

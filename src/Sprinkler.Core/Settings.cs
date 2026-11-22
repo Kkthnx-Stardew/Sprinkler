@@ -33,6 +33,9 @@ internal sealed class SettingsData
     public bool TourSeen { get; set; }
     public bool GroupContentPacks { get; set; } = true;
 
+    /// <summary>Start quietly at sign-in, check the mods, and open only when updates are waiting.</summary>
+    public bool RemindOnSignIn { get; set; }
+
     /// <summary>Mods whose content packs the person folded (true) or unfolded (false) by hand. A mod not listed follows the default.</summary>
     public Dictionary<string, bool> PackGroupFolds { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

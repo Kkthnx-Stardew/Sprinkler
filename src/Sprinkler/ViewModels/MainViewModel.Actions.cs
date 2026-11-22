@@ -141,6 +141,22 @@ internal sealed partial class MainViewModel
         Ui?.Exit();
     }
 
+    public bool RemindSupported => Autostart.Supported;
+
+    /// <summary>Whether the app starts quietly at sign-in and opens only when updates are waiting.</summary>
+    public bool RemindOnSignIn
+    {
+        get => Snap?.Settings.RemindOnSignIn ?? false;
+        set
+        {
+            if (value == RemindOnSignIn)
+                return;
+            if (_svc.SetRemindOnSignIn(value) is { } error)
+                Toast(Loc.T("act.remind_failed", error), true);
+            Refresh();
+        }
+    }
+
     /// <summary>Whether the program looks for a newer version of itself when it starts.</summary>
     public bool CheckAppUpdates
     {
@@ -522,6 +538,8 @@ internal sealed partial class MainViewModel
             return;
         _svc.SetModNote(row.UniqueId, text);
         Refresh();
+        // the note is not part of the row's update state, so the row does not redraw by itself
+        row.Redraw();
     }
 
     public void OpenConfig(ModRowViewModel row)
@@ -572,6 +590,7 @@ internal sealed partial class MainViewModel
             return;
         var (ok, message) = await _svc.SetEndorsementAsync(id, !IsEndorsed(id), row.Version);
         Refresh();
+        row.Redraw();
         Toast(message, !ok);
     }
 

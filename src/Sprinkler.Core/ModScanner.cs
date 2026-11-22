@@ -21,7 +21,7 @@ internal static class ModScanner
             .ToList();
     }
 
-    /// <summary>Folder names SMAPI never treats as mods (its ModScanner ignore list): Vortex and macOS leftovers.</summary>
+    /// <summary>Folder names SMAPI never treats as mods (its ModScanner ignore list), such as a mod manager's marker folder and macOS leftovers.</summary>
     internal static bool IsIgnoredFolder(string name) =>
         name.Equals("__folder_managed_by_vortex", StringComparison.OrdinalIgnoreCase)
         || name.Equals("__MACOSX", StringComparison.OrdinalIgnoreCase)

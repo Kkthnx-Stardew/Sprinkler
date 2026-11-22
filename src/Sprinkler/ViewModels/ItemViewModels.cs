@@ -39,6 +39,7 @@ internal sealed partial class OfferViewModel(ItemViewModel owner, int index, Off
     public bool IsClick => Info.Usable && Info.Mode != DeliveryMode.Auto;
     public string ModeText => Loc.T(Info.Mode switch { DeliveryMode.Auto => "mode.auto", DeliveryMode.OneClick => "mode.oneclick", _ => "mode.manual" });
     public bool IsChosen => owner.Info.Chosen == Index;
+    public string UseInsteadText => Loc.T("card.use_instead", Label);
 
     public void Update(OfferInfo info)
     {
@@ -176,6 +177,11 @@ internal sealed partial class ItemViewModel : ObservableObject, IModArt
         Refill(info);
         OnPropertyChanged(string.Empty);
     }
+
+    /// <summary>True when two snapshots of an update would draw the same card. The record's own equality compares its lists by reference, and every snapshot has new lists.</summary>
+    internal static bool SameState(ItemInfo a, ItemInfo b) =>
+        a with { Changelog = b.Changelog, Details = b.Details, Offers = b.Offers } == b
+        && a.Changelog.SequenceEqual(b.Changelog) && a.Details.SequenceEqual(b.Details) && a.Offers.SequenceEqual(b.Offers);
 
     private void Refill(ItemInfo info)
     {
@@ -327,7 +333,8 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
     public bool HasUrl => !string.IsNullOrEmpty(Row.Url);
     public bool HasSkipped => !string.IsNullOrEmpty(Row.SkippedVersion);
     public string StopSkippingText => Loc.T("row.stop_skipping", Row.SkippedVersion ?? "");
-    public bool CanIgnore => Row.State is not (RowState.Bundled or RowState.Disabled);
+    // a mod skipped in SMAPI's own settings can only be changed there
+    public bool CanIgnore => Row.State is not (RowState.Bundled or RowState.Disabled) && !Row.SkippedBySmapi;
     public bool IsIgnored => Row.State == RowState.Ignored;
     public string IgnoreText => Loc.T(IsIgnored ? "row.ignore_off" : "row.ignore_on");
 
@@ -406,6 +413,9 @@ internal sealed partial class ModRowViewModel : ObservableObject, IModArt
 
     [RelayCommand]
     private Task EditNote() => _main.EditNoteAsync(this);
+
+    /// <summary>Redraws the row after something it shows but does not hold changed, such as its note or endorsement.</summary>
+    public void Redraw() => OnPropertyChanged(string.Empty);
 
     [RelayCommand]
     private Task Remove() => _main.RemoveModAsync(this);

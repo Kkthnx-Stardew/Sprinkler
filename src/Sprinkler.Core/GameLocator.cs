@@ -201,11 +201,14 @@ internal static partial class GameLocator
         {
             if (!fresh && DateTime.UtcNow - _runningCheckedAt < TimeSpan.FromSeconds(2))
                 return _running;
-            _running = GameProcess.IsRunning();
+            _running = RunningProbe();
             _runningCheckedAt = DateTime.UtcNow;
             return _running;
         }
     }
+
+    /// <summary>How a running game is found. Tests swap it so a game the developer is playing does not block them.</summary>
+    internal static Func<bool> RunningProbe = GameProcess.IsRunning;
 
     private static readonly object RunningGate = new();
     private static DateTime _runningCheckedAt = DateTime.MinValue;

@@ -499,6 +499,36 @@ public class ServiceTests
         Assert.Contains(items, i => i.GetProperty("isNew").GetBoolean() && i.GetProperty("name").GetString() == "The Framework");
         Assert.Contains(s.GetProperty("problems").EnumerateArray(), p => p.GetProperty("title").GetString()!.Contains("Content Patcher") || p.GetProperty("title").GetString()!.Contains("Pathoschild"));
     }
+    [Fact]
+    public async Task TellsSmapiWhichModsFailedToLoadLastSession()
+    {
+        using var rig = new Rig(SourcePolicy.NexusFirst);
+        var logPath = rig.Dir.Write("SMAPI-latest.txt", """
+[03:20:44 ERROR SMAPI]    Skipped mods
+[03:20:44 ERROR SMAPI]    --------------------------------------------------
+[03:20:44 ERROR SMAPI]       - Thing 1.0.0 because its DLL couldn't be loaded.
+""");
+        string? body = null;
+        var inner = rig.Web.Handler;
+        rig.Web.Handler = (path, ctx) =>
+        {
+            if (path == "/smapi")
+                body = new StreamReader(ctx.Request.InputStream).ReadToEnd();
+            return inner(path, ctx);
+        };
+        Environment.SetEnvironmentVariable("SPRINKLER_LOG", logPath);
+        try
+        {
+            await rig.StartAsync();
+            await rig.WaitForAsync(_ => body is not null);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("SPRINKLER_LOG", Boot.NoLog);
+        }
+        var mod = JsonDocument.Parse(body!).RootElement.GetProperty("mods").EnumerateArray().Single(m => m.GetProperty("id").GetString() == "me.Thing");
+        Assert.True(mod.GetProperty("isBroken").GetBoolean());
+    }
 }
 
 public class NexusFlowTests
@@ -761,6 +791,18 @@ public class SmapiLogTests
         Assert.Equal(SkipKind.Incompatible, log.Skipped[1].Kind);
         Assert.Equal(SkipKind.Other, log.Skipped[2].Kind);
         Assert.Null(log.Skipped[2].Version);
+    }
+
+    [Fact]
+    public void AModSmapiSkippedIsMarkedBrokenOnlyAtTheVersionItSkipped()
+    {
+        var log = SmapiLog.Parse(Sample.Split('\n'), DateTime.Now);
+        Assert.True(UpdateService.SkippedInLastSession(log, "sunberry village", "1.1.2"));
+        Assert.True(UpdateService.SkippedInLastSession(log, "Old Thing", "0.9.0"));
+        Assert.False(UpdateService.SkippedInLastSession(log, "Sunberry Village", "1.1.3"));
+        Assert.False(UpdateService.SkippedInLastSession(log, "Content Patcher", "2.9.1"));
+        Assert.False(UpdateService.SkippedInLastSession(log, "Odd Mod", "1.0.0"));
+        Assert.False(UpdateService.SkippedInLastSession(null, "Old Thing", "0.9"));
     }
 
     [Fact]

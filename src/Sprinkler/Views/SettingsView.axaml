@@ -49,7 +49,7 @@
           </StackPanel>
           <StackPanel IsVisible="{Binding NxmCanOffer}" Spacing="8">
             <TextBlock Classes="warn small" IsVisible="{Binding NxmNeedsKey}" TextWrapping="Wrap" Text="{loc:T ui.connect_your_nexus_account_first_links_do_no}" />
-            <TextBlock Classes="warn small" IsVisible="{Binding NxmOther}" TextWrapping="Wrap" Text="{loc:T ui.another_program_such_as_vortex_or_mod_organi}" />
+            <TextBlock Classes="warn small" IsVisible="{Binding NxmOther}" TextWrapping="Wrap" Text="{loc:T ui.another_program_handles_nexus_links}" />
             <Button Command="{Binding TurnNxmOnCommand}" IsEnabled="{Binding NexusConnected}" HorizontalAlignment="Left"><TextBlock Text="{loc:T ui.let_this_app_handle_nexus_links}" /></Button>
           </StackPanel>
           <TextBlock Classes="muted small" Text="{Binding NxmNote}" IsVisible="{Binding HasNxmNote}" TextWrapping="Wrap" />
@@ -118,6 +118,15 @@
             <Button Classes="slim" Command="{Binding RemoveShortcutCommand}"><TextBlock Text="{loc:T ui.remove}" /></Button>
           </StackPanel>
           <Button Command="{Binding AddShortcutCommand}" IsVisible="{Binding ShortcutMissing}" HorizontalAlignment="Left"><TextBlock Text="{loc:T ui.add_to_the_application_menu}" /></Button>
+        </StackPanel>
+      </Border>
+
+      <!-- a quiet check after signing in -->
+      <Border Classes="panel" IsVisible="{Binding RemindSupported}">
+        <StackPanel Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="10"><ctl:IconView Kind="clock" Size="22" /><TextBlock Classes="h2" Text="{loc:T remind.title}" /></StackPanel>
+          <CheckBox IsChecked="{Binding RemindOnSignIn}" Content="{loc:T remind.check}" />
+          <TextBlock Classes="muted small" TextWrapping="Wrap" Text="{loc:T remind.note}" />
         </StackPanel>
       </Border>
 

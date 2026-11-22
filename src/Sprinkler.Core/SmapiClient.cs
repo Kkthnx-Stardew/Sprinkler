@@ -4,7 +4,8 @@ using System.Text.Json.Serialization;
 
 namespace Sprinkler.Core;
 
-internal sealed record SmapiQuery(string Id, string[] UpdateKeys, string? InstalledVersion);
+/// <param name="IsBroken">SMAPI skipped this copy in the last game session. SMAPI sends the same flag, and the service then also offers preview files.</param>
+internal sealed record SmapiQuery(string Id, string[] UpdateKeys, string? InstalledVersion, bool IsBroken = false);
 
 /// <summary>What SMAPI's public update service knows about one mod.</summary>
 internal sealed record SmapiResult(
@@ -42,6 +43,7 @@ internal sealed class SmapiClient
                     id = q.Id,
                     updateKeys = q.UpdateKeys,
                     installedVersion = q.InstalledVersion,
+                    isBroken = q.IsBroken,
                 }),
                 apiVersion = smapiVersion ?? "4.0.0",
                 gameVersion = gameVersion ?? "1.6.0",

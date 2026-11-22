@@ -37,7 +37,7 @@ The other options were ruled out on evidence:
 - **Tauri / Photino (system web view)**: on Linux they use WebKitGTK. Tauri's own documentation has a page of [Linux graphics issues](https://v2.tauri.app/develop/debug/linux-graphics/) (blank windows, flicker and crashes on NVIDIA under Wayland, fixed by environment variables), so shipping it would mean shipping known rendering risks that cannot be tested here.
 - **Electron**: a full Chromium per app, the heaviest option.
 
-[Stardrop](https://github.com/blackrosepetals/stardrop), a popular Stardew mod manager, also uses Avalonia on Windows, Linux and macOS, which is a good sign for the Linux case.
+At least one other Stardew Valley mod manager already ships Avalonia builds for Windows, Linux and macOS, which is a good sign for the Linux case.
 
 ## Themes and accessibility
 

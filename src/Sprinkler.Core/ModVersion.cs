@@ -94,6 +94,15 @@ internal sealed partial class ModVersion : IComparable<ModVersion>, IEquatable<M
         var plen = Math.Min(_pre.Length, other._pre.Length);
         for (var i = 0; i < plen; i++)
         {
+            if (string.Equals(_pre[i], other._pre[i], StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // SMAPI ranks an "unofficial" tag below any other tag, so 1.0.0-unofficial.1 is older than 1.0.0-beta
+            if (other._pre[i].Equals("unofficial", StringComparison.OrdinalIgnoreCase))
+                return 1;
+            if (_pre[i].Equals("unofficial", StringComparison.OrdinalIgnoreCase))
+                return -1;
+
             var aNum = long.TryParse(_pre[i], out var an);
             var bNum = long.TryParse(other._pre[i], out var bn);
             int c;

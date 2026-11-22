@@ -54,6 +54,29 @@ internal sealed partial class UpdateService
         }
     }
 
+    /// <summary>Turns the sign-in check on or off. Returns null when it worked, or what went wrong.</summary>
+    public string? SetRemindOnSignIn(bool on)
+    {
+        if (on && Autostart.Enable() is { } error)
+            return error;
+        if (!on)
+            Autostart.Disable();
+        lock (_gate)
+        {
+            Settings.Data.RemindOnSignIn = on;
+            Settings.Save();
+        }
+        Update(() => { });
+        return null;
+    }
+
+    /// <summary>Writes the sign-in start again for the program where it is now, in case it was moved or updated.</summary>
+    public void RefreshSignInStart()
+    {
+        if (Settings.Data.RemindOnSignIn && Autostart.Supported)
+            Autostart.Enable();
+    }
+
     /// <summary>Turns the start-up look for a newer version of this app on or off.</summary>
     public void SetCheckAppUpdates(bool on)
     {

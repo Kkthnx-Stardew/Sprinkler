@@ -203,6 +203,7 @@ internal sealed partial class MainViewModel
                 return;
             _itemMap.Clear();
             _rowMap.Clear();
+            _syncedRows = null;
             _historyMap.Clear();
             _foundMap.Clear();
             _profileMap.Clear();

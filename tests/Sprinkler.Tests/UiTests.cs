@@ -385,6 +385,9 @@ public class UiTests
         using var _r = rig;
         var row = vm.Mods.Single(m => m.UniqueId == "me.B");
         Assert.False(row.HasNote);
+        // the row on screen only changes when it is told to redraw
+        var redrawn = false;
+        row.PropertyChanged += (_, e) => redrawn |= string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(row.HasNote);
 
         var editing = row.EditNoteCommand.ExecuteAsync(null);
         await SettleAsync(vm, () => vm.Dialog is TextPromptDialogViewModel);
@@ -395,6 +398,7 @@ public class UiTests
         await SettleAsync(vm);
 
         Assert.True(row.HasNote);
+        Assert.True(redrawn, "The row was not told to show its new note.");
         Assert.Equal("wait for the festival patch", row.NoteText);
         Assert.Equal("Edit the note", row.NoteMenuText);
 
